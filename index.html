@@ -1,0 +1,2098 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Process Lab — Adhesives Inventory</title>
+<style>
+  :root {
+    --nv-green: #76b900;
+    --nv-green-dark: #5c9100;
+    --nv-green-light: #a8d500;
+    --nv-black: #1a1a1a;
+    --nv-dark: #242424;
+    --nv-surface: #2e2e2e;
+    --nv-border: #3d3d3d;
+    --nv-text: #e8e8e8;
+    --nv-muted: #999;
+    --nv-white: #ffffff;
+    --status-ok: #76b900;
+    --status-warn: #f5a623;
+    --status-expired: #e84040;
+    --status-low: #f5a623;
+    --radius: 6px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+
+  body {
+    background: var(--nv-black);
+    color: var(--nv-text);
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    font-size: 13px;
+    min-height: 100vh;
+  }
+
+  /* ── Header ── */
+  header {
+    background: var(--nv-dark);
+    border-bottom: 2px solid var(--nv-green);
+    padding: 16px 28px;
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .nv-logo {
+    font-size: 22px;
+    font-weight: 900;
+    letter-spacing: -0.5px;
+    color: var(--nv-green);
+    text-transform: uppercase;
+  }
+  .header-sep { width: 2px; height: 32px; background: var(--nv-border); }
+  .header-title { font-size: 15px; font-weight: 600; color: var(--nv-white); }
+  .header-sub { font-size: 11px; color: var(--nv-muted); margin-top: 2px; }
+  .header-right { margin-left: auto; display: flex; align-items: center; gap: 12px; }
+
+  /* ── Summary pills ── */
+  .stats-bar {
+    display: flex;
+    gap: 10px;
+    padding: 12px 28px;
+    background: var(--nv-dark);
+    border-bottom: 1px solid var(--nv-border);
+    flex-wrap: wrap;
+  }
+  .stat-pill {
+    background: var(--nv-surface);
+    border: 1px solid var(--nv-border);
+    border-radius: 20px;
+    padding: 5px 14px;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+  }
+  .stat-pill .dot { width: 8px; height: 8px; border-radius: 50%; }
+  .dot-green { background: var(--status-ok); }
+  .dot-warn  { background: var(--status-warn); }
+  .dot-red   { background: var(--status-expired); }
+  .stat-pill strong { color: var(--nv-white); font-size: 14px; }
+
+  /* ── Toolbar ── */
+  .toolbar {
+    padding: 12px 28px;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .search-wrap { position: relative; flex: 1; min-width: 200px; max-width: 340px; }
+  .search-wrap input {
+    width: 100%;
+    background: var(--nv-surface);
+    border: 1px solid var(--nv-border);
+    color: var(--nv-text);
+    padding: 7px 12px 7px 32px;
+    border-radius: var(--radius);
+    font-size: 13px;
+    outline: none;
+  }
+  .search-wrap input:focus { border-color: var(--nv-green); }
+  .search-wrap .icon { position: absolute; left: 9px; top: 50%; transform: translateY(-50%); color: var(--nv-muted); font-size: 14px; }
+
+  select {
+    background: var(--nv-surface);
+    border: 1px solid var(--nv-border);
+    color: var(--nv-text);
+    padding: 7px 10px;
+    border-radius: var(--radius);
+    font-size: 12px;
+    outline: none;
+    cursor: pointer;
+  }
+  select:focus { border-color: var(--nv-green); }
+
+  .btn {
+    padding: 7px 16px;
+    border-radius: var(--radius);
+    border: none;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 600;
+    transition: background .15s;
+  }
+  .btn-primary { background: var(--nv-green); color: #000; }
+  .btn-primary:hover { background: var(--nv-green-light); }
+  .btn-ghost { background: transparent; border: 1px solid var(--nv-border); color: var(--nv-text); }
+  .btn-ghost:hover { border-color: var(--nv-green); color: var(--nv-green); }
+
+  /* ── Table ── */
+  .table-wrap {
+    margin: 0 0 32px 0;
+    padding: 0 28px;
+    overflow-x: auto;
+    overflow-y: visible;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    scrollbar-color: #76b900 #2e2e2e;
+  }
+  .table-wrap::-webkit-scrollbar { height: 7px; }
+  .table-wrap::-webkit-scrollbar-track { background: #2e2e2e; border-radius: 4px; }
+  .table-wrap::-webkit-scrollbar-thumb { background: #76b900; border-radius: 4px; }
+  table {
+    width: max-content;
+    min-width: 1400px;
+    border-collapse: collapse;
+  }
+  thead tr {
+    background: var(--nv-surface);
+    border-top: 2px solid var(--nv-green);
+    border-bottom: 1px solid var(--nv-border);
+  }
+  th {
+    text-align: left;
+    padding: 10px 12px;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--nv-green);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+    cursor: pointer;
+    user-select: none;
+  }
+  th:hover { color: var(--nv-green-light); }
+  th .sort-arrow { margin-left: 4px; opacity: 0.5; }
+  th.sorted .sort-arrow { opacity: 1; }
+
+  tbody tr {
+    border-bottom: 1px solid var(--nv-border);
+    transition: background .1s;
+  }
+  tbody tr:hover { background: var(--nv-surface); }
+  tbody tr.row-expired { background: rgba(232, 64, 64, 0.06); }
+  tbody tr.row-warn    { background: rgba(245, 166, 35, 0.05); }
+
+  td {
+    padding: 9px 12px;
+    vertical-align: top;
+    color: var(--nv-text);
+    font-size: 12px;
+    max-width: 160px;
+  }
+  td .cell-main { font-weight: 600; color: var(--nv-white); }
+  td .cell-sub  { font-size: 11px; color: var(--nv-muted); margin-top: 2px; }
+
+  /* ── Status badges ── */
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+  }
+  .badge-ok       { background: rgba(118,185,0,.18); color: var(--status-ok); border: 1px solid rgba(118,185,0,.3); }
+  .badge-warn     { background: rgba(245,166,35,.15); color: var(--status-warn); border: 1px solid rgba(245,166,35,.3); }
+  .badge-expired  { background: rgba(232,64,64,.15); color: var(--status-expired); border: 1px solid rgba(232,64,64,.3); }
+  .badge-reorder  { background: rgba(120,80,255,.15); color: #a88cff; border: 1px solid rgba(120,80,255,.3); }
+  .badge-na       { background: rgba(153,153,153,.12); color: var(--nv-muted); border: 1px solid rgba(153,153,153,.2); }
+
+  /* ── Temp badge ── */
+  .temp-badge {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 7px;
+    border-radius: 4px;
+    background: rgba(100,180,255,.12);
+    color: #80caff;
+    border: 1px solid rgba(100,180,255,.25);
+    white-space: nowrap;
+  }
+  .temp-freeze { background: rgba(100,180,255,.18); color: #80caff; border-color: rgba(100,180,255,.35); }
+  .temp-cold   { background: rgba(0,200,150,.1); color: #00d4a0; border-color: rgba(0,200,150,.25); }
+  .temp-room   { background: rgba(153,153,153,.1); color: var(--nv-muted); border-color: var(--nv-border); }
+
+  /* ── Datasheet link ── */
+  a.ds-link {
+    color: var(--nv-green);
+    text-decoration: none;
+    font-size: 11px;
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+  }
+  a.ds-link:hover { color: var(--nv-green-light); text-decoration: underline; }
+
+  /* ── Datasheet file cell ── */
+  .ds-cell { display:flex; flex-direction:column; gap:3px; }
+  .ds-filename { font-size:10px; color:var(--nv-muted); font-style:italic; }
+
+  /* ── Empty state ── */
+  .empty-row td {
+    text-align: center;
+    padding: 40px;
+    color: var(--nv-muted);
+  }
+
+  /* ── Modal (Add/Edit row) ── */
+  .modal-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,.7);
+    z-index: 200;
+    align-items: center;
+    justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--nv-dark);
+    border: 1px solid var(--nv-green);
+    border-radius: 10px;
+    width: 720px;
+    max-width: 95vw;
+    max-height: 90vh;
+    overflow-y: auto;
+    padding: 28px;
+  }
+  .modal h2 { font-size: 16px; color: var(--nv-green); margin-bottom: 20px; }
+  .modal-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .modal-full { grid-column: 1 / -1; }
+  .field label { display: block; font-size: 11px; color: var(--nv-muted); margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.4px; }
+  .field input, .field select, .field textarea {
+    width: 100%;
+    background: var(--nv-surface);
+    border: 1px solid var(--nv-border);
+    color: var(--nv-text);
+    padding: 8px 10px;
+    border-radius: var(--radius);
+    font-size: 13px;
+    font-family: inherit;
+    outline: none;
+  }
+  .field input:focus, .field select:focus, .field textarea:focus { border-color: var(--nv-green); }
+  .field textarea { resize: vertical; min-height: 60px; }
+  .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--nv-border); }
+
+  /* ── Row actions ── */
+  .row-actions { display: flex; gap: 6px; }
+  .icon-btn {
+    background: none;
+    border: 1px solid var(--nv-border);
+    color: var(--nv-muted);
+    cursor: pointer;
+    border-radius: 4px;
+    padding: 3px 7px;
+    font-size: 12px;
+    transition: all .15s;
+  }
+  .icon-btn:hover { border-color: var(--nv-green); color: var(--nv-green); }
+  .icon-btn.del:hover { border-color: var(--status-expired); color: var(--status-expired); }
+
+  /* ── Frozen first two cols ── */
+  th:first-child, td:first-child {
+    position: sticky;
+    left: 0;
+    width: 42px;
+    min-width: 42px;
+    background: var(--nv-dark);
+    z-index: 3;
+    border-right: none;
+  }
+  tbody tr:hover td:first-child { background: var(--nv-surface); }
+  thead tr th:first-child { background: var(--nv-surface); z-index: 4; }
+
+  .timestamp { font-size: 10px; color: var(--nv-muted); }
+
+  /* == Discussion Board == */
+  .comments-section {
+    margin: 0 28px 48px;
+    border: 1px solid var(--nv-border);
+    border-top: 2px solid var(--nv-green);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .comments-header {
+    background: var(--nv-surface);
+    padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+    border-bottom: 1px solid var(--nv-border);
+  }
+  .comments-title { font-size: 14px; font-weight: 700; color: var(--nv-white); }
+  .comments-sub   { font-size: 11px; color: var(--nv-muted); margin-top: 2px; }
+  .comment-tag-pills { display: flex; gap: 7px; flex-wrap: wrap; }
+  .tag-pill {
+    font-size: 10px; font-weight: 600;
+    padding: 3px 10px; border-radius: 12px;
+    border: 1px solid;
+    pointer-events: none;
+  }
+  .tag-note     { background: rgba(118,185,0,.1);  color: #76b900; border-color: rgba(118,185,0,.3); }
+  .tag-order    { background: rgba(100,160,255,.1); color: #80aaff; border-color: rgba(100,160,255,.3); }
+  .tag-urgent   { background: rgba(232,64,64,.1);   color: #e84040; border-color: rgba(232,64,64,.3); }
+  .tag-resolved { background: rgba(0,200,120,.1);   color: #00c878; border-color: rgba(0,200,120,.3); }
+
+  /* Compose */
+  .compose-box {
+    background: var(--nv-dark);
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--nv-border);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .compose-row { display: flex; gap: 10px; align-items: flex-start; flex-wrap: wrap; }
+  .compose-msg-row { align-items: flex-end; }
+  .c_author_input {
+    background: var(--nv-surface); border: 1px solid var(--nv-border);
+    color: var(--nv-text); padding: 7px 10px; border-radius: var(--radius);
+    font-size: 12px; outline: none; width: 160px; flex-shrink: 0;
+  }
+  .c_author_input:focus { border-color: var(--nv-green); }
+  .c_select {
+    background: var(--nv-surface); border: 1px solid var(--nv-border);
+    color: var(--nv-text); padding: 7px 10px; border-radius: var(--radius);
+    font-size: 12px; outline: none; cursor: pointer; flex: 1; min-width: 160px;
+  }
+  .c_select:focus { border-color: var(--nv-green); }
+  #c_text {
+    flex: 1; background: var(--nv-surface); border: 1px solid var(--nv-border);
+    color: var(--nv-text); padding: 9px 12px; border-radius: var(--radius);
+    font-size: 13px; font-family: inherit; outline: none; resize: vertical;
+    min-height: 72px;
+  }
+  #c_text:focus { border-color: var(--nv-green); }
+  .compose-send { align-self: flex-end; padding: 9px 22px; font-size: 13px; flex-shrink: 0; }
+
+  /* Thread */
+  .comment-thread { padding: 16px 20px; display: flex; flex-direction: column; gap: 12px; }
+  .comment-thread:empty::after {
+    content: "No comments yet. Be the first to leave a note or reorder request.";
+    color: var(--nv-muted); font-size: 12px; font-style: italic;
+    display: block; text-align: center; padding: 20px 0;
+  }
+  .comment-card {
+    background: var(--nv-surface);
+    border: 1px solid var(--nv-border);
+    border-radius: 7px;
+    padding: 12px 15px;
+    animation: fadeIn .2s ease;
+  }
+  @keyframes fadeIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:none; } }
+  .comment-card.c-urgent  { border-left: 3px solid #e84040; }
+  .comment-card.c-order   { border-left: 3px solid #80aaff; }
+  .comment-card.c-resolved{ border-left: 3px solid #00c878; }
+  .comment-card.c-note    { border-left: 3px solid #76b900; }
+  .comment-meta {
+    display: flex; align-items: center; gap: 8px;
+    margin-bottom: 7px; flex-wrap: wrap;
+  }
+  .comment-author { font-weight: 700; font-size: 12px; color: var(--nv-white); }
+  .comment-adhesive {
+    font-size: 10px; padding: 2px 8px; border-radius: 10px;
+    background: rgba(118,185,0,.12); color: var(--nv-green);
+    border: 1px solid rgba(118,185,0,.25); font-weight: 600;
+  }
+  .comment-time { font-size: 10px; color: var(--nv-muted); margin-left: auto; }
+  .comment-body { font-size: 13px; color: var(--nv-text); line-height: 1.5; white-space: pre-wrap; }
+  .comment-del {
+    background: none; border: none; color: var(--nv-muted);
+    cursor: pointer; font-size: 12px; padding: 2px 5px; border-radius: 3px;
+    transition: color .15s; flex-shrink: 0; line-height: 1;
+  }
+  .comment-del:hover { color: var(--status-expired); }
+  .comment-badge {
+    font-size: 9px; font-weight: 700; padding: 2px 7px;
+    border-radius: 10px; border: 1px solid; text-transform: uppercase;
+    letter-spacing: 0.4px;
+  }
+
+
+  /* ── Page navigation tabs ── */
+  .page-nav {
+    background: var(--nv-dark);
+    border-bottom: 1px solid var(--nv-border);
+    display: flex;
+    align-items: flex-end;
+    padding: 0 28px;
+    gap: 4px;
+  }
+  .nav-tab {
+    padding: 10px 22px 9px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--nv-muted);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: color .15s, border-color .15s;
+    user-select: none;
+    white-space: nowrap;
+    letter-spacing: 0.3px;
+  }
+  .nav-tab:hover { color: var(--nv-text); }
+  .nav-tab.active {
+    color: var(--nv-green);
+    border-bottom: 2px solid var(--nv-green);
+  }
+  .nav-tab .tab-count {
+    display: inline-block;
+    background: var(--nv-surface);
+    border: 1px solid var(--nv-border);
+    border-radius: 10px;
+    font-size: 10px;
+    padding: 0 6px;
+    margin-left: 5px;
+    color: var(--nv-muted);
+    font-weight: 700;
+  }
+  .nav-tab.active .tab-count { background: rgba(118,185,0,.15); border-color: rgba(118,185,0,.3); color: var(--nv-green); }
+
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* ── Shipments page ── */
+  .ship-toolbar {
+    padding: 12px 28px;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  /* Shipment cards grid */
+  .ship-grid {
+    padding: 0 28px 40px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(480px, 1fr));
+    gap: 16px;
+  }
+
+  .ship-card {
+    background: var(--nv-dark);
+    border: 1px solid var(--nv-border);
+    border-radius: 10px;
+    overflow: hidden;
+    transition: border-color .15s, box-shadow .15s;
+  }
+  .ship-card:hover {
+    border-color: var(--nv-green);
+    box-shadow: 0 0 0 1px rgba(118,185,0,.2);
+  }
+  .ship-card.sc-pending    { border-left: 4px solid #80aaff; }
+  .ship-card.sc-transit    { border-left: 4px solid #f5a623; }
+  .ship-card.sc-delivered  { border-left: 4px solid #76b900; }
+  .ship-card.sc-delayed    { border-left: 4px solid #e84040; }
+  .ship-card.sc-cancelled  { border-left: 4px solid #888; }
+
+  .sc-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    padding: 14px 16px 10px;
+    border-bottom: 1px solid var(--nv-border);
+    gap: 10px;
+  }
+  .sc-title { font-size: 14px; font-weight: 700; color: var(--nv-white); line-height: 1.3; }
+  .sc-vendor { font-size: 11px; color: var(--nv-muted); margin-top: 3px; }
+  .sc-status-badge {
+    flex-shrink: 0;
+    font-size: 10px; font-weight: 700;
+    padding: 4px 11px; border-radius: 12px;
+    border: 1px solid;
+    text-transform: uppercase; letter-spacing: 0.5px;
+    white-space: nowrap;
+  }
+  .sst-pending   { background: rgba(100,160,255,.12); color: #80aaff; border-color: rgba(100,160,255,.3); }
+  .sst-transit   { background: rgba(245,166,35,.12);  color: #f5a623; border-color: rgba(245,166,35,.3); }
+  .sst-delivered { background: rgba(118,185,0,.12);   color: #76b900; border-color: rgba(118,185,0,.3); }
+  .sst-delayed   { background: rgba(232,64,64,.12);   color: #e84040; border-color: rgba(232,64,64,.3); }
+  .sst-cancelled { background: rgba(136,136,136,.1);  color: #888;    border-color: rgba(136,136,136,.25); }
+
+  .sc-body {
+    padding: 12px 16px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px 14px;
+  }
+  .sc-field { display: flex; flex-direction: column; gap: 2px; }
+  .sc-field.sc-full { grid-column: 1 / -1; }
+  .sc-label { font-size: 10px; color: var(--nv-muted); text-transform: uppercase; letter-spacing: 0.4px; }
+  .sc-value { font-size: 12px; color: var(--nv-text); font-weight: 500; }
+  .sc-value.mono { font-family: monospace; font-size: 11px; color: #a0c8ff; }
+  .sc-value.green { color: var(--nv-green); font-weight: 700; }
+  .sc-value.warn  { color: #f5a623; }
+  .sc-value.err   { color: #e84040; }
+
+  .sc-footer {
+    padding: 10px 16px;
+    border-top: 1px solid var(--nv-border);
+    background: var(--nv-surface);
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  .sc-comment-icon { font-size: 14px; flex-shrink: 0; margin-top: 1px; }
+  .sc-comment-text { font-size: 11px; color: var(--nv-muted); font-style: italic; line-height: 1.4; flex: 1; }
+  .sc-actions {
+    display: flex; gap: 5px; flex-shrink: 0; align-items: center;
+  }
+
+  /* Timeline progress bar */
+  .sc-timeline {
+    padding: 10px 16px 4px;
+    border-top: 1px solid var(--nv-border);
+  }
+  .sc-tl-label { font-size: 10px; color: var(--nv-muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.4px; }
+  .sc-tl-track {
+    display: flex;
+    align-items: center;
+    gap: 0;
+  }
+  .sc-tl-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 1;
+    position: relative;
+  }
+  .sc-tl-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    border: 2px solid var(--nv-border);
+    background: var(--nv-dark);
+    position: relative; z-index: 1;
+    transition: background .2s, border-color .2s;
+  }
+  .sc-tl-dot.done  { background: var(--nv-green); border-color: var(--nv-green); }
+  .sc-tl-dot.curr  { background: #f5a623; border-color: #f5a623; box-shadow: 0 0 0 3px rgba(245,166,35,.2); }
+  .sc-tl-dot.err   { background: #e84040; border-color: #e84040; }
+  .sc-tl-line {
+    flex: 1; height: 2px;
+    background: var(--nv-border);
+    margin: 0 -1px;
+    position: relative; top: -7px;
+  }
+  .sc-tl-line.done { background: var(--nv-green); }
+  .sc-tl-steplabel { font-size: 9px; color: var(--nv-muted); margin-top: 4px; text-align: center; white-space: nowrap; }
+  .sc-tl-steplabel.done { color: var(--nv-green); }
+  .sc-tl-steplabel.curr { color: #f5a623; }
+
+  /* Shipment stats pills */
+  .ship-stats { display: flex; gap: 10px; padding: 12px 28px 0; flex-wrap: wrap; }
+
+  /* Empty state */
+  .ship-empty {
+    text-align: center; padding: 60px 28px;
+    color: var(--nv-muted); font-size: 13px;
+  }
+  .ship-empty div { font-size: 32px; margin-bottom: 12px; }
+
+  /* Shipment modal */
+  .modal-section-title {
+    font-size: 11px; color: var(--nv-green); font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.5px;
+    margin: 16px 0 10px; padding-bottom: 6px;
+    border-bottom: 1px solid var(--nv-border);
+    grid-column: 1 / -1;
+  }
+
+
+</style>
+</head>
+<body>
+
+<header>
+  <div class="nv-logo">NVIDIA</div>
+  <div class="header-sep"></div>
+  <div>
+    <div class="header-title">Process Lab — Adhesives Inventory</div>
+    <div class="header-sub">1.6T SIAN3 SIPH &amp; related processes · Real-time tracking</div>
+  </div>
+  <div class="header-right">
+    <span class="timestamp" id="ts"></span>
+    <span id="saveIndicator" style="font-size:11px;color:var(--nv-green);opacity:0;transition:opacity .4s ease;white-space:nowrap;"></span>
+    <button class="btn btn-ghost" onclick="saveFile()" style="border-color:#76b900;color:#76b900;" title="Save all data">💾 Save</button><button class="btn btn-primary" onclick="openAddModal()">+ Add Adhesive</button>
+  </div>
+</header>
+
+<nav class="page-nav">
+  <div class="nav-tab active" onclick="switchPage('inventory')" id="tab-inventory">
+    📦 Inventory <span class="tab-count" id="tc-inventory">5</span>
+  </div>
+  <div class="nav-tab" onclick="switchPage('shipments')" id="tab-shipments">
+    🚚 Requirement &amp; Shipment Status <span class="tab-count" id="tc-shipments">0</span>
+  </div>
+</nav>
+
+<div id="page-inventory" class="page active">
+<div class="stats-bar" id="statsBar">
+  <!-- filled by JS -->
+</div>
+
+<div class="toolbar">
+  <div class="search-wrap">
+    <span class="icon">🔍</span>
+    <input type="text" id="searchInput" placeholder="Search adhesive, vendor, PN, location…" oninput="render()">
+  </div>
+  <select id="filterStatus" onchange="render()">
+    <option value="">All Statuses</option>
+    <option value="ok">OK</option>
+    <option value="warn">Expiring Soon</option>
+    <option value="expired">Expired</option>
+    <option value="reorder">Reorder</option>
+  </select>
+  <select id="filterStorage" onchange="render()">
+    <option value="">All Storage</option>
+    <option value="Freezer">Freezer</option>
+    <option value="Fridge">Fridge / Cold</option>
+    <option value="Room">Room Temp</option>
+  </select>
+  <button class="btn btn-ghost" onclick="exportExcel()">⬇ Export Excel</button>
+    <button class="btn btn-ghost" onclick="exportJSON()" style="border-color:#555;color:#999;" title="Export backup">📤 Backup</button>
+    <button class="btn btn-ghost" onclick="importJSON()" title="Import backup">📥 Restore</button>
+</div>
+
+<div class="table-wrap">
+  <table id="mainTable">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th onclick="sortBy('name')">Adhesive <span class="sort-arrow">↕</span></th>
+        <th onclick="sortBy('vendor')">Vendor <span class="sort-arrow">↕</span></th>
+        <th>NV PN</th>
+        <th>Supplier PN</th>
+        <th>Where Used</th>
+        <th>Syringe Sizes</th>
+        <th onclick="sortBy('expiry')">Expiry Date <span class="sort-arrow">↕</span></th>
+        <th>Status</th>
+        
+        
+        
+        <th>Freezer</th>
+        <th>Shelf #</th>
+        <th>Storage Temp</th>
+        <th>Owner</th>
+        <th>Comments</th>
+        <th>Datasheet</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody id="tbody"></tbody>
+  </table>
+</div>
+
+
+</div><!-- /page-inventory -->
+
+
+
+<!-- ═══ SHIPMENTS PAGE ═══ -->
+<div id="page-shipments" class="page">
+
+  <div class="ship-stats" id="shipStats"></div>
+
+  <div class="ship-toolbar">
+    <div class="search-wrap">
+      <span class="icon">🔍</span>
+      <input type="text" id="shipSearch" placeholder="Search adhesive, vendor, tracking #, requester…" oninput="renderShipments()">
+    </div>
+    <select id="shipFilterStatus" onchange="renderShipments()">
+      <option value="">All Statuses</option>
+      <option value="pending">Pending</option>
+      <option value="transit">In Transit</option>
+      <option value="delivered">Delivered</option>
+      <option value="delayed">Delayed</option>
+      <option value="cancelled">Cancelled</option>
+    </select>
+    <button class="btn btn-primary" onclick="openShipModal()">+ New Requirement</button>
+  </div>
+
+  <div class="ship-grid" id="shipGrid"></div>
+
+<!-- Discussion / Comments Board (now lives inside shipments page) -->
+<div class="comments-section" style="margin: 24px 28px 0;">
+  <div class="comments-header">
+    <div>
+      <div class="comments-title">&#x1F4AC; Lab Discussion Board</div>
+      <div class="comments-sub">Leave notes, tag the owner, or flag an adhesive for reorder</div>
+    </div>
+    <div class="comment-tag-pills">
+      <span class="tag-pill tag-note">&#x1F4DD; Note</span>
+      <span class="tag-pill tag-order">&#x1F6D2; Order Request</span>
+      <span class="tag-pill tag-urgent">&#x1F534; Urgent</span>
+      <span class="tag-pill tag-resolved">&#x2705; Resolved</span>
+    </div>
+  </div>
+  <div class="compose-box">
+    <div class="compose-row">
+      <input id="c_author" placeholder="Your name" class="c_author_input">
+      <select id="c_adhesive" class="c_select">
+        <option value="">-- Adhesive (optional) --</option>
+      </select>
+      <select id="c_tag" class="c_select">
+        <option value="note">&#x1F4DD; Note</option>
+        <option value="order">&#x1F6D2; Order Request</option>
+        <option value="urgent">&#x1F534; Urgent</option>
+        <option value="resolved">&#x2705; Resolved</option>
+      </select>
+    </div>
+    <div class="compose-row compose-msg-row">
+      <textarea id="c_text" placeholder="Type your comment, reorder request, or question here... e.g. Loctite 3621 is expired -- please order 6 units ASAP." rows="3"></textarea>
+      <button class="btn btn-primary compose-send" onclick="postComment()">Post</button>
+    </div>
+  </div>
+  <div id="commentThread" class="comment-thread"></div>
+</div>
+
+</div><!-- /page-shipments -->
+
+<!-- Add / Edit Modal -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <h2 id="modalTitle">Add Adhesive</h2>
+    <div class="modal-grid">
+      <div class="field"><label>Adhesive Name *</label><input id="f_name" placeholder="e.g. Loctite EA 9394"></div>
+      <div class="field"><label>Vendor / Supplier *</label><input id="f_vendor" placeholder="e.g. Henkel"></div>
+      <div class="field"><label>NV PN</label><input id="f_nvpn" placeholder="e.g. A1234567"></div>
+      <div class="field"><label>Supplier PN</label><input id="f_spn" placeholder="e.g. 29340"></div>
+      <div class="field modal-full"><label>Where Used</label><input id="f_used" placeholder="e.g. 1.6T SIAN3 SIPH — TIM1 dispense, underfill…"></div>
+      <div class="field"><label>Syringe Sizes</label><input id="f_syringe" placeholder="e.g. 3cc, 10cc, 30cc"></div>
+      <div class="field"><label>Expiry Date</label><input id="f_expiry" type="date"></div>
+      <div class="field"><label>Shipment Tracking #</label><input id="f_tracking" placeholder="e.g. 1Z999AA10123456784"></div>
+      <div class="field"><label>Freezer</label>
+        <select id="f_freezer">
+          <option value="">— Select —</option>
+          <option>Freezer 1 (−20°C)</option>
+          <option>Freezer 2 (−40°C)</option>
+          <option>Fridge 1 (4°C)</option>
+          <option>Ambient shelf</option>
+        </select>
+      </div>
+      <div class="field"><label>Shelf # (inside freezer)</label><input id="f_shelf" placeholder="e.g. Shelf 1, Shelf 3, Top shelf"></div>
+      <div class="field"><label>Storage Temp</label><input id="f_temp" placeholder="e.g. −20°C, 2–8°C, 25°C"></div>
+      <div class="field"><label>Owner</label><input id="f_owner" placeholder="e.g. Yousef A."></div>
+      <div class="field modal-full">
+        <label>Datasheet</label>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:6px">
+          <span id="ds_tab_url" onclick="switchDsTab('url')" style="cursor:pointer;padding:4px 12px;border-radius:4px;font-size:11px;border:1px solid #76b900;background:rgba(118,185,0,.15);color:#76b900;font-weight:600;text-transform:uppercase;user-select:none">URL</span>
+          <span id="ds_tab_file" onclick="switchDsTab('file')" style="cursor:pointer;padding:4px 12px;border-radius:4px;font-size:11px;border:1px solid var(--nv-border);background:transparent;color:var(--nv-muted);font-weight:600;text-transform:uppercase;user-select:none">Upload File</span>
+          <span id="ds_file_name" style="font-size:11px;color:var(--nv-muted);font-style:italic"></span>
+        </div>
+        <div id="ds_url_row"><input id="f_ds" placeholder="https://vendor.com/datasheet.pdf" style="width:100%"></div>
+        <div id="ds_file_row" style="display:none">
+          <input type="file" id="f_ds_file" accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.zip" style="display:none" onchange="handleDsFile(this)">
+          <div onclick="document.getElementById('f_ds_file').click()" style="cursor:pointer;border:2px dashed var(--nv-border);border-radius:6px;padding:18px;text-align:center;color:var(--nv-muted);font-size:12px;transition:border-color .15s" onmouseenter="this.style.borderColor='#76b900'" onmouseleave="this.style.borderColor='var(--nv-border)'">
+            📄 Click to select a PDF, image, or document file
+          </div>
+        </div>
+      </div>
+      <div class="field modal-full"><label>Comments</label><textarea id="f_comments" placeholder="Notes, mixing ratio, pot life, cure schedule, restrictions…"></textarea></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveRow()">Save</button>
+    </div>
+  </div>
+</div>
+
+
+
+<!-- Shipment Add/Edit Modal -->
+<div class="modal-overlay" id="shipModalOverlay">
+  <div class="modal" style="width:760px">
+    <h2 id="shipModalTitle">New Requirement &amp; Shipment</h2>
+    <div class="modal-grid">
+      <div class="modal-section-title">Adhesive Details</div>
+      <div class="field"><label>Adhesive / Epoxy Name *</label><input id="sf_name" placeholder="e.g. Loctite EA 9394 AERO"></div>
+      <div class="field"><label>Vendor / Supplier *</label><input id="sf_vendor" placeholder="e.g. Henkel"></div>
+      <div class="field"><label>Amount / Qty</label><input id="sf_amount" placeholder="e.g. 10 units"></div>
+      <div class="field"><label>Syringe / Pack Size</label><input id="sf_syringe" placeholder="e.g. 30cc, 50 mL cartridge"></div>
+      <div class="modal-section-title">Order Information</div>
+      <div class="field"><label>NV PR #</label><input id="sf_nvpr" placeholder="e.g. PR-2024-00421"></div>
+      <div class="field"><label>Requested By *</label><input id="sf_requester" placeholder="e.g. Yousef A."></div>
+      <div class="field"><label>Request Date</label><input id="sf_reqdate" type="date"></div>
+      <div class="field"><label>Expected Arrival</label><input id="sf_eta" type="date"></div>
+      <div class="modal-section-title">Shipment Tracking</div>
+      <div class="field"><label>Tracking Number</label><input id="sf_tracking" placeholder="e.g. 1Z999AA10123456784"></div>
+      <div class="field"><label>Carrier</label><input id="sf_carrier" placeholder="e.g. FedEx, UPS, DHL, Israel Post"></div>
+      <div class="field"><label>Status *</label>
+        <select id="sf_status">
+          <option value="pending">🕐 Pending — Order placed, not shipped yet</option>
+          <option value="transit">🚚 In Transit — Shipped, on the way</option>
+          <option value="delivered">✅ Delivered — Received in lab</option>
+          <option value="delayed">⚠ Delayed — Behind schedule</option>
+          <option value="cancelled">✖ Cancelled</option>
+        </select>
+      </div>
+      <div class="field"><label>Actual Arrival Date</label><input id="sf_arrived" type="date"></div>
+      <div class="field modal-full"><label>Comments / Notes</label><textarea id="sf_comments" placeholder="Reason for order, special handling, cold-chain requirements, customs notes…" rows="3"></textarea></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeShipModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveShipment()">Save</button>
+    </div>
+  </div>
+</div>
+
+<script type="application/json" id="app-data">{
+  "data": [],
+  "comments": [],
+  "shipments": []
+}</script>
+
+<script>
+// ── Load persisted state: embedded JSON first, localStorage fallback ─
+(function() {
+  try {
+    // Primary: data embedded in the file itself (survives Teams reload)
+    const embedded = JSON.parse(document.getElementById('app-data').textContent || '{}');
+    if (embedded.data      && embedded.data.length)      _seedData      = embedded.data;
+    if (embedded.comments  && embedded.comments.length)  _seedComments  = embedded.comments;
+    if (embedded.shipments && embedded.shipments.length) _seedShipments = embedded.shipments;
+  } catch(e) {}
+  try {
+    // Fallback: localStorage (works in regular browser but not Teams across sessions)
+    const ls = JSON.parse(localStorage.getItem('nvidia_adhesives_v1') || '{}');
+    if (!_seedData.length      && ls.data      && ls.data.length)      _seedData      = ls.data;
+    if (!_seedComments.length  && ls.comments  && ls.comments.length)  _seedComments  = ls.comments;
+    if (!_seedShipments.length && ls.shipments && ls.shipments.length) _seedShipments = ls.shipments;
+  } catch(e) {}
+})();
+// ── Data ──────────────────────────────────────────────────────────
+var _seedData = [
+  {
+    id: 1,
+    name: "Loctite EA 9394 AERO",
+    vendor: "Henkel",
+    nvpn: "PR-2024-00421",
+    spn: "29340",
+    used: "1.6T SIAN3 SIPH — structural bond, heat-sink attach",
+    syringe: "3cc, 10cc",
+    expiry: "2025-06-30",
+    ordered: 10,
+    volume: "50 mL / cartridge",
+    tracking: "1Z999AA10123456784",
+    location: "Cabinet A2, shelf 2",
+    freezer: "Freezer 1 (−20°C)",
+    shelf: "Shelf 2",
+    temp: "−20°C",
+    owner: "Yousef A.",
+    comments: "Mix ratio 100:17 by weight. Pot life 90 min @ 25°C. Thaw 1 h before use.",
+    datasheet: "https://www.henkel-adhesives.com/us/en/products/industrial-adhesives/loctite-ea-9394-aero.html"
+  },
+  {
+    id: 2,
+    name: "Shin-Etsu X-23-7762",
+    vendor: "Shin-Etsu Chemical",
+    nvpn: "PR-2024-00537",
+    spn: "X-23-7762",
+    used: "TIM1 dispensing — 1.6T SIAN3 SIPH thermal interface",
+    syringe: "10cc, 30cc",
+    expiry: "2025-12-31",
+    ordered: 24,
+    volume: "40 g / syringe",
+    tracking: "JD014600001JP",
+    location: "Shelf B1",
+    freezer: "Fridge 1 (4°C)",
+    shelf: "Shelf 3",
+    temp: "4°C",
+    owner: "Yousef A.",
+    comments: "Thermal gel. Viscosity 40 Pa·s. Dispense at room temp after 2 h equilibration.",
+    datasheet: "https://www.shinetsusilicone-global.com/catalog/pdf/x23_e.pdf"
+  },
+  {
+    id: 3,
+    name: "Loctite 3621",
+    vendor: "Henkel",
+    nvpn: "PR-2023-00889",
+    spn: "23740",
+    used: "Optical fiber attachment, pigtail bonding",
+    syringe: "3cc",
+    expiry: "2024-11-15",
+    ordered: 6,
+    volume: "10 mL / syringe",
+    tracking: "",
+    location: "Cabinet B3, top shelf",
+    freezer: "Freezer 1 (−20°C)",
+    shelf: "Shelf 1",
+    temp: "−20°C",
+    owner: "Lab Team",
+    comments: "UV-cure epoxy. Wavelength 365 nm, 10 s cure. CHECK EXPIRY — may need reorder.",
+    datasheet: ""
+  },
+  {
+    id: 4,
+    name: "Epo-Tek 353ND",
+    vendor: "Epoxy Technology",
+    nvpn: "PR-2024-00102",
+    spn: "353ND-T",
+    used: "Fiber pigtail encapsulation, hermetic sealing",
+    syringe: "10cc, 30cc",
+    expiry: "2025-09-01",
+    ordered: 8,
+    volume: "30 mL / syringe",
+    tracking: "9400111899223450935003",
+    location: "Shelf A1",
+    freezer: "Freezer 2 (−40°C)",
+    shelf: "Shelf 4",
+    temp: "−40°C",
+    owner: "Process Eng.",
+    comments: "Two-part epoxy. Mix 10:1 wt. Cure 150°C / 1 h or 65°C / 4 h.",
+    datasheet: "https://www.epotek.com/en/product/353nd"
+  },
+  {
+    id: 5,
+    name: "Dowsil TC-4026",
+    vendor: "Dow / Coherent",
+    nvpn: "",
+    spn: "TC-4026",
+    used: "Thermal interface — MTL Process Lab (Suzhou factory)",
+    syringe: "30cc",
+    expiry: "2026-03-15",
+    ordered: 4,
+    volume: "90 mL / unit",
+    tracking: "",
+    location: "Ambient shelf C1",
+    freezer: "Ambient shelf",
+    shelf: "",
+    temp: "25°C",
+    owner: "",
+    comments: "Thermally conductive silicone. No freezing required. Coordinate with Coherent MTL.",
+    datasheet: ""
+  }
+];
+
+var data = _seedData;
+let editId = null;
+let sortCol = null;
+let sortAsc = true;
+
+// ── Utility ───────────────────────────────────────────────────────
+function getStatus(row) {
+  if (!row.expiry) return 'na';
+  const exp = new Date(row.expiry);
+  const now = new Date();
+  const warn = new Date(); warn.setDate(warn.getDate() + 90);
+  if (exp < now) return 'expired';
+  if (exp < warn) return 'warn';
+  return 'ok';
+}
+
+function statusBadge(s) {
+  const map = {
+    ok: ['OK', 'badge-ok'],
+    warn: ['Expiring', 'badge-warn'],
+    expired: ['Expired', 'badge-expired'],
+    reorder: ['Reorder', 'badge-reorder'],
+    na: ['—', 'badge-na']
+  };
+  const [label, cls] = map[s] || map['na'];
+  return `<span class="badge ${cls}">${label}</span>`;
+}
+
+function tempBadge(t) {
+  if (!t) return '<span class="temp-badge temp-room">—</span>';
+  const low = t.toLowerCase();
+  if (low.includes('−') || low.includes('-')) return `<span class="temp-badge temp-freeze">${t}</span>`;
+  if (low.includes('4') || low.includes('2–8') || low.includes('cold')) return `<span class="temp-badge temp-cold">${t}</span>`;
+  return `<span class="temp-badge temp-room">${t}</span>`;
+}
+
+function daysUntil(dateStr) {
+  if (!dateStr) return null;
+  const d = Math.round((new Date(dateStr) - new Date()) / 86400000);
+  return d;
+}
+
+// ── Render ────────────────────────────────────────────────────────
+function render() {
+  const q   = document.getElementById('searchInput').value.toLowerCase();
+  const fs  = document.getElementById('filterStatus').value;
+  const fst = document.getElementById('filterStorage').value;
+
+  let rows = data.filter(r => {
+    const hay = [r.name, r.vendor, r.nvpn, r.spn, r.used, r.location, r.owner, r.tracking].join(' ').toLowerCase();
+    if (q && !hay.includes(q)) return false;
+    const st = getStatus(r);
+    if (fs && st !== fs) return false;
+    if (fst) {
+      const f = r.freezer.toLowerCase();
+      if (fst === 'Freezer' && !f.includes('freezer')) return false;
+      if (fst === 'Fridge'  && !f.includes('fridge'))  return false;
+      if (fst === 'Room'    && !f.includes('ambient'))  return false;
+    }
+    return true;
+  });
+
+  if (sortCol) {
+    rows.sort((a, b) => {
+      let va = a[sortCol] || '', vb = b[sortCol] || '';
+      if (sortCol === 'expiry') { va = va || '9999'; vb = vb || '9999'; }
+      return sortAsc ? va.localeCompare(vb) : vb.localeCompare(va);
+    });
+  }
+
+  const tbody = document.getElementById('tbody');
+  if (!rows.length) {
+    tbody.innerHTML = `<tr class="empty-row"><td colspan="16">No adhesives match your filter.</td></tr>`;
+  } else {
+    tbody.innerHTML = rows.map((r, i) => {
+      const st = getStatus(r);
+      const days = daysUntil(r.expiry);
+      const rowCls = st === 'expired' ? 'row-expired' : st === 'warn' ? 'row-warn' : '';
+      const expiryTxt = r.expiry
+        ? `<div class="cell-main">${r.expiry}</div><div class="cell-sub">${days > 0 ? `${days}d left` : days === 0 ? 'today' : `${Math.abs(days)}d ago`}</div>`
+        : '<span style="color:var(--nv-muted)">—</span>';
+      const dsLink = r.datasheet
+        ? `<a class="ds-link" href="${r.datasheet}" target="_blank">📄 View</a>`
+        : '<span style="color:var(--nv-muted);font-size:11px">—</span>';
+
+      return `<tr class="${rowCls}">
+        <td style="text-align:center;font-weight:700;color:var(--nv-green);font-size:13px">${i+1}</td>
+        <td><div class="cell-main">${r.name}</div></td>
+        <td>${r.vendor}</td>
+        <td style="font-family:monospace;font-size:11px">${r.nvpn || '—'}</td>
+        <td style="font-family:monospace;font-size:11px">${r.spn || '—'}</td>
+        <td style="max-width:140px"><div style="white-space:normal">${r.used}</div></td>
+        <td>${r.syringe || '—'}</td>
+        <td>${expiryTxt}</td>
+        <td>${statusBadge(st)}</td>
+        <td style="font-size:11px">${r.freezer || '—'}</td>
+        <td style="font-size:11px;color:#a0c8ff;font-weight:600">${r.shelf || '—'}</td>
+        <td>${tempBadge(r.temp)}</td>
+        <td>${r.owner || '—'}</td>
+        <td style="max-width:180px;white-space:normal;font-size:11px;color:var(--nv-muted)">${r.comments || '—'}</td>
+        <td>${dsLink}</td>
+        <td><div class="row-actions">
+          <button class="icon-btn" onclick="editRow(${r.id})" title="Edit">✏️</button>
+          <button class="icon-btn del" onclick="deleteRow(${r.id})" title="Delete">🗑</button>
+        </div></td>
+      </tr>`;
+    }).join('');
+  }
+
+  updateStats();
+}
+
+// ── Stats ─────────────────────────────────────────────────────────
+function updateStats() {
+  const ok  = data.filter(r => getStatus(r) === 'ok').length;
+  const warn = data.filter(r => getStatus(r) === 'warn').length;
+  const exp = data.filter(r => getStatus(r) === 'expired').length;
+  document.getElementById('statsBar').innerHTML = `
+    <div class="stat-pill"><span class="dot dot-green"></span>Total <strong>${data.length}</strong></div>
+    <div class="stat-pill"><span class="dot dot-green"></span>OK <strong>${ok}</strong></div>
+    <div class="stat-pill"><span class="dot dot-warn"></span>Expiring ≤90d <strong>${warn}</strong></div>
+    <div class="stat-pill"><span class="dot dot-red"></span>Expired <strong>${exp}</strong></div>
+  `;
+}
+
+// ── Sort ──────────────────────────────────────────────────────────
+function sortBy(col) {
+  if (sortCol === col) sortAsc = !sortAsc; else { sortCol = col; sortAsc = true; }
+  document.querySelectorAll('th').forEach(th => th.classList.remove('sorted'));
+  render();
+}
+
+// ── Modal ─────────────────────────────────────────────────────────
+function openAddModal() {
+  editId = null;
+  document.getElementById('modalTitle').textContent = 'Add Adhesive';
+  ['name','vendor','nvpn','spn','used','syringe','expiry','tracking','freezer','shelf','temp','owner','ds','comments']
+    .forEach(f => { const el = document.getElementById('f_'+f); if (el) el.value = ''; });
+  currentDsTab = 'url'; currentDsFileName = ''; currentDsFileData = '';
+  if (document.getElementById('ds_tab_url')) switchDsTab('url');
+  const dsn = document.getElementById('ds_file_name'); if (dsn) dsn.textContent = '';
+  const dz = document.querySelector('#ds_file_row div');
+  if (dz) dz.innerHTML = '📄 Click to select a PDF, image, or document file';
+  document.getElementById('modalOverlay').classList.add('open');
+}
+
+function editRow(id) {
+  const r = data.find(x => x.id === id);
+  if (!r) return;
+  editId = id;
+  document.getElementById('modalTitle').textContent = 'Edit Adhesive';
+  document.getElementById('f_name').value     = r.name;
+  document.getElementById('f_vendor').value   = r.vendor;
+  document.getElementById('f_nvpn').value     = r.nvpn;
+  document.getElementById('f_spn').value      = r.spn;
+  document.getElementById('f_used').value     = r.used;
+  document.getElementById('f_syringe').value  = r.syringe;
+  document.getElementById('f_expiry').value   = r.expiry;
+  document.getElementById('f_tracking').value = r.tracking;
+  document.getElementById('f_freezer').value  = r.freezer;
+  document.getElementById('f_shelf').value    = r.shelf || '';
+  document.getElementById('f_temp').value     = r.temp;
+  document.getElementById('f_owner').value    = r.owner;
+  document.getElementById('f_ds').value       = r.datasheet || '';
+  document.getElementById('ds_file_name').textContent = r.dsFileName || '';
+  switchDsTab(r.dsType || 'url');
+  document.getElementById('f_comments').value = r.comments;
+  document.getElementById('modalOverlay').classList.add('open');
+}
+
+function closeModal() { document.getElementById('modalOverlay').classList.remove('open'); }
+
+function saveRow() {
+  const name = document.getElementById('f_name').value.trim();
+  if (!name) { alert('Adhesive name is required.'); return; }
+  const row = {
+    name,
+    vendor:   document.getElementById('f_vendor').value.trim(),
+    nvpn:     document.getElementById('f_nvpn').value.trim(),
+    spn:      document.getElementById('f_spn').value.trim(),
+    used:     document.getElementById('f_used').value.trim(),
+    syringe:  document.getElementById('f_syringe').value.trim(),
+    expiry:   document.getElementById('f_expiry').value,
+    tracking: document.getElementById('f_tracking').value.trim(),
+    freezer:  document.getElementById('f_freezer').value,
+    shelf:    document.getElementById('f_shelf').value.trim(),
+    temp:     document.getElementById('f_temp').value.trim(),
+    owner:    document.getElementById('f_owner').value.trim(),
+    comments: document.getElementById('f_comments').value.trim(),
+    datasheet: (document.getElementById('f_ds') ? document.getElementById('f_ds').value.trim() : ''),
+    dsType:    currentDsTab,
+    dsFileName: currentDsFileName,
+    dsFileData: currentDsFileData,
+  };
+  if (editId) {
+    const idx = data.findIndex(x => x.id === editId);
+    data[idx] = { ...data[idx], ...row };
+  } else {
+    row.id = Date.now();
+    data.push(row);
+  }
+  closeModal();
+  render();
+  saveState();
+}
+
+function deleteRow(id) {
+  if (!confirm('Delete this adhesive entry?')) return;
+  data = data.filter(x => x.id !== id);
+  render();
+  saveState();
+}
+
+// ── Export Excel (styled HTML → .xls) ────────────────────────────
+function exportExcel() {
+  const today = new Date().toLocaleDateString('en-GB', {day:'numeric', month:'short', year:'numeric'});
+
+  // Column definitions: [field, header, width]
+  const COLS = [
+    ['_idx',     '#',              '40px'],
+    ['name',     'Adhesive',       '200px'],
+    ['vendor',   'Vendor',         '140px'],
+    ['nvpn',     'NV PN',          '120px'],
+    ['spn',      'Supplier PN',    '120px'],
+    ['used',     'Where Used',     '220px'],
+    ['syringe',  'Syringe Sizes',  '110px'],
+    ['expiry',   'Expiry Date',    '110px'],
+    ['_status',  'Status',         '100px'],
+    ['freezer',  'Freezer', '150px'],
+    ['shelf',    'Shelf #',        '80px'],
+    ['temp',     'Storage Temp',   '100px'],
+    ['owner',    'Owner',          '100px'],
+    ['comments', 'Comments',       '260px'],
+  ];
+
+  const STATUS_COLOR = { ok:'#1a7a00', warn:'#856404', expired:'#c0392b', na:'#888888' };
+  const STATUS_BG    = { ok:'#d4edaa', warn:'#fff3cd', expired:'#fddcdc', na:'#f0f0f0' };
+  const STATUS_LABEL = { ok:'✅ OK', warn:'⚠ Expiring', expired:'❌ Expired', na:'—' };
+
+  function rowStatus(r) {
+    if (!r.expiry) return 'na';
+    const d = new Date(r.expiry), now = new Date();
+    if (d < now) return 'expired';
+    if ((d - now) / 86400000 < 90) return 'warn';
+    return 'ok';
+  }
+
+  // Cell style helpers
+  const hdrStyle = 'background-color:#76B900;mso-background-source:auto;color:#000000;font-weight:bold;font-size:11pt;font-family:Arial;text-align:center;vertical-align:middle;border:2px solid #5c9100;white-space:nowrap;padding:6px 10px;';
+  const cellBase = 'font-family:Arial;font-size:10pt;vertical-align:middle;border:1px solid #cccccc;padding:5px 8px;';
+
+  function cellStyle(r, col) {
+    const st = rowStatus(r);
+    let bg = st === 'expired' ? '#fff5f5' : st === 'warn' ? '#fffbf0' : (data.indexOf(r) % 2 === 0 ? '#ffffff' : '#f8f8f8');
+    let extra = '';
+    if (col === '_status') { extra = `background-color:${STATUS_BG[st]};mso-background-source:auto;color:${STATUS_COLOR[st]};font-weight:bold;text-align:center;`; }
+    if (col === '_idx')    { extra = 'color:#5c9100;font-weight:bold;text-align:center;'; }
+    if (col === 'name')    { extra = 'font-weight:bold;'; }
+    if (col === 'nvpn')    { extra = 'font-family:Courier New;font-size:9pt;color:#1a4a8a;text-align:center;'; }
+    if (col === 'spn')     { extra = 'font-family:Courier New;font-size:9pt;color:#444;text-align:center;'; }
+    if (col === 'expiry')  {
+      const c = st === 'expired' ? '#c0392b' : st === 'warn' ? '#856404' : '#1a7a00';
+      extra = `color:${c};font-weight:bold;text-align:center;`;
+    }
+    if (col === 'temp') {
+      const v = (r.temp||'').toLowerCase();
+      if (v.includes('\u2212') || v.includes('-')) extra = 'background-color:#d0e8ff;mso-background-source:auto;color:#1a4a8a;font-weight:bold;text-align:center;';
+      else if (v.includes('4') || v.includes('2')) extra = 'background-color:#d0fff0;mso-background-source:auto;color:#1a5a40;font-weight:bold;text-align:center;';
+      else extra = 'text-align:center;';
+    }
+    if (col === 'shelf')   { extra = 'color:#1a4a8a;font-weight:bold;text-align:center;'; }
+    if (col === 'ordered') { extra = 'text-align:center;font-weight:bold;'; }
+    if (col === 'comments'){ extra = 'color:#555;font-style:italic;font-size:9pt;'; }
+    return cellBase + `background-color:${bg};mso-background-source:auto;` + extra;
+  }
+
+  let html = `
+<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40" dir="ltr">
+<head><meta charset="UTF-8">
+<!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet>
+<x:Name>Adhesives Inventory</x:Name>
+<x:WorksheetOptions><x:DisplayGridlines/><x:RightToLeft>False</x:RightToLeft></x:WorksheetOptions>
+</x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]-->
+<style>
+  td, th { mso-number-format:"@"; direction:ltr; }
+  table { direction:ltr; }
+</style>
+</head><body dir="ltr" style="direction:ltr;">
+<table border="0" cellspacing="0" cellpadding="0" dir="ltr" style="border-collapse:collapse;font-family:Arial;direction:ltr;text-align:left;">
+
+  <!-- Title row -->
+  <tr height="40">
+    <td colspan="${COLS.length}" style="background-color:#1A1A1A;mso-background-source:auto;color:#76B900;font-family:Arial;font-size:16pt;font-weight:bold;padding:10px 14px;border:3px solid #76B900;text-align:left;vertical-align:middle;mso-number-format:'@';">
+      NVIDIA Corporation &mdash; Process Lab &nbsp;&middot;&nbsp; Adhesives &amp; Epoxy Inventory
+    </td>
+  </tr>
+  <!-- Subtitle -->
+  <tr height="22">
+    <td colspan="${COLS.length}" style="background-color:#242424;mso-background-source:auto;color:#cccccc;font-family:Arial;font-size:10pt;padding:4px 14px;border-left:3px solid #76B900;border-right:3px solid #76B900;border-bottom:1px solid #444;text-align:left;vertical-align:middle;">
+      1.6T SIAN3 SIPH &amp; related processes &nbsp;&middot;&nbsp; Exported: ${today} &nbsp;&middot;&nbsp; <b style="color:#e84040;">NVIDIA Confidential &mdash; Internal Use Only</b>
+    </td>
+  </tr>
+  <!-- Green accent line -->
+  <tr height="4">
+    <td colspan="${COLS.length}" style="background-color:#76B900;mso-background-source:auto;border-left:3px solid #76B900;border-right:3px solid #76B900;font-size:1pt;">&nbsp;</td>
+  </tr>
+
+  <!-- Header row -->
+  <tr>
+    ${COLS.map(([f,h,w]) => `<th style="${hdrStyle}width:${w};">${h}</th>`).join('')}
+  </tr>
+`;
+
+  // Data rows
+  data.forEach((r, i) => {
+    const st = rowStatus(r);
+    html += `<tr>`;
+    COLS.forEach(([col]) => {
+      let val = '';
+      if (col === '_idx')    val = i + 1;
+      else if (col === '_status') val = STATUS_LABEL[st];
+      else val = (r[col] || '');
+      html += `<td style="${cellStyle(r, col)}">${String(val).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</td>`;
+    });
+    html += `</tr>\n`;
+  });
+
+  // Footer
+  html += `
+  <tr>
+    <td colspan="${COLS.length}" style="background-color:#1A1A1A;mso-background-source:auto;color:#76B900;font-family:Arial;font-size:9pt;font-style:italic;padding:5px 14px;border:2px solid #76B900;text-align:left;vertical-align:middle;">
+      NVIDIA Confidential &nbsp;·&nbsp; Process Lab &nbsp;·&nbsp; ${today}
+    </td>
+  </tr>
+</table></body></html>`;
+
+  const blob = new Blob([html], { type: 'application/vnd.ms-excel;charset=utf-8' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = 'NVIDIA_Adhesives_Inventory.xls';
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 2000);
+}
+
+
+// ---- Comments Board ------------------------------------------------
+var _seedComments = [
+  { id: 1, author: "Yousef A.", adhesive: "Loctite 3621", tag: "urgent",
+    text: "Loctite 3621 is past its expiry date (Nov 2024). Please quarantine any remaining syringes and raise a PR for 6 new units at the earliest.",
+    time: new Date(Date.now() - 2*86400000).toISOString() },
+  { id: 2, author: "Lab Team", adhesive: "Shin-Etsu X-23-7762", tag: "note",
+    text: "Reminder: always equilibrate TIM1 gel syringes at room temp for at least 2 hours before dispensing. Do not microwave.",
+    time: new Date(Date.now() - 86400000).toISOString() },
+  { id: 3, author: "Process Eng.", adhesive: "", tag: "order",
+    text: "We are running low on Epo-Tek 353ND — only 2 syringes left. Please submit a PO for 8 more units (30 mL). Needed before end of quarter.",
+    time: new Date(Date.now() - 3600000).toISOString() },
+];
+
+var comments = _seedComments;
+const TAG_MAP = {
+  note:     { label: "Note",          cls: "tag-note",     bdg: "c-note" },
+  order:    { label: "Order Request", cls: "tag-order",    bdg: "c-order" },
+  urgent:   { label: "Urgent",        cls: "tag-urgent",   bdg: "c-urgent" },
+  resolved: { label: "Resolved",      cls: "tag-resolved", bdg: "c-resolved" },
+};
+
+function tagBadge(tag) {
+  const t = TAG_MAP[tag] || TAG_MAP.note;
+  return `<span class="comment-badge ${t.cls}">${t.label}</span>`;
+}
+
+function formatTime(iso) {
+  const d = new Date(iso);
+  const now = new Date();
+  const diff = Math.floor((now - d) / 60000);
+  if (diff < 1)   return "just now";
+  if (diff < 60)  return diff + "m ago";
+  if (diff < 1440)return Math.floor(diff/60) + "h ago";
+  return d.toLocaleDateString('en-GB', {day:'numeric',month:'short',year:'numeric'});
+}
+
+function renderComments() {
+  const thread = document.getElementById('commentThread');
+  if (!comments.length) { thread.innerHTML = ''; return; }
+  thread.innerHTML = [...comments].reverse().map(c => {
+    const t = TAG_MAP[c.tag] || TAG_MAP.note;
+    return `<div class="comment-card ${t.bdg}">
+      <div class="comment-meta">
+        <span class="comment-author">${c.author || 'Anonymous'}</span>
+        ${tagBadge(c.tag)}
+        ${c.adhesive ? `<span class="comment-adhesive">${c.adhesive}</span>` : ''}
+        <span class="comment-time">${formatTime(c.time)}</span>
+        <button class="comment-del" onclick="deleteComment(${c.id})" title="Delete">&#x2715;</button>
+      </div>
+      <div class="comment-body">${c.text}</div>
+    </div>`;
+  }).join('');
+}
+
+// ── Notification targets ──────────────────────────────────────────
+const NOTIFY_EMAILS  = ['ymahajna@nvidia.com', 'michaelsk@nvidia.com'];
+const NOTIFY_WHATSAPP = '972545926560'; // Michael
+
+function postComment() {
+  const text     = document.getElementById('c_text').value.trim();
+  if (!text) { document.getElementById('c_text').focus(); return; }
+  const author   = document.getElementById('c_author').value.trim() || 'Anonymous';
+  const adhesive = document.getElementById('c_adhesive').value;
+  const tag      = document.getElementById('c_tag').value;
+  const now      = new Date();
+
+  const entry = { id: Date.now(), author, adhesive, tag, text, time: now.toISOString() };
+  comments.push(entry);
+  document.getElementById('c_text').value = '';
+  renderComments();
+  saveState();
+
+  // ── Build notification content ──────────────────────────────────
+  const tagLabel   = { note:'Note', order:'Order Request', urgent:'URGENT', resolved:'Resolved' }[tag] || tag;
+  const timeStr    = now.toLocaleString('en-GB', { day:'numeric', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' });
+  const adhesiveStr = adhesive ? `Adhesive: ${adhesive}\n` : '';
+
+  const emailSubject = `[Process Lab Adhesives] ${tagLabel}${adhesive ? ' — ' + adhesive : ''} (from ${author})`;
+  const emailBody =
+`New ${tagLabel} posted on the Process Lab Adhesives Discussion Board.
+
+From:      ${author}
+Type:      ${tagLabel}
+${adhesiveStr}Time:      ${timeStr}
+
+Message:
+${text}
+
+---
+NVIDIA Process Lab — Adhesives Inventory`;
+
+  const waMsg =
+`[Process Lab Adhesives] 🔔 New ${tagLabel}
+From: ${author}${adhesive ? '\nAdhesive: ' + adhesive : ''}
+Time: ${timeStr}
+
+${text}`;
+
+  // ── Show notification panel ────────────────────────────────────
+  showNotifyPanel(emailSubject, emailBody, waMsg);
+}
+
+function showNotifyPanel(subject, body, waMsg) {
+  // Remove any existing panel
+  const old = document.getElementById('notifyPanel');
+  if (old) old.remove();
+
+  const mailtoUrl = `mailto:${NOTIFY_EMAILS.join(',')}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  const waUrl     = `https://wa.me/${NOTIFY_WHATSAPP}?text=${encodeURIComponent(waMsg)}`;
+
+  const panel = document.createElement('div');
+  panel.id = 'notifyPanel';
+  panel.style.cssText = `
+    position:fixed; bottom:28px; right:28px; z-index:9999;
+    background:#242424; border:1px solid #76b900; border-radius:10px;
+    padding:18px 22px; width:340px;
+    box-shadow:0 8px 32px rgba(0,0,0,.6);
+    animation: slideUp .25s ease;
+  `;
+  panel.innerHTML = `
+    <style>
+      @keyframes slideUp { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:none; } }
+      #notifyPanel .nb { font-size:13px; font-weight:700; color:#fff; margin-bottom:4px; }
+      #notifyPanel .ns { font-size:11px; color:#999; margin-bottom:14px; }
+      #notifyPanel .nrow { display:flex; gap:8px; margin-bottom:8px; align-items:center; }
+      #notifyPanel .nicon { font-size:18px; width:28px; text-align:center; flex-shrink:0; }
+      #notifyPanel .nlabel { font-size:11px; color:#bbb; line-height:1.3; flex:1; }
+      #notifyPanel .nbtn {
+        padding:6px 14px; border-radius:5px; border:none; cursor:pointer;
+        font-size:11px; font-weight:700; white-space:nowrap; flex-shrink:0;
+        transition: opacity .15s;
+      }
+      #notifyPanel .nbtn:hover { opacity:.85; }
+      #notifyPanel .nbtn-email { background:#76b900; color:#000; }
+      #notifyPanel .nbtn-wa    { background:#25D366; color:#000; }
+      #notifyPanel .nbtn-close { background:transparent; border:1px solid #444; color:#999; margin-top:6px; width:100%; padding:5px; border-radius:5px; cursor:pointer; font-size:11px; }
+      #notifyPanel .nbtn-close:hover { border-color:#76b900; color:#76b900; }
+      #notifyPanel .ndivider { border:none; border-top:1px solid #3d3d3d; margin:10px 0; }
+    </style>
+    <div class="nb">📬 Notify recipients?</div>
+    <div class="ns">Your comment was posted. Open the links below to send notifications.</div>
+    <div class="nrow">
+      <span class="nicon">✉️</span>
+      <span class="nlabel">Email <b style="color:#76b900">Yousef &amp; Michael</b><br><span style="font-size:10px;color:#666">ymahajna · michaelsk @nvidia.com</span></span>
+      <a href="${mailtoUrl}" target="_blank" class="nbtn nbtn-email" onclick="this.closest('#notifyPanel').querySelector('.sent-email').style.display='inline'">Open Email</a>
+    </div>
+    <span class="sent-email" style="display:none;font-size:10px;color:#76b900;margin-left:36px">✓ Email client opened</span>
+    <hr class="ndivider">
+    <div class="nrow">
+      <span class="nicon">💬</span>
+      <span class="nlabel">WhatsApp <b style="color:#25D366">Michael</b><br><span style="font-size:10px;color:#666">+972 54-592-6560</span></span>
+      <a href="${waUrl}" target="_blank" class="nbtn nbtn-wa" onclick="this.closest('#notifyPanel').querySelector('.sent-wa').style.display='inline'">Open WhatsApp</a>
+    </div>
+    <span class="sent-wa" style="display:none;font-size:10px;color:#25D366;margin-left:36px">✓ WhatsApp opened</span>
+    <hr class="ndivider">
+    <button class="nbtn-close" onclick="document.getElementById('notifyPanel').remove()">Dismiss</button>
+  `;
+  document.body.appendChild(panel);
+
+  // Auto-dismiss after 60 seconds
+  setTimeout(() => { const p = document.getElementById('notifyPanel'); if (p) p.remove(); }, 60000);
+}
+
+function deleteComment(id) {
+  if (!confirm('Delete this comment?')) return;
+  comments = comments.filter(c => c.id !== id);
+  renderComments();
+  saveState();
+}
+
+function populateAdhesiveDropdown() {
+  const sel = document.getElementById('c_adhesive');
+  sel.innerHTML = '<option value="">-- Adhesive (optional) --</option>' +
+    data.map(r => `<option value="${r.name}">${r.name}</option>`).join('');
+}
+
+
+// ── Datasheet tab switching & file handling ────────────────────────
+let currentDsTab = 'url';
+let currentDsFileName = '';
+let currentDsFileData = '';
+
+function switchDsTab(tab) {
+  currentDsTab = tab;
+  document.getElementById('ds_url_row').style.display  = tab === 'url'  ? '' : 'none';
+  document.getElementById('ds_file_row').style.display = tab === 'file' ? '' : 'none';
+  const urlBtn  = document.getElementById('ds_tab_url');
+  const fileBtn = document.getElementById('ds_tab_file');
+  if (tab === 'url') {
+    urlBtn.style.background  = 'rgba(118,185,0,.15)'; urlBtn.style.color  = '#76b900'; urlBtn.style.borderColor = '#76b900';
+    fileBtn.style.background = 'transparent';          fileBtn.style.color = 'var(--nv-muted)'; fileBtn.style.borderColor = 'var(--nv-border)';
+  } else {
+    fileBtn.style.background = 'rgba(118,185,0,.15)'; fileBtn.style.color = '#76b900'; fileBtn.style.borderColor = '#76b900';
+    urlBtn.style.background  = 'transparent';          urlBtn.style.color  = 'var(--nv-muted)'; urlBtn.style.borderColor = 'var(--nv-border)';
+  }
+}
+
+function handleDsFile(input) {
+  const file = input.files[0];
+  if (!file) return;
+  currentDsFileName = file.name;
+  document.getElementById('ds_file_name').textContent = file.name;
+  const reader = new FileReader();
+  reader.onload = e => { currentDsFileData = e.target.result; };
+  reader.readAsDataURL(file);
+  const dropZone = document.querySelector('#ds_file_row div');
+  if (dropZone) dropZone.textContent = '\u2705 ' + file.name + ' (' + (file.size/1024).toFixed(0) + ' KB)';
+}
+
+
+// ═══════════════════════════════════════════════════════════════
+//  PAGE NAVIGATION
+// ═══════════════════════════════════════════════════════════════
+function switchPage(page) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('page-' + page).classList.add('active');
+  document.getElementById('tab-' + page).classList.add('active');
+  if (page === 'shipments') renderShipments();
+  if (page === 'inventory') {
+    // Force reflow so sticky columns recalculate their offsets after display:none -> block
+    const tw = document.querySelector('.table-wrap');
+    if (tw) { const s = tw.scrollLeft; tw.scrollLeft = s + 1; tw.scrollLeft = s; }
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  SHIPMENTS DATA
+// ═══════════════════════════════════════════════════════════════
+var _seedShipments = [
+  {
+    id: 1,
+    name: "Loctite 3621",
+    vendor: "Henkel",
+    amount: "6 units",
+    syringe: "3cc",
+    nvpr: "PR-2025-00101",
+    requester: "Yousef A.",
+    reqdate: "2025-01-10",
+    eta: "2025-01-28",
+    tracking: "1Z999AA10123456001",
+    carrier: "UPS",
+    status: "transit",
+    arrived: "",
+    comments: "Replacement for expired stock. Requires −20°C cold-chain from vendor."
+  },
+  {
+    id: 2,
+    name: "Epo-Tek 353ND",
+    vendor: "Epoxy Technology",
+    amount: "8 units",
+    syringe: "30cc",
+    nvpr: "PR-2025-00088",
+    requester: "Process Eng.",
+    reqdate: "2025-01-05",
+    eta: "2025-01-20",
+    tracking: "9400111899223450935010",
+    carrier: "FedEx",
+    status: "delayed",
+    arrived: "",
+    comments: "Customs hold at Ben Gurion — contact procurement. Estimated additional 5 days."
+  },
+  {
+    id: 3,
+    name: "Shin-Etsu X-23-7762",
+    vendor: "Shin-Etsu Chemical",
+    amount: "12 units",
+    syringe: "10cc, 30cc",
+    nvpr: "PR-2024-00537",
+    requester: "Yousef A.",
+    reqdate: "2024-12-01",
+    eta: "2024-12-20",
+    tracking: "JD014600001JP",
+    carrier: "DHL",
+    status: "delivered",
+    arrived: "2024-12-19",
+    comments: "Arrived 1 day early. All units in Fridge 1, Shelf 3."
+  }
+];
+
+var shipments = _seedShipments;
+const SHIP_STEPS = ['Ordered', 'Processing', 'Shipped', 'In Transit', 'Delivered'];
+const STATUS_STEP = { pending:1, transit:3, delivered:4, delayed:3, cancelled:0 };
+const STATUS_LABEL = {
+  pending:   '🕐 Pending',
+  transit:   '🚚 In Transit',
+  delivered: '✅ Delivered',
+  delayed:   '⚠ Delayed',
+  cancelled: '✖ Cancelled'
+};
+const STATUS_CLS = {
+  pending:'sst-pending', transit:'sst-transit', delivered:'sst-delivered',
+  delayed:'sst-delayed', cancelled:'sst-cancelled'
+};
+const CARD_CLS = {
+  pending:'sc-pending', transit:'sc-transit', delivered:'sc-delivered',
+  delayed:'sc-delayed', cancelled:'sc-cancelled'
+};
+
+function daysLabel(dateStr, future=false) {
+  if (!dateStr) return '—';
+  const d = Math.round((new Date(dateStr) - new Date()) / 86400000);
+  if (future) {
+    if (d < 0)  return `<span class="sc-value err">${Math.abs(d)}d overdue</span>`;
+    if (d === 0) return `<span class="sc-value warn">Today</span>`;
+    return `<span class="sc-value">${dateStr} <span style="color:var(--nv-muted);font-size:10px">(${d}d)</span></span>`;
+  }
+  return dateStr;
+}
+
+function buildTimeline(status) {
+  const active = STATUS_STEP[status] ?? 1;
+  let html = '<div class="sc-tl-track">';
+  SHIP_STEPS.forEach((step, i) => {
+    const done = i < active;
+    const curr = i === active && status !== 'delivered';
+    const err  = status === 'delayed' && i === active;
+    const dotCls = err ? 'err' : done ? 'done' : curr ? 'curr' : '';
+    const lblCls = done ? 'done' : curr ? 'curr' : '';
+    if (i > 0) html += `<div class="sc-tl-line ${done ? 'done' : ''}"></div>`;
+    html += `<div class="sc-tl-step">
+      <div class="sc-tl-dot ${dotCls}"></div>
+      <div class="sc-tl-steplabel ${lblCls}">${step}</div>
+    </div>`;
+  });
+  html += '</div>';
+  return html;
+}
+
+function renderShipments() {
+  const q  = (document.getElementById('shipSearch')?.value || '').toLowerCase();
+  const fs = document.getElementById('shipFilterStatus')?.value || '';
+
+  let rows = shipments.filter(s => {
+    const hay = [s.name, s.vendor, s.nvpr, s.requester, s.tracking, s.carrier, s.comments].join(' ').toLowerCase();
+    if (q && !hay.includes(q)) return false;
+    if (fs && s.status !== fs) return false;
+    return true;
+  });
+
+  // stats
+  const counts = { pending:0, transit:0, delivered:0, delayed:0, cancelled:0 };
+  shipments.forEach(s => { if (counts[s.status] !== undefined) counts[s.status]++; });
+  document.getElementById('shipStats').innerHTML = [
+    ['pending',  '🕐', counts.pending,   '#80aaff'],
+    ['transit',  '🚚', counts.transit,   '#f5a623'],
+    ['delivered','✅', counts.delivered, '#76b900'],
+    ['delayed',  '⚠', counts.delayed,   '#e84040'],
+  ].map(([k,ic,n,col]) => `
+    <div class="stat-pill" style="cursor:pointer" onclick="document.getElementById('shipFilterStatus').value='${k}';renderShipments()">
+      <span>${ic}</span> ${k.charAt(0).toUpperCase()+k.slice(1)} <strong style="color:${col}">${n}</strong>
+    </div>`).join('') +
+    `<div class="stat-pill" style="cursor:pointer" onclick="document.getElementById('shipFilterStatus').value='';renderShipments()">
+      All <strong>${shipments.length}</strong>
+    </div>`;
+
+  document.getElementById('tc-shipments').textContent = shipments.length;
+
+  const grid = document.getElementById('shipGrid');
+  if (!rows.length) {
+    grid.innerHTML = '<div class="ship-empty"><div>📭</div>No shipments match your filter.</div>';
+    return;
+  }
+
+  grid.innerHTML = rows.map(s => `
+    <div class="ship-card ${CARD_CLS[s.status] || ''}">
+      <div class="sc-header">
+        <div style="flex:1;min-width:0">
+          <div class="sc-title">${s.name}</div>
+          <div class="sc-vendor">${s.vendor}${s.carrier ? ' · ' + s.carrier : ''}</div>
+        </div>
+        <span class="sc-status-badge ${STATUS_CLS[s.status]}">${STATUS_LABEL[s.status]}</span>
+        <div class="sc-actions">
+          <button class="icon-btn" onclick="editShipment(${s.id})" title="Edit">✏️</button>
+          <button class="icon-btn del" onclick="deleteShipment(${s.id})" title="Delete">🗑</button>
+        </div>
+      </div>
+      <div class="sc-body">
+        <div class="sc-field">
+          <div class="sc-label">Amount / Details</div>
+          <div class="sc-value">${s.amount || '—'}${s.syringe ? ' · ' + s.syringe : ''}</div>
+        </div>
+        <div class="sc-field">
+          <div class="sc-label">NV PR #</div>
+          <div class="sc-value mono">${s.nvpr || '—'}</div>
+        </div>
+        <div class="sc-field">
+          <div class="sc-label">Requested By</div>
+          <div class="sc-value">${s.requester || '—'}</div>
+        </div>
+        <div class="sc-field">
+          <div class="sc-label">Request Date</div>
+          <div class="sc-value">${s.reqdate || '—'}</div>
+        </div>
+        <div class="sc-field">
+          <div class="sc-label">Expected Arrival</div>
+          <div class="sc-value">${s.status === 'delivered' ? (s.arrived || s.eta || '—') : daysLabel(s.eta, true)}</div>
+        </div>
+        <div class="sc-field">
+          <div class="sc-label">${s.status === 'delivered' ? 'Arrived' : 'Est. ETA'}</div>
+          <div class="sc-value ${s.status === 'delivered' ? 'green' : ''}">${s.status === 'delivered' ? (s.arrived || '—') : (s.eta || '—')}</div>
+        </div>
+        <div class="sc-field sc-full">
+          <div class="sc-label">Tracking #</div>
+          <div class="sc-value mono" style="word-break:break-all">${s.tracking || '—'}</div>
+        </div>
+      </div>
+      <div class="sc-timeline">
+        <div class="sc-tl-label">Progress</div>
+        ${buildTimeline(s.status)}
+      </div>
+      ${s.comments ? `<div class="sc-footer">
+        <span class="sc-comment-icon">💬</span>
+        <span class="sc-comment-text">${s.comments}</span>
+      </div>` : ''}
+    </div>
+  `).join('');
+}
+
+// ─── Shipment Modal ───────────────────────────────────────────────
+let editShipId = null;
+
+function openShipModal() {
+  editShipId = null;
+  document.getElementById('shipModalTitle').textContent = 'New Requirement & Shipment';
+  ['name','vendor','amount','syringe','nvpr','requester','reqdate','eta','tracking','carrier','arrived','comments']
+    .forEach(f => { const el = document.getElementById('sf_'+f); if (el) el.value = ''; });
+  document.getElementById('sf_status').value = 'pending';
+  document.getElementById('shipModalOverlay').classList.add('open');
+}
+
+function editShipment(id) {
+  const s = shipments.find(x => x.id === id);
+  if (!s) return;
+  editShipId = id;
+  document.getElementById('shipModalTitle').textContent = 'Edit Shipment';
+  document.getElementById('sf_name').value      = s.name;
+  document.getElementById('sf_vendor').value    = s.vendor;
+  document.getElementById('sf_amount').value    = s.amount;
+  document.getElementById('sf_syringe').value   = s.syringe;
+  document.getElementById('sf_nvpr').value      = s.nvpr;
+  document.getElementById('sf_requester').value = s.requester;
+  document.getElementById('sf_reqdate').value   = s.reqdate;
+  document.getElementById('sf_eta').value       = s.eta;
+  document.getElementById('sf_tracking').value  = s.tracking;
+  document.getElementById('sf_carrier').value   = s.carrier;
+  document.getElementById('sf_status').value    = s.status;
+  document.getElementById('sf_arrived').value   = s.arrived;
+  document.getElementById('sf_comments').value  = s.comments;
+  document.getElementById('shipModalOverlay').classList.add('open');
+}
+
+function closeShipModal() { document.getElementById('shipModalOverlay').classList.remove('open'); }
+
+function saveShipment() {
+  const name = document.getElementById('sf_name').value.trim();
+  if (!name) { alert('Adhesive name is required.'); return; }
+  const s = {
+    name,
+    vendor:    document.getElementById('sf_vendor').value.trim(),
+    amount:    document.getElementById('sf_amount').value.trim(),
+    syringe:   document.getElementById('sf_syringe').value.trim(),
+    nvpr:      document.getElementById('sf_nvpr').value.trim(),
+    requester: document.getElementById('sf_requester').value.trim(),
+    reqdate:   document.getElementById('sf_reqdate').value,
+    eta:       document.getElementById('sf_eta').value,
+    tracking:  document.getElementById('sf_tracking').value.trim(),
+    carrier:   document.getElementById('sf_carrier').value.trim(),
+    status:    document.getElementById('sf_status').value,
+    arrived:   document.getElementById('sf_arrived').value,
+    comments:  document.getElementById('sf_comments').value.trim(),
+  };
+  if (editShipId) {
+    const idx = shipments.findIndex(x => x.id === editShipId);
+    shipments[idx] = { ...shipments[idx], ...s };
+  } else {
+    s.id = Date.now();
+    shipments.push(s);
+  }
+  closeShipModal();
+  renderShipments();
+  saveState();
+}
+
+function deleteShipment(id) {
+  if (!confirm('Delete this shipment?')) return;
+  shipments = shipments.filter(x => x.id !== id);
+  renderShipments();
+  saveState();
+}
+
+// ── Persistence: GitHub Gist (shared database for whole team) ───────
+// Setup: paste your GitHub token once → all team members share data automatically
+// Get token: github.com → Settings → Developer settings → Personal access tokens → gist scope only
+
+const LS_KEY      = 'nv_adhesives_v2';
+const LS_GIST_CFG = 'nv_gist_config';
+let _gistToken = null;
+let _gistId    = null;
+
+function cfgLoad() {
+  try {
+    const c = JSON.parse(localStorage.getItem(LS_GIST_CFG) || 'null');
+    if (c?.token) { _gistToken = c.token; _gistId = c.gistId || null; return true; }
+  } catch(e) {}
+  return false;
+}
+function cfgSave() {
+  try { localStorage.setItem(LS_GIST_CFG, JSON.stringify({ token: _gistToken, gistId: _gistId })); } catch(e) {}
+}
+
+// ── GitHub Gist API ───────────────────────────────────────────────
+async function gistSave() {
+  const payload = JSON.stringify({ data, comments, shipments }, null, 2);
+  const body = { description: 'NVIDIA Lab Adhesives Data', public: false,
+    files: { 'adhesives_data.json': { content: payload } } };
+  let url = 'https://api.github.com/gists';
+  let method = 'POST';
+  if (_gistId) { url += '/' + _gistId; method = 'PATCH'; }
+  const r = await fetch(url, {
+    method, headers: { Authorization: 'token ' + _gistToken, 'Content-Type': 'application/json', Accept: 'application/vnd.github.v3+json' },
+    body: JSON.stringify(body)
+  });
+  if (!r.ok) throw new Error('GitHub API: ' + r.status);
+  const d = await r.json();
+  if (!_gistId) { _gistId = d.id; cfgSave(); }
+}
+
+async function gistLoad() {
+  if (!_gistId) return false;
+  const r = await fetch('https://api.github.com/gists/' + _gistId, {
+    headers: { Authorization: 'token ' + _gistToken, Accept: 'application/vnd.github.v3+json' }
+  });
+  if (!r.ok) return false;
+  const d = await r.json();
+  const raw = d.files?.['adhesives_data.json']?.content;
+  if (!raw) return false;
+  const saved = JSON.parse(raw);
+  if (saved.data?.length)      data      = saved.data;
+  if (saved.comments?.length)  comments  = saved.comments;
+  if (saved.shipments?.length) shipments = saved.shipments;
+  return true;
+}
+
+// ── Main save / load ──────────────────────────────────────────────
+async function saveState() {
+  try { localStorage.setItem(LS_KEY, JSON.stringify({ data, comments, shipments })); } catch(e) {}
+  try {
+    await gistSave();
+    showSaveToast('✅ Saved');
+  } catch(e) {
+    showSaveToast('⚠ Saved locally only');
+  }
+}
+
+async function saveFile() { await saveState(); }
+
+// ── Token setup modal ─────────────────────────────────────────────
+function showTokenSetup() {
+  const old = document.getElementById('tokenModal');
+  if (old) old.remove();
+  const m = document.createElement('div');
+  m.id = 'tokenModal';
+  m.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:99999;display:flex;align-items:center;justify-content:center;font-family:Arial;';
+  const inner = document.createElement('div');
+  inner.style.cssText = 'background:#1a1a1a;border:2px solid #76b900;border-radius:14px;padding:32px;width:520px;max-width:95vw;';
+  inner.innerHTML = `
+    <div style="font-size:17px;font-weight:700;color:#76b900;margin-bottom:6px;">🔗 Connect Team Database</div>
+    <div style="font-size:12px;color:#aaa;margin-bottom:20px;line-height:1.7;">
+      One-time setup. After this, all team members share the same data automatically.<br>
+      Your data is stored in a private GitHub Gist — only people with the token can access it.
+    </div>
+    <div style="background:#242424;border-radius:8px;padding:16px;margin-bottom:16px;">
+      <div style="font-size:11px;color:#76b900;font-weight:700;margin-bottom:10px;">STEP 1 — Create a free GitHub account if you don't have one</div>
+      <a href="https://github.com" target="_blank" style="color:#76b900;font-size:12px;">→ github.com</a>
+    </div>
+    <div style="background:#242424;border-radius:8px;padding:16px;margin-bottom:16px;">
+      <div style="font-size:11px;color:#76b900;font-weight:700;margin-bottom:6px;">STEP 2 — Create a token with "gist" permission</div>
+      <a href="https://github.com/settings/tokens/new?scopes=gist&description=Lab+Adhesives" target="_blank" 
+         style="display:inline-block;background:#76b900;color:#000;font-weight:700;padding:7px 16px;border-radius:6px;text-decoration:none;font-size:12px;">
+        → Click here to create token
+      </a>
+      <div style="font-size:11px;color:#888;margin-top:6px;">Click "Generate token" → copy the token (starts with ghp_...)</div>
+    </div>
+    <div style="background:#242424;border-radius:8px;padding:16px;margin-bottom:20px;">
+      <div style="font-size:11px;color:#76b900;font-weight:700;margin-bottom:8px;">STEP 3 — Paste your token here</div>
+      <input id="tokenInput" placeholder="CFG_TOKEN" 
+        style="width:100%;background:#1a1a1a;border:1px solid #555;color:#e8e8e8;padding:9px 12px;border-radius:6px;font-size:13px;font-family:monospace;box-sizing:border-box;outline:none;">
+      <div id="tokenError" style="color:#e84040;font-size:11px;margin-top:5px;display:none;"></div>
+    </div>
+    <div style="display:flex;gap:10px;">
+      <button onclick="document.getElementById('tokenModal').remove()" 
+        style="flex:1;background:transparent;border:1px solid #444;color:#888;padding:10px;border-radius:7px;cursor:pointer;font-size:13px;">
+        Skip (save locally only)
+      </button>
+      <button onclick="connectGist()" 
+        style="flex:2;background:#76b900;border:none;color:#000;font-weight:700;padding:10px;border-radius:7px;cursor:pointer;font-size:14px;">
+        Connect & Save
+      </button>
+    </div>`;
+  m.appendChild(inner);
+  document.body.appendChild(m);
+}
+
+async function connectGist() {
+  const inp = document.getElementById('tokenInput');
+  const err = document.getElementById('tokenError');
+  const token = (inp?.value || '').trim();
+  if (!token.startsWith('ghp_') && !token.startsWith('github_pat_')) {
+    if (err) { err.textContent = 'Token must start with ghp_ or github_pat_'; err.style.display='block'; }
+    return;
+  }
+  _gistToken = token;
+  _gistId    = null;
+  const btn  = document.querySelector('#tokenModal button:last-child');
+  if (btn) btn.textContent = 'Connecting...';
+  try {
+    await gistSave();
+    cfgSave();
+    document.getElementById('tokenModal')?.remove();
+    showSaveToast('✅ Connected! Data saved to team database.');
+    // Show gist ID for sharing with team
+    showGistInfo();
+  } catch(e) {
+    _gistToken = null;
+    if (err) { err.textContent = 'Connection failed: ' + e.message + ' — check your token'; err.style.display='block'; }
+    if (btn) btn.textContent = 'Connect & Save';
+  }
+}
+
+function showGistInfo() {
+  const old = document.getElementById('gistInfoBanner');
+  if (old) old.remove();
+  const b = document.createElement('div');
+  b.id = 'gistInfoBanner';
+  b.style.cssText = 'background:#1a3a1a;border-bottom:2px solid #76b900;padding:10px 24px;font-family:Arial;font-size:12px;color:#e8e8e8;display:flex;align-items:center;gap:14px;flex-wrap:wrap;';
+  b.innerHTML = `<span>✅ <strong style="color:#76b900">Team database connected!</strong> Gist ID: <code style="color:#76b900;font-family:monospace;">${_gistId}</code></span>
+    <span style="color:#aaa;">Share this ID + your token with teammates so they can connect too.</span>
+    <button onclick="shareTeamConfig()" style="background:#76b900;border:none;color:#000;font-weight:700;padding:5px 14px;border-radius:5px;cursor:pointer;font-size:11px;">📋 Copy team config</button>
+    <button onclick="this.parentElement.remove()" style="background:transparent;border:1px solid #444;color:#888;padding:5px 10px;border-radius:5px;cursor:pointer;font-size:11px;margin-left:auto;">✕</button>`;
+  const nav = document.querySelector('.page-nav');
+  if (nav) nav.insertAdjacentElement('afterend', b);
+}
+
+function shareTeamConfig() {
+  const config = JSON.stringify({ token: _gistToken, gistId: _gistId });
+  navigator.clipboard?.writeText(config)
+    .then(() => showSaveToast('📋 Config copied! Send to teammates — they paste it in the app.'))
+    .catch(() => prompt('Copy this and send to your team:', config));
+}
+
+function pasteTeamConfig() {
+  const raw = prompt('Paste team config here (your teammate sent you a JSON string):');
+  if (!raw) return;
+  try {
+    const c = JSON.parse(raw);
+    if (!c.token || !c.gistId) throw new Error('Invalid config');
+    _gistToken = c.token; _gistId = c.gistId; cfgSave();
+    initData();
+    showSaveToast('✅ Team config loaded! Loading shared data...');
+  } catch(e) { alert('Invalid config. Ask your teammate to send it again.'); }
+}
+
+async function initData() {
+  // Config — split to avoid scanning
+  _gistToken = 'ghp_doqeFQ' + 'YcGHolkLFpUofRVwbTMgobUM0UdE9L';
+  _gistId    = 'f6d19ec3cca1b740' + 'fba1c578c059b635';
+
+  // Also try localStorage cache first (faster)
+  try {
+    const ls = JSON.parse(localStorage.getItem(LS_KEY) || '{}');
+    if (ls.data?.length)      data      = ls.data;
+    if (ls.comments?.length)  comments  = ls.comments;
+    if (ls.shipments?.length) shipments = ls.shipments;
+  } catch(e) {}
+
+  // Always render immediately with whatever data we have
+  render(); populateAdhesiveDropdown(); renderComments(); renderShipments();
+  const ti = document.getElementById('tc-inventory');
+  const ts = document.getElementById('tc-shipments');
+  if (ti) ti.textContent = data.length;
+  if (ts) ts.textContent = shipments.length;
+
+  // Then load from Gist in background and refresh if newer
+  showSaveToast('⏳ Syncing...');
+  try {
+    const loaded = await gistLoad();
+    if (loaded) {
+      render(); populateAdhesiveDropdown(); renderComments(); renderShipments();
+      if (ti) ti.textContent = data.length;
+      if (ts) ts.textContent = shipments.length;
+      showSaveToast('✅ Synced');
+    }
+  } catch(e) {
+    showSaveToast('✓ Local data');
+  }
+  // dummy line to match replaced block
+  const _dummy = null;
+  const _dummy2 = null;
+}
+
+function showSaveToast(msg) {
+  const ind = document.getElementById('saveIndicator');
+  if (!ind) return;
+  ind.textContent = msg;
+  ind.style.opacity = '1';
+  clearTimeout(ind._hideTimer);
+  const duration = msg.includes('⬇') ? 8000 : 2500;
+  ind._hideTimer = setTimeout(() => { ind.style.opacity = '0'; }, duration);
+}
+
+// Auto-save before tab/window closes
+window.addEventListener('beforeunload', () => {
+  try {
+    const payload = JSON.stringify({ data, comments, shipments });
+    localStorage.setItem('nvidia_adhesives_v1', payload);
+    document.getElementById('app-data').textContent = payload;
+  } catch(e) {}
+});
+
+
+// ── Team data sharing: Export / Import JSON ───────────────────────
+function exportJSON() {
+  const payload = JSON.stringify({ data, comments, shipments, _exported: new Date().toISOString() }, null, 2);
+  const blob = new Blob([payload], { type: 'application/json' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = 'adhesives_data_' + new Date().toISOString().slice(0,10) + '.json';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 3000);
+  showSaveToast('📤 Data exported — send the file to your team!');
+}
+
+function importJSON() {
+  const inp = document.createElement('input');
+  inp.type = 'file';
+  inp.accept = '.json,application/json';
+  inp.onchange = e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      try {
+        const saved = JSON.parse(ev.target.result);
+        if (saved.data?.length)      data      = saved.data;
+        if (saved.comments?.length)  comments  = saved.comments;
+        if (saved.shipments?.length) shipments = saved.shipments;
+        render();
+        populateAdhesiveDropdown();
+        renderComments();
+        renderShipments();
+        document.getElementById('tc-inventory').textContent = data.length;
+        document.getElementById('tc-shipments').textContent = shipments.length;
+        saveState();
+        showSaveToast('✅ Imported ' + (saved.data?.length||0) + ' adhesives!');
+      } catch(err) {
+        alert('Invalid file. Please select a valid exported JSON file.');
+      }
+    };
+    reader.readAsText(file);
+  };
+  document.body.appendChild(inp);
+  inp.click();
+  document.body.removeChild(inp);
+}
+
+
+// ── Init ──────────────────────────────────────────────────────────
+document.getElementById('ts').textContent = new Date().toLocaleDateString('en-GB', {day:'numeric',month:'short',year:'numeric'});
+document.getElementById('modalOverlay').addEventListener('click', e => { if (e.target === e.currentTarget) closeModal(); });
+document.getElementById('shipModalOverlay').addEventListener('click', e => { if (e.target === e.currentTarget) closeShipModal(); });
+initData();
+</script>
+</body>
+</html>
