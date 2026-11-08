@@ -57,6 +57,9 @@
   .header-title { font-size: 15px; font-weight: 600; color: var(--nv-white); }
   .header-sub { font-size: 11px; color: var(--nv-muted); margin-top: 2px; }
   .header-right { margin-left: auto; display: flex; align-items: center; gap: 12px; }
+  .rev-tag { font-size: 11px; font-weight: 700; color: var(--nv-green); margin-left: 8px; white-space: nowrap; cursor: default; }
+  .header-clock { margin-left: auto; font-size: 13px; color: var(--nv-text); white-space: nowrap; font-variant-numeric: tabular-nums; }
+  @media (max-width: 900px) { .header-clock { display: none; } }
 
   /* ── Summary pills ── */
   .stats-bar {
@@ -637,11 +640,11 @@
   <div class="nv-logo">NVIDIA</div>
   <div class="header-sep"></div>
   <div>
-    <div class="header-title">Process Lab — Adhesives Inventory</div>
+    <div class="header-title">Process Lab — Adhesives Inventory<span class="rev-tag" id="appRev"></span></div>
     <div class="header-sub">Process Lab · Adhesives &amp; Epoxy Management</div>
   </div>
+  <div class="header-clock" id="ts"></div>
   <div class="header-right">
-    <span class="timestamp" id="ts"></span>
     <span id="saveIndicator" style="font-size:11px;color:var(--nv-green);opacity:0;transition:opacity .4s ease;white-space:nowrap;"></span>
     <button class="btn btn-ghost" onclick="saveFile()" style="border-color:#76b900;color:#76b900;" title="Save all data">💾 Save</button><button class="btn btn-primary edit-only" onclick="openAddModal()">+ Add Adhesive</button>
   </div>
@@ -2302,7 +2305,18 @@ function importExcel() {
 
 
 // ── Init ─────────────────────────────────────────────────────────
-document.getElementById('ts').textContent = new Date().toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});
+// Revision of THIS file = day.month.year + a letter (a, b, c … = which version of that day). Updated with every new delivery of the file.
+const APP_REV = '8.11.26c';
+(function() {
+  var rev = document.getElementById('appRev');
+  if (rev) { rev.textContent = 'Rev ' + APP_REV; rev.title = 'Version of this file (day.month.year + letter of the day\'s revision)'; }
+  var el = document.getElementById('ts'), D = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  function tick() {   // e.g.  Sun 08/11/2026 12:06:04
+    var d = new Date(), p = function(n){ return String(n).padStart(2, '0'); };
+    if (el) el.textContent = D[d.getDay()] + ' ' + p(d.getDate()) + '/' + p(d.getMonth() + 1) + '/' + d.getFullYear() + ' ' + p(d.getHours()) + ':' + p(d.getMinutes()) + ':' + p(d.getSeconds());
+  }
+  tick(); setInterval(tick, 1000);
+})();
 document.getElementById('modalOverlay').addEventListener('click', e => { if(e.target===e.currentTarget) closeModal(); });
 document.getElementById('shipModalOverlay').addEventListener('click', e => { if(e.target===e.currentTarget) closeShipModal(); });
 showLoginScreen();
