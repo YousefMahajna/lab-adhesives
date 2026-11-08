@@ -1870,7 +1870,7 @@ function showNotifyPanel(author, adhesive, tag, text) {
 // ── Export Excel — built from the LIVE tables every time you click ─
 // Same look as before (NVIDIA colours, 3 sheets, frozen header). No library needed.
 // Text is stored as shared strings (like Excel does) so "Import Excel" can read this file back.
-const _XL_STYLES = "<styleSheet xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\"><numFmts count=\"0\"/><fonts count=\"16\"><font><name val=\"Calibri\"/><family val=\"2\"/><color theme=\"1\"/><sz val=\"11\"/><scheme val=\"minor\"/></font><font><name val=\"Arial\"/><b val=\"1\"/><color rgb=\"0076B900\"/><sz val=\"14\"/></font><font><name val=\"Arial\"/><i val=\"1\"/><color rgb=\"00888888\"/><sz val=\"10\"/></font><font><name val=\"Arial\"/><b val=\"1\"/><color rgb=\"00000000\"/><sz val=\"10\"/></font><font><name val=\"Arial\"/><b val=\"1\"/><color rgb=\"001A1A1A\"/><sz val=\"10\"/></font><font><name val=\"Arial\"/><color rgb=\"001A1A1A\"/><sz val=\"10\"/></font><font><name val=\"Courier New\"/><color rgb=\"001A4A8A\"/><sz val=\"10\"/></font><font><name val=\"Arial\"/><b val=\"1\"/><color rgb=\"00856404\"/><sz val=\"10\"/></font><font><name val=\"Arial\"/><b val=\"1\"/><color rgb=\"001A4A8A\"/><sz val=\"10\"/></font><font><name val=\"Arial\"/><i val=\"1\"/><color rgb=\"001A1A1A\"/><sz val=\"10\"/></font><font><name val=\"Arial\"/><b val=\"1\"/><color rgb=\"00C0392B\"/><sz val=\"10\"/></font><font><name val=\"Arial\"/><color rgb=\"003D7A00\"/><sz val=\"10\"/></font><font><name val=\"Arial\"/><b val=\"1\"/><color rgb=\"003D7A00\"/><sz val=\"10\"/></font><font><name val=\"Arial\"/><color rgb=\"00888888\"/><sz val=\"10\"/></font><font><name val=\"Arial\"/><b val=\"1\"/><color rgb=\"00888888\"/><sz val=\"10\"/></font><font><name val=\"Arial\"/><i val=\"1\"/><color rgb=\"0076B900\"/><sz val=\"8\"/></font></fonts><fills count=\"12\"><fill><patternFill/></fill><fill><patternFill patternType=\"gray125\"/></fill><fill><patternFill patternType=\"solid\"><fgColor rgb=\"001A1A1A\"/></patternFill></fill><fill><patternFill patternType=\"solid\"><fgColor rgb=\"00242424\"/></patternFill></fill><fill><patternFill patternType=\"solid\"><fgColor rgb=\"0076B900\"/></patternFill></fill><fill><patternFill patternType=\"solid\"><fgColor rgb=\"00FFFFFF\"/></patternFill></fill><fill><patternFill patternType=\"solid\"><fgColor rgb=\"00FFF3CD\"/></patternFill></fill><fill><patternFill patternType=\"solid\"><fgColor rgb=\"00D0E8FF\"/></patternFill></fill><fill><patternFill patternType=\"solid\"><fgColor rgb=\"00F5F5F5\"/></patternFill></fill><fill><patternFill patternType=\"solid\"><fgColor rgb=\"00FDDCDC\"/></patternFill></fill><fill><patternFill patternType=\"solid\"><fgColor rgb=\"00E8F5D0\"/></patternFill></fill><fill><patternFill patternType=\"solid\"><fgColor rgb=\"00F0F0F0\"/></patternFill></fill></fills><borders count=\"3\"><border><left/><right/><top/><bottom/><diagonal/></border><border><left style=\"thin\"><color rgb=\"005C9100\"/></left><right style=\"thin\"><color rgb=\"005C9100\"/></right><top style=\"thin\"><color rgb=\"005C9100\"/></top><bottom style=\"thin\"><color rgb=\"005C9100\"/></bottom></border><border><left style=\"thin\"><color rgb=\"00CCCCCC\"/></left><right style=\"thin\"><color rgb=\"00CCCCCC\"/></right><top style=\"thin\"><color rgb=\"00CCCCCC\"/></top><bottom style=\"thin\"><color rgb=\"00CCCCCC\"/></bottom></border></borders><cellStyleXfs count=\"1\"><xf numFmtId=\"0\" fontId=\"0\" fillId=\"0\" borderId=\"0\"/></cellStyleXfs><cellXfs count=\"29\"><xf numFmtId=\"0\" fontId=\"0\" fillId=\"0\" borderId=\"0\" pivotButton=\"0\" quotePrefix=\"0\" xfId=\"0\"/><xf numFmtId=\"0\" fontId=\"1\" fillId=\"2\" borderId=\"0\" applyAlignment=\"1\" pivotButton=\"0\" quotePrefix=\"0\" xfId=\"0\"><alignment horizontal=\"left\" vertical=\"center\"/></xf><xf numFmtId=\"0\" fontId=\"2\" fillId=\"3\" borderId=\"0\" applyAlignment=\"1\" pivotButton=\"0\" quotePrefix=\"0\" xfId=\"0\"><alignment horizontal=\"left\" vertical=\"center\"/></xf><xf numFmtId=\"0\" fontId=\"0\" fillId=\"4\" borderId=\"0\" pivotButton=\"0\" quotePrefix=\"0\" xfId=\"0\"/><xf numFmtId=\"0\" fontId=\"3\" fillId=\"4\" borderId=\"1\" applyAlignment=\"1\" pivotButton=\"0\" quotePrefix=\"0\" xfId=\"0\"><alignment horizontal=\"center\" vertical=\"center\"/></xf><xf numFmtId=\"0\" fontId=\"3\" fillId=\"4\" borderId=\"1\" applyAlignment=\"1\" pivotButton=\"0\" quotePrefix=\"0\" xfId=\"0\"><alignment horizontal=\"center\" vertical=\"center\" wrapText=\"1\"/></xf><xf numFmtId=\"0\" fontId=\"4\" fillId=\"5\" borderId=\"2\" applyAlignment=\"1\" pivotButton=\"0\" quotePrefix=\"0\" xfId=\"0\"><alignment horizontal=\"left\" vertical=\"center\" wrapText=\"1\"/></xf><xf numFmtId=\"0\" fontId=\"5\" fillId=\"5\" borderId=\"2\" applyAlignment=\"1\" pivotButton=\"0\" quotePrefix=\"0\" xfId=\"0\"><alignment horizontal=\"left\" vertical=\"center\" wrapText=\"1\"/></xf><xf numFmtId=\"0\" fontId=\"6\" fillId=\"5\" borderId=\"2\" applyAlignment=\"1\" pivotButton=\"0\" quotePrefix=\"0\" xfId=\"0\"><alignment horizontal=\"left\" vertical=\"center\" wrapText=\"1\"/></xf><xf numFmtId=\"0\" fontId=\"5\" fillId=\"5\" borderId=\"2\" applyAlignment=\"1\" pivotButton=\"0\" quotePrefix=\"0\" xfId=\"0\"><alignment horizontal=\"center\" vertical=\"center\" wrapText=\"1\"/></xf><xf numFmtId=\"0\" fontId=\"7\" fillId=\"5\" borderId=\"2\" applyAlignment=\"1\" pivotButton=\"0\" quotePrefix=\"0\" xfId=\"0\"><alignment horizontal=\"left\" vertical=\"center\" wrapText=\"1\"/></xf><xf numFmtId=\"0\" fontId=\"7\" fillId=\"6\" borderId=\"2\" applyAlignment=\"1\" pivotButton=\"0\" quotePrefix=\"0\" xfId=\"0\"><alignment horizontal=\"center\" vertical=\"center\" wrapText=\"1\"/></xf><xf numFmtId=\"0\" fontId=\"8\" fillId=\"7\" borderId=\"2\" applyAlignment=\"1\" pivotButton=\"0\" quotePrefix=\"0\" xfId=\"0\"><alignment horizontal=\"center\" vertical=\"center\" wrapText=\"1\"/></xf><xf numFmtId=\"0\" fontId=\"9\" fillId=\"5\" borderId=\"2\" applyAlignment=\"1\" pivotButton=\"0\" quotePrefix=\"0\" xfId=\"0\"><alignment horizontal=\"left\" vertical=\"center\" wrapText=\"1\"/></xf><xf numFmtId=\"0\" fontId=\"4\" fillId=\"8\" borderId=\"2\" applyAlignment=\"1\" pivotButton=\"0\" quotePrefix=\"0\" xfId=\"0\"><alignment horizontal=\"left\" vertical=\"center\" wrapText=\"1\"/></xf><xf numFmtId=\"0\" fontId=\"5\" fillId=\"8\" borderId=\"2\" applyAlignment=\"1\" pivotButton=\"0\" quotePrefix=\"0\" xfId=\"0\"><alignment horizontal=\"left\" vertical=\"center\" wrapText=\"1\"/></xf><xf numFmtId=\"0\" fontId=\"6\" fillId=\"8\" borderId=\"2\" applyAlignment=\"1\" pivotButton=\"0\" quotePrefix=\"0\" xfId=\"0\"><alignment horizontal=\"left\" vertical=\"center\" wrapText=\"1\"/></xf><xf numFmtId=\"0\" fontId=\"5\" fillId=\"8\" borderId=\"2\" applyAlignment=\"1\" pivotButton=\"0\" quotePrefix=\"0\" xfId=\"0\"><alignment horizontal=\"center\" vertical=\"center\" wrapText=\"1\"/></xf><xf numFmtId=\"0\" fontId=\"7\" fillId=\"8\" borderId=\"2\" applyAlignment=\"1\" pivotButton=\"0\" quotePrefix=\"0\" xfId=\"0\"><alignment horizontal=\"left\" vertical=\"center\" wrapText=\"1\"/></xf><xf numFmtId=\"0\" fontId=\"9\" fillId=\"8\" borderId=\"2\" applyAlignment=\"1\" pivotButton=\"0\" quotePrefix=\"0\" xfId=\"0\"><alignment horizontal=\"left\" vertical=\"center\" wrapText=\"1\"/></xf><xf numFmtId=\"0\" fontId=\"10\" fillId=\"5\" borderId=\"2\" applyAlignment=\"1\" pivotButton=\"0\" quotePrefix=\"0\" xfId=\"0\"><alignment horizontal=\"left\" vertical=\"center\" wrapText=\"1\"/></xf><xf numFmtId=\"0\" fontId=\"10\" fillId=\"9\" borderId=\"2\" applyAlignment=\"1\" pivotButton=\"0\" quotePrefix=\"0\" xfId=\"0\"><alignment horizontal=\"center\" vertical=\"center\" wrapText=\"1\"/></xf><xf numFmtId=\"0\" fontId=\"11\" fillId=\"8\" borderId=\"2\" applyAlignment=\"1\" pivotButton=\"0\" quotePrefix=\"0\" xfId=\"0\"><alignment horizontal=\"left\" vertical=\"center\" wrapText=\"1\"/></xf><xf numFmtId=\"0\" fontId=\"12\" fillId=\"10\" borderId=\"2\" applyAlignment=\"1\" pivotButton=\"0\" quotePrefix=\"0\" xfId=\"0\"><alignment horizontal=\"center\" vertical=\"center\" wrapText=\"1\"/></xf><xf numFmtId=\"0\" fontId=\"13\" fillId=\"5\" borderId=\"2\" applyAlignment=\"1\" pivotButton=\"0\" quotePrefix=\"0\" xfId=\"0\"><alignment horizontal=\"left\" vertical=\"center\" wrapText=\"1\"/></xf><xf numFmtId=\"0\" fontId=\"14\" fillId=\"11\" borderId=\"2\" applyAlignment=\"1\" pivotButton=\"0\" quotePrefix=\"0\" xfId=\"0\"><alignment horizontal=\"center\" vertical=\"center\" wrapText=\"1\"/></xf><xf numFmtId=\"0\" fontId=\"10\" fillId=\"8\" borderId=\"2\" applyAlignment=\"1\" pivotButton=\"0\" quotePrefix=\"0\" xfId=\"0\"><alignment horizontal=\"left\" vertical=\"center\" wrapText=\"1\"/></xf><xf numFmtId=\"0\" fontId=\"15\" fillId=\"2\" borderId=\"0\" applyAlignment=\"1\" pivotButton=\"0\" quotePrefix=\"0\" xfId=\"0\"><alignment horizontal=\"center\" vertical=\"center\"/></xf><xf numFmtId=\"0\" fontId=\"11\" fillId=\"5\" borderId=\"2\" applyAlignment=\"1\" pivotButton=\"0\" quotePrefix=\"0\" xfId=\"0\"><alignment horizontal=\"left\" vertical=\"center\" wrapText=\"1\"/></xf></cellXfs><cellStyles count=\"1\"><cellStyle name=\"Normal\" xfId=\"0\" builtinId=\"0\" hidden=\"0\"/></cellStyles><tableStyles count=\"0\" defaultTableStyle=\"TableStyleMedium9\" defaultPivotStyle=\"PivotStyleLight16\"/><colors><indexedColors><rgbColor rgb=\"00000000\"/><rgbColor rgb=\"00FFFFFF\"/><rgbColor rgb=\"00FF0000\"/><rgbColor rgb=\"0000FF00\"/><rgbColor rgb=\"000000FF\"/><rgbColor rgb=\"00FFFF00\"/><rgbColor rgb=\"00FF00FF\"/><rgbColor rgb=\"0000FFFF\"/><rgbColor rgb=\"00000000\"/><rgbColor rgb=\"00FFFFFF\"/><rgbColor rgb=\"00FF0000\"/><rgbColor rgb=\"0000FF00\"/><rgbColor rgb=\"000000FF\"/><rgbColor rgb=\"00FFFF00\"/><rgbColor rgb=\"00FF00FF\"/><rgbColor rgb=\"0000FFFF\"/><rgbColor rgb=\"00800000\"/><rgbColor rgb=\"00008000\"/><rgbColor rgb=\"00000080\"/><rgbColor rgb=\"00808000\"/><rgbColor rgb=\"00800080\"/><rgbColor rgb=\"00008080\"/><rgbColor rgb=\"00C0C0C0\"/><rgbColor rgb=\"00808080\"/><rgbColor rgb=\"009999FF\"/><rgbColor rgb=\"00993366\"/><rgbColor rgb=\"00FFFFCC\"/><rgbColor rgb=\"00CCFFFF\"/><rgbColor rgb=\"00660066\"/><rgbColor rgb=\"00FF8080\"/><rgbColor rgb=\"000066CC\"/><rgbColor rgb=\"00CCCCFF\"/><rgbColor rgb=\"00000080\"/><rgbColor rgb=\"00FF00FF\"/><rgbColor rgb=\"00FFFF00\"/><rgbColor rgb=\"0000FFFF\"/><rgbColor rgb=\"00800080\"/><rgbColor rgb=\"00800000\"/><rgbColor rgb=\"00008080\"/><rgbColor rgb=\"000000FF\"/><rgbColor rgb=\"0000CCFF\"/><rgbColor rgb=\"00CCFFFF\"/><rgbColor rgb=\"00CCFFCC\"/><rgbColor rgb=\"00FFFF99\"/><rgbColor rgb=\"0099CCFF\"/><rgbColor rgb=\"00FF99CC\"/><rgbColor rgb=\"00CC99FF\"/><rgbColor rgb=\"00FFCC99\"/><rgbColor rgb=\"003366FF\"/><rgbColor rgb=\"0033CCCC\"/><rgbColor rgb=\"0099CC00\"/><rgbColor rgb=\"00FFCC00\"/><rgbColor rgb=\"00FF9900\"/><rgbColor rgb=\"00FF6600\"/><rgbColor rgb=\"00666699\"/><rgbColor rgb=\"00969696\"/><rgbColor rgb=\"00003366\"/><rgbColor rgb=\"00339966\"/><rgbColor rgb=\"00003300\"/><rgbColor rgb=\"00333300\"/><rgbColor rgb=\"00993300\"/><rgbColor rgb=\"00993366\"/><rgbColor rgb=\"00333399\"/><rgbColor rgb=\"00333333\"/></indexedColors></colors></styleSheet>";
+const _XL_STYLES = "<styleSheet xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\"><numFmts count=\"0\"/><fonts count=\"16\"><font><name val=\"Calibri\"/><family val=\"2\"/><color theme=\"1\"/><sz val=\"11\"/><scheme val=\"minor\"/></font><font><name val=\"Arial\"/><b val=\"1\"/><color rgb=\"0076B900\"/><sz val=\"14\"/></font><font><name val=\"Arial\"/><i val=\"1\"/><color rgb=\"00888888\"/><sz val=\"10\"/></font><font><name val=\"Arial\"/><b val=\"1\"/><color rgb=\"00000000\"/><sz val=\"10\"/></font><font><name val=\"Arial\"/><b val=\"1\"/><color rgb=\"001A1A1A\"/><sz val=\"10\"/></font><font><name val=\"Arial\"/><color rgb=\"001A1A1A\"/><sz val=\"10\"/></font><font><name val=\"Courier New\"/><color rgb=\"001A4A8A\"/><sz val=\"10\"/></font><font><name val=\"Arial\"/><b val=\"1\"/><color rgb=\"00856404\"/><sz val=\"10\"/></font><font><name val=\"Arial\"/><b val=\"1\"/><color rgb=\"001A4A8A\"/><sz val=\"10\"/></font><font><name val=\"Arial\"/><i val=\"1\"/><color rgb=\"001A1A1A\"/><sz val=\"10\"/></font><font><name val=\"Arial\"/><b val=\"1\"/><color rgb=\"00C0392B\"/><sz val=\"10\"/></font><font><name val=\"Arial\"/><color rgb=\"003D7A00\"/><sz val=\"10\"/></font><font><name val=\"Arial\"/><b val=\"1\"/><color rgb=\"003D7A00\"/><sz val=\"10\"/></font><font><name val=\"Arial\"/><color rgb=\"00888888\"/><sz val=\"10\"/></font><font><name val=\"Arial\"/><b val=\"1\"/><color rgb=\"00888888\"/><sz val=\"10\"/></font><font><name val=\"Arial\"/><i val=\"1\"/><color rgb=\"0076B900\"/><sz val=\"8\"/></font></fonts><fills count=\"12\"><fill><patternFill/></fill><fill><patternFill patternType=\"gray125\"/></fill><fill><patternFill patternType=\"solid\"><fgColor rgb=\"001A1A1A\"/></patternFill></fill><fill><patternFill patternType=\"solid\"><fgColor rgb=\"00242424\"/></patternFill></fill><fill><patternFill patternType=\"solid\"><fgColor rgb=\"0076B900\"/></patternFill></fill><fill><patternFill patternType=\"solid\"><fgColor rgb=\"00FFFFFF\"/></patternFill></fill><fill><patternFill patternType=\"solid\"><fgColor rgb=\"00FFF3CD\"/></patternFill></fill><fill><patternFill patternType=\"solid\"><fgColor rgb=\"00D0E8FF\"/></patternFill></fill><fill><patternFill patternType=\"solid\"><fgColor rgb=\"00F5F5F5\"/></patternFill></fill><fill><patternFill patternType=\"solid\"><fgColor rgb=\"00FDDCDC\"/></patternFill></fill><fill><patternFill patternType=\"solid\"><fgColor rgb=\"00E8F5D0\"/></patternFill></fill><fill><patternFill patternType=\"solid\"><fgColor rgb=\"00F0F0F0\"/></patternFill></fill></fills><borders count=\"3\"><border><left/><right/><top/><bottom/><diagonal/></border><border><left style=\"thin\"><color rgb=\"005C9100\"/></left><right style=\"thin\"><color rgb=\"005C9100\"/></right><top style=\"thin\"><color rgb=\"005C9100\"/></top><bottom style=\"thin\"><color rgb=\"005C9100\"/></bottom></border><border><left style=\"thin\"><color rgb=\"00CCCCCC\"/></left><right style=\"thin\"><color rgb=\"00CCCCCC\"/></right><top style=\"thin\"><color rgb=\"00CCCCCC\"/></top><bottom style=\"thin\"><color rgb=\"00CCCCCC\"/></bottom></border></borders><cellStyleXfs count=\"1\"><xf numFmtId=\"0\" fontId=\"0\" fillId=\"0\" borderId=\"0\"/></cellStyleXfs><cellXfs count=\"30\"><xf numFmtId=\"0\" fontId=\"0\" fillId=\"0\" borderId=\"0\" pivotButton=\"0\" quotePrefix=\"0\" xfId=\"0\"/><xf numFmtId=\"0\" fontId=\"1\" fillId=\"2\" borderId=\"0\" applyAlignment=\"1\" pivotButton=\"0\" quotePrefix=\"0\" xfId=\"0\"><alignment horizontal=\"left\" vertical=\"center\"/></xf><xf numFmtId=\"0\" fontId=\"2\" fillId=\"3\" borderId=\"0\" applyAlignment=\"1\" pivotButton=\"0\" quotePrefix=\"0\" xfId=\"0\"><alignment horizontal=\"left\" vertical=\"center\"/></xf><xf numFmtId=\"0\" fontId=\"0\" fillId=\"4\" borderId=\"0\" pivotButton=\"0\" quotePrefix=\"0\" xfId=\"0\"/><xf numFmtId=\"0\" fontId=\"3\" fillId=\"4\" borderId=\"1\" applyAlignment=\"1\" pivotButton=\"0\" quotePrefix=\"0\" xfId=\"0\"><alignment horizontal=\"center\" vertical=\"center\"/></xf><xf numFmtId=\"0\" fontId=\"3\" fillId=\"4\" borderId=\"1\" applyAlignment=\"1\" pivotButton=\"0\" quotePrefix=\"0\" xfId=\"0\"><alignment horizontal=\"center\" vertical=\"center\" wrapText=\"1\"/></xf><xf numFmtId=\"0\" fontId=\"4\" fillId=\"5\" borderId=\"2\" applyAlignment=\"1\" pivotButton=\"0\" quotePrefix=\"0\" xfId=\"0\"><alignment horizontal=\"left\" vertical=\"center\" wrapText=\"1\"/></xf><xf numFmtId=\"0\" fontId=\"5\" fillId=\"5\" borderId=\"2\" applyAlignment=\"1\" pivotButton=\"0\" quotePrefix=\"0\" xfId=\"0\"><alignment horizontal=\"left\" vertical=\"center\" wrapText=\"1\"/></xf><xf numFmtId=\"0\" fontId=\"6\" fillId=\"5\" borderId=\"2\" applyAlignment=\"1\" pivotButton=\"0\" quotePrefix=\"0\" xfId=\"0\"><alignment horizontal=\"left\" vertical=\"center\" wrapText=\"1\"/></xf><xf numFmtId=\"0\" fontId=\"5\" fillId=\"5\" borderId=\"2\" applyAlignment=\"1\" pivotButton=\"0\" quotePrefix=\"0\" xfId=\"0\"><alignment horizontal=\"center\" vertical=\"center\" wrapText=\"1\"/></xf><xf numFmtId=\"0\" fontId=\"7\" fillId=\"5\" borderId=\"2\" applyAlignment=\"1\" pivotButton=\"0\" quotePrefix=\"0\" xfId=\"0\"><alignment horizontal=\"left\" vertical=\"center\" wrapText=\"1\"/></xf><xf numFmtId=\"0\" fontId=\"7\" fillId=\"6\" borderId=\"2\" applyAlignment=\"1\" pivotButton=\"0\" quotePrefix=\"0\" xfId=\"0\"><alignment horizontal=\"center\" vertical=\"center\" wrapText=\"1\"/></xf><xf numFmtId=\"0\" fontId=\"8\" fillId=\"7\" borderId=\"2\" applyAlignment=\"1\" pivotButton=\"0\" quotePrefix=\"0\" xfId=\"0\"><alignment horizontal=\"center\" vertical=\"center\" wrapText=\"1\"/></xf><xf numFmtId=\"0\" fontId=\"9\" fillId=\"5\" borderId=\"2\" applyAlignment=\"1\" pivotButton=\"0\" quotePrefix=\"0\" xfId=\"0\"><alignment horizontal=\"left\" vertical=\"center\" wrapText=\"1\"/></xf><xf numFmtId=\"0\" fontId=\"4\" fillId=\"8\" borderId=\"2\" applyAlignment=\"1\" pivotButton=\"0\" quotePrefix=\"0\" xfId=\"0\"><alignment horizontal=\"left\" vertical=\"center\" wrapText=\"1\"/></xf><xf numFmtId=\"0\" fontId=\"5\" fillId=\"8\" borderId=\"2\" applyAlignment=\"1\" pivotButton=\"0\" quotePrefix=\"0\" xfId=\"0\"><alignment horizontal=\"left\" vertical=\"center\" wrapText=\"1\"/></xf><xf numFmtId=\"0\" fontId=\"6\" fillId=\"8\" borderId=\"2\" applyAlignment=\"1\" pivotButton=\"0\" quotePrefix=\"0\" xfId=\"0\"><alignment horizontal=\"left\" vertical=\"center\" wrapText=\"1\"/></xf><xf numFmtId=\"0\" fontId=\"5\" fillId=\"8\" borderId=\"2\" applyAlignment=\"1\" pivotButton=\"0\" quotePrefix=\"0\" xfId=\"0\"><alignment horizontal=\"center\" vertical=\"center\" wrapText=\"1\"/></xf><xf numFmtId=\"0\" fontId=\"7\" fillId=\"8\" borderId=\"2\" applyAlignment=\"1\" pivotButton=\"0\" quotePrefix=\"0\" xfId=\"0\"><alignment horizontal=\"left\" vertical=\"center\" wrapText=\"1\"/></xf><xf numFmtId=\"0\" fontId=\"9\" fillId=\"8\" borderId=\"2\" applyAlignment=\"1\" pivotButton=\"0\" quotePrefix=\"0\" xfId=\"0\"><alignment horizontal=\"left\" vertical=\"center\" wrapText=\"1\"/></xf><xf numFmtId=\"0\" fontId=\"10\" fillId=\"5\" borderId=\"2\" applyAlignment=\"1\" pivotButton=\"0\" quotePrefix=\"0\" xfId=\"0\"><alignment horizontal=\"left\" vertical=\"center\" wrapText=\"1\"/></xf><xf numFmtId=\"0\" fontId=\"10\" fillId=\"9\" borderId=\"2\" applyAlignment=\"1\" pivotButton=\"0\" quotePrefix=\"0\" xfId=\"0\"><alignment horizontal=\"center\" vertical=\"center\" wrapText=\"1\"/></xf><xf numFmtId=\"0\" fontId=\"11\" fillId=\"8\" borderId=\"2\" applyAlignment=\"1\" pivotButton=\"0\" quotePrefix=\"0\" xfId=\"0\"><alignment horizontal=\"left\" vertical=\"center\" wrapText=\"1\"/></xf><xf numFmtId=\"0\" fontId=\"12\" fillId=\"10\" borderId=\"2\" applyAlignment=\"1\" pivotButton=\"0\" quotePrefix=\"0\" xfId=\"0\"><alignment horizontal=\"center\" vertical=\"center\" wrapText=\"1\"/></xf><xf numFmtId=\"0\" fontId=\"13\" fillId=\"5\" borderId=\"2\" applyAlignment=\"1\" pivotButton=\"0\" quotePrefix=\"0\" xfId=\"0\"><alignment horizontal=\"left\" vertical=\"center\" wrapText=\"1\"/></xf><xf numFmtId=\"0\" fontId=\"14\" fillId=\"11\" borderId=\"2\" applyAlignment=\"1\" pivotButton=\"0\" quotePrefix=\"0\" xfId=\"0\"><alignment horizontal=\"center\" vertical=\"center\" wrapText=\"1\"/></xf><xf numFmtId=\"0\" fontId=\"10\" fillId=\"8\" borderId=\"2\" applyAlignment=\"1\" pivotButton=\"0\" quotePrefix=\"0\" xfId=\"0\"><alignment horizontal=\"left\" vertical=\"center\" wrapText=\"1\"/></xf><xf numFmtId=\"0\" fontId=\"15\" fillId=\"2\" borderId=\"0\" applyAlignment=\"1\" pivotButton=\"0\" quotePrefix=\"0\" xfId=\"0\"><alignment horizontal=\"center\" vertical=\"center\"/></xf><xf numFmtId=\"0\" fontId=\"11\" fillId=\"5\" borderId=\"2\" applyAlignment=\"1\" pivotButton=\"0\" quotePrefix=\"0\" xfId=\"0\"><alignment horizontal=\"left\" vertical=\"center\" wrapText=\"1\"/></xf><xf numFmtId=\"0\" fontId=\"13\" fillId=\"8\" borderId=\"2\" applyAlignment=\"1\" pivotButton=\"0\" quotePrefix=\"0\" xfId=\"0\"><alignment horizontal=\"left\" vertical=\"center\" wrapText=\"1\"/></xf></cellXfs><cellStyles count=\"1\"><cellStyle name=\"Normal\" xfId=\"0\" builtinId=\"0\" hidden=\"0\"/></cellStyles><tableStyles count=\"0\" defaultTableStyle=\"TableStyleMedium9\" defaultPivotStyle=\"PivotStyleLight16\"/><colors><indexedColors><rgbColor rgb=\"00000000\"/><rgbColor rgb=\"00FFFFFF\"/><rgbColor rgb=\"00FF0000\"/><rgbColor rgb=\"0000FF00\"/><rgbColor rgb=\"000000FF\"/><rgbColor rgb=\"00FFFF00\"/><rgbColor rgb=\"00FF00FF\"/><rgbColor rgb=\"0000FFFF\"/><rgbColor rgb=\"00000000\"/><rgbColor rgb=\"00FFFFFF\"/><rgbColor rgb=\"00FF0000\"/><rgbColor rgb=\"0000FF00\"/><rgbColor rgb=\"000000FF\"/><rgbColor rgb=\"00FFFF00\"/><rgbColor rgb=\"00FF00FF\"/><rgbColor rgb=\"0000FFFF\"/><rgbColor rgb=\"00800000\"/><rgbColor rgb=\"00008000\"/><rgbColor rgb=\"00000080\"/><rgbColor rgb=\"00808000\"/><rgbColor rgb=\"00800080\"/><rgbColor rgb=\"00008080\"/><rgbColor rgb=\"00C0C0C0\"/><rgbColor rgb=\"00808080\"/><rgbColor rgb=\"009999FF\"/><rgbColor rgb=\"00993366\"/><rgbColor rgb=\"00FFFFCC\"/><rgbColor rgb=\"00CCFFFF\"/><rgbColor rgb=\"00660066\"/><rgbColor rgb=\"00FF8080\"/><rgbColor rgb=\"000066CC\"/><rgbColor rgb=\"00CCCCFF\"/><rgbColor rgb=\"00000080\"/><rgbColor rgb=\"00FF00FF\"/><rgbColor rgb=\"00FFFF00\"/><rgbColor rgb=\"0000FFFF\"/><rgbColor rgb=\"00800080\"/><rgbColor rgb=\"00800000\"/><rgbColor rgb=\"00008080\"/><rgbColor rgb=\"000000FF\"/><rgbColor rgb=\"0000CCFF\"/><rgbColor rgb=\"00CCFFFF\"/><rgbColor rgb=\"00CCFFCC\"/><rgbColor rgb=\"00FFFF99\"/><rgbColor rgb=\"0099CCFF\"/><rgbColor rgb=\"00FF99CC\"/><rgbColor rgb=\"00CC99FF\"/><rgbColor rgb=\"00FFCC99\"/><rgbColor rgb=\"003366FF\"/><rgbColor rgb=\"0033CCCC\"/><rgbColor rgb=\"0099CC00\"/><rgbColor rgb=\"00FFCC00\"/><rgbColor rgb=\"00FF9900\"/><rgbColor rgb=\"00FF6600\"/><rgbColor rgb=\"00666699\"/><rgbColor rgb=\"00969696\"/><rgbColor rgb=\"00003366\"/><rgbColor rgb=\"00339966\"/><rgbColor rgb=\"00003300\"/><rgbColor rgb=\"00333300\"/><rgbColor rgb=\"00993300\"/><rgbColor rgb=\"00993366\"/><rgbColor rgb=\"00333399\"/><rgbColor rgb=\"00333333\"/></indexedColors></colors></styleSheet>";
 const _XL_THEME  = "<?xml version=\"1.0\"?><a:theme xmlns:a=\"http://schemas.openxmlformats.org/drawingml/2006/main\" name=\"Office Theme\"><a:themeElements><a:clrScheme name=\"Office\"><a:dk1><a:sysClr val=\"windowText\" lastClr=\"000000\"/></a:dk1><a:lt1><a:sysClr val=\"window\" lastClr=\"FFFFFF\"/></a:lt1><a:dk2><a:srgbClr val=\"1F497D\"/></a:dk2><a:lt2><a:srgbClr val=\"EEECE1\"/></a:lt2><a:accent1><a:srgbClr val=\"4F81BD\"/></a:accent1><a:accent2><a:srgbClr val=\"C0504D\"/></a:accent2><a:accent3><a:srgbClr val=\"9BBB59\"/></a:accent3><a:accent4><a:srgbClr val=\"8064A2\"/></a:accent4><a:accent5><a:srgbClr val=\"4BACC6\"/></a:accent5><a:accent6><a:srgbClr val=\"F79646\"/></a:accent6><a:hlink><a:srgbClr val=\"0000FF\"/></a:hlink><a:folHlink><a:srgbClr val=\"800080\"/></a:folHlink></a:clrScheme><a:fontScheme name=\"Office\"><a:majorFont><a:latin typeface=\"Cambria\"/><a:ea typeface=\"\"/><a:cs typeface=\"\"/><a:font script=\"Jpan\" typeface=\"&#xFF2D;&#xFF33; &#xFF30;&#x30B4;&#x30B7;&#x30C3;&#x30AF;\"/><a:font script=\"Hang\" typeface=\"&#xB9D1;&#xC740; &#xACE0;&#xB515;\"/><a:font script=\"Hans\" typeface=\"&#x5B8B;&#x4F53;\"/><a:font script=\"Hant\" typeface=\"&#x65B0;&#x7D30;&#x660E;&#x9AD4;\"/><a:font script=\"Arab\" typeface=\"Times New Roman\"/><a:font script=\"Hebr\" typeface=\"Times New Roman\"/><a:font script=\"Thai\" typeface=\"Tahoma\"/><a:font script=\"Ethi\" typeface=\"Nyala\"/><a:font script=\"Beng\" typeface=\"Vrinda\"/><a:font script=\"Gujr\" typeface=\"Shruti\"/><a:font script=\"Khmr\" typeface=\"MoolBoran\"/><a:font script=\"Knda\" typeface=\"Tunga\"/><a:font script=\"Guru\" typeface=\"Raavi\"/><a:font script=\"Cans\" typeface=\"Euphemia\"/><a:font script=\"Cher\" typeface=\"Plantagenet Cherokee\"/><a:font script=\"Yiii\" typeface=\"Microsoft Yi Baiti\"/><a:font script=\"Tibt\" typeface=\"Microsoft Himalaya\"/><a:font script=\"Thaa\" typeface=\"MV Boli\"/><a:font script=\"Deva\" typeface=\"Mangal\"/><a:font script=\"Telu\" typeface=\"Gautami\"/><a:font script=\"Taml\" typeface=\"Latha\"/><a:font script=\"Syrc\" typeface=\"Estrangelo Edessa\"/><a:font script=\"Orya\" typeface=\"Kalinga\"/><a:font script=\"Mlym\" typeface=\"Kartika\"/><a:font script=\"Laoo\" typeface=\"DokChampa\"/><a:font script=\"Sinh\" typeface=\"Iskoola Pota\"/><a:font script=\"Mong\" typeface=\"Mongolian Baiti\"/><a:font script=\"Viet\" typeface=\"Times New Roman\"/><a:font script=\"Uigh\" typeface=\"Microsoft Uighur\"/></a:majorFont><a:minorFont><a:latin typeface=\"Calibri\"/><a:ea typeface=\"\"/><a:cs typeface=\"\"/><a:font script=\"Jpan\" typeface=\"&#xFF2D;&#xFF33; &#xFF30;&#x30B4;&#x30B7;&#x30C3;&#x30AF;\"/><a:font script=\"Hang\" typeface=\"&#xB9D1;&#xC740; &#xACE0;&#xB515;\"/><a:font script=\"Hans\" typeface=\"&#x5B8B;&#x4F53;\"/><a:font script=\"Hant\" typeface=\"&#x65B0;&#x7D30;&#x660E;&#x9AD4;\"/><a:font script=\"Arab\" typeface=\"Arial\"/><a:font script=\"Hebr\" typeface=\"Arial\"/><a:font script=\"Thai\" typeface=\"Tahoma\"/><a:font script=\"Ethi\" typeface=\"Nyala\"/><a:font script=\"Beng\" typeface=\"Vrinda\"/><a:font script=\"Gujr\" typeface=\"Shruti\"/><a:font script=\"Khmr\" typeface=\"DaunPenh\"/><a:font script=\"Knda\" typeface=\"Tunga\"/><a:font script=\"Guru\" typeface=\"Raavi\"/><a:font script=\"Cans\" typeface=\"Euphemia\"/><a:font script=\"Cher\" typeface=\"Plantagenet Cherokee\"/><a:font script=\"Yiii\" typeface=\"Microsoft Yi Baiti\"/><a:font script=\"Tibt\" typeface=\"Microsoft Himalaya\"/><a:font script=\"Thaa\" typeface=\"MV Boli\"/><a:font script=\"Deva\" typeface=\"Mangal\"/><a:font script=\"Telu\" typeface=\"Gautami\"/><a:font script=\"Taml\" typeface=\"Latha\"/><a:font script=\"Syrc\" typeface=\"Estrangelo Edessa\"/><a:font script=\"Orya\" typeface=\"Kalinga\"/><a:font script=\"Mlym\" typeface=\"Kartika\"/><a:font script=\"Laoo\" typeface=\"DokChampa\"/><a:font script=\"Sinh\" typeface=\"Iskoola Pota\"/><a:font script=\"Mong\" typeface=\"Mongolian Baiti\"/><a:font script=\"Viet\" typeface=\"Arial\"/><a:font script=\"Uigh\" typeface=\"Microsoft Uighur\"/></a:minorFont></a:fontScheme><a:fmtScheme name=\"Office\"><a:fillStyleLst><a:solidFill><a:schemeClr val=\"phClr\"/></a:solidFill><a:gradFill rotWithShape=\"1\"><a:gsLst><a:gs pos=\"0\"><a:schemeClr val=\"phClr\"><a:tint val=\"50000\"/><a:satMod val=\"300000\"/></a:schemeClr></a:gs><a:gs pos=\"35000\"><a:schemeClr val=\"phClr\"><a:tint val=\"37000\"/><a:satMod val=\"300000\"/></a:schemeClr></a:gs><a:gs pos=\"100000\"><a:schemeClr val=\"phClr\"><a:tint val=\"15000\"/><a:satMod val=\"350000\"/></a:schemeClr></a:gs></a:gsLst><a:lin ang=\"16200000\" scaled=\"1\"/></a:gradFill><a:gradFill rotWithShape=\"1\"><a:gsLst><a:gs pos=\"0\"><a:schemeClr val=\"phClr\"><a:shade val=\"51000\"/><a:satMod val=\"130000\"/></a:schemeClr></a:gs><a:gs pos=\"80000\"><a:schemeClr val=\"phClr\"><a:shade val=\"93000\"/><a:satMod val=\"130000\"/></a:schemeClr></a:gs><a:gs pos=\"100000\"><a:schemeClr val=\"phClr\"><a:shade val=\"94000\"/><a:satMod val=\"135000\"/></a:schemeClr></a:gs></a:gsLst><a:lin ang=\"16200000\" scaled=\"0\"/></a:gradFill></a:fillStyleLst><a:lnStyleLst><a:ln w=\"9525\" cap=\"flat\" cmpd=\"sng\" algn=\"ctr\"><a:solidFill><a:schemeClr val=\"phClr\"><a:shade val=\"95000\"/><a:satMod val=\"105000\"/></a:schemeClr></a:solidFill><a:prstDash val=\"solid\"/></a:ln><a:ln w=\"25400\" cap=\"flat\" cmpd=\"sng\" algn=\"ctr\"><a:solidFill><a:schemeClr val=\"phClr\"/></a:solidFill><a:prstDash val=\"solid\"/></a:ln><a:ln w=\"38100\" cap=\"flat\" cmpd=\"sng\" algn=\"ctr\"><a:solidFill><a:schemeClr val=\"phClr\"/></a:solidFill><a:prstDash val=\"solid\"/></a:ln></a:lnStyleLst><a:effectStyleLst><a:effectStyle><a:effectLst><a:outerShdw blurRad=\"40000\" dist=\"20000\" dir=\"5400000\" rotWithShape=\"0\"><a:srgbClr val=\"000000\"><a:alpha val=\"38000\"/></a:srgbClr></a:outerShdw></a:effectLst></a:effectStyle><a:effectStyle><a:effectLst><a:outerShdw blurRad=\"40000\" dist=\"23000\" dir=\"5400000\" rotWithShape=\"0\"><a:srgbClr val=\"000000\"><a:alpha val=\"35000\"/></a:srgbClr></a:outerShdw></a:effectLst></a:effectStyle><a:effectStyle><a:effectLst><a:outerShdw blurRad=\"40000\" dist=\"23000\" dir=\"5400000\" rotWithShape=\"0\"><a:srgbClr val=\"000000\"><a:alpha val=\"35000\"/></a:srgbClr></a:outerShdw></a:effectLst><a:scene3d><a:camera prst=\"orthographicFront\"><a:rot lat=\"0\" lon=\"0\" rev=\"0\"/></a:camera><a:lightRig rig=\"threePt\" dir=\"t\"><a:rot lat=\"0\" lon=\"0\" rev=\"1200000\"/></a:lightRig></a:scene3d><a:sp3d><a:bevelT w=\"63500\" h=\"25400\"/></a:sp3d></a:effectStyle></a:effectStyleLst><a:bgFillStyleLst><a:solidFill><a:schemeClr val=\"phClr\"/></a:solidFill><a:gradFill rotWithShape=\"1\"><a:gsLst><a:gs pos=\"0\"><a:schemeClr val=\"phClr\"><a:tint val=\"40000\"/><a:satMod val=\"350000\"/></a:schemeClr></a:gs><a:gs pos=\"40000\"><a:schemeClr val=\"phClr\"><a:tint val=\"45000\"/><a:shade val=\"99000\"/><a:satMod val=\"350000\"/></a:schemeClr></a:gs><a:gs pos=\"100000\"><a:schemeClr val=\"phClr\"><a:shade val=\"20000\"/><a:satMod val=\"255000\"/></a:schemeClr></a:gs></a:gsLst><a:path path=\"circle\"><a:fillToRect l=\"50000\" t=\"-80000\" r=\"50000\" b=\"180000\"/></a:path></a:gradFill><a:gradFill rotWithShape=\"1\"><a:gsLst><a:gs pos=\"0\"><a:schemeClr val=\"phClr\"><a:tint val=\"80000\"/><a:satMod val=\"300000\"/></a:schemeClr></a:gs><a:gs pos=\"100000\"><a:schemeClr val=\"phClr\"><a:shade val=\"30000\"/><a:satMod val=\"200000\"/></a:schemeClr></a:gs></a:gsLst><a:path path=\"circle\"><a:fillToRect l=\"50000\" t=\"50000\" r=\"50000\" b=\"50000\"/></a:path></a:gradFill></a:bgFillStyleLst></a:fmtScheme></a:themeElements><a:objectDefaults/><a:extraClrSchemeLst/></a:theme>";
 
 function _xe(v) {   // XML-escape (&, <, >). Other characters stay as plain UTF-8, exactly like Excel writes them.
@@ -1949,62 +1949,78 @@ function exportExcel() {
   var pick = function(i, a, b){ return odd(i) ? a : b; };
 
   // ── Sheet 1: Inventory — ALL rows of the table (filters on screen are ignored) ──
-  var invCols = [{h:'#',w:5},{h:'Adhesive',w:26},{h:'Vendor',w:16},{h:'NV PN',w:14},{h:'Supplier PN',w:14},{h:'Where Used',w:24},{h:'Syringe Sizes',w:14},{h:'Qty',w:8},{h:'Expiry Date',w:13},{h:'Status',w:13},{h:'Freezer',w:18},{h:'Shelf #',w:10},{h:'Storage Temp',w:13},{h:'Owner',w:14},{h:'Comments',w:30},{h:'Datasheet',w:30}];
+  var invCols = [{h:'#',w:5},{h:'Adhesive',w:26},{h:'Vendor',w:16},{h:'NV PN',w:14},{h:'Supplier PN',w:14},{h:'Where Used',w:24},{h:'Syringe Sizes',w:14},{h:'Qty',w:8},{h:'Expiry Date',w:13},{h:'Status',w:13},{h:'Freezer',w:18},{h:'Shelf #',w:10},{h:'Storage Temp',w:13},{h:'Owner',w:14},{h:'Comments',w:30},{h:'Datasheet',w:30},{h:'ID',w:16}];
   var stLabel = { ok:'OK', warn:'Expiring', expired:'Expired', na:'\u2014' };
-  var expSty  = { warn:[10,18], expired:[20,26], ok:[28,22], na:[24,15] };
+  var expSty  = { warn:[10,18], expired:[20,26], ok:[28,22], na:[24,29] };
   var stSty   = { warn:11, expired:21, ok:23, na:25 };
   var invRows = data.map(function(r, i) {
     var st = getStatus(r), ds = (r.dsType === 'file' && r.dsFileName) ? r.dsFileName : (r.datasheet || '');
-    var vals = [i + 1, r.name, r.vendor, r.nvpn, r.spn, r.used, r.syringe, r.qty, r.expiry, stLabel[st] || '\u2014', r.freezer, r.shelf, r.temp, r.owner, r.comments, ds];
-    var sty  = [5, pick(i,6,14), pick(i,7,15), pick(i,8,16), pick(i,8,16), pick(i,7,15), pick(i,7,15), pick(i,9,17), pick(i, (expSty[st]||expSty.na)[0], (expSty[st]||expSty.na)[1]), stSty[st] || 25, pick(i,7,15), 12, 12, pick(i,7,15), pick(i,13,19), pick(i,8,16)];
+    var vals = [i + 1, r.name, r.vendor, r.nvpn, r.spn, r.used, r.syringe, r.qty, r.expiry, stLabel[st] || '\u2014', r.freezer, r.shelf, r.temp, r.owner, r.comments, ds, String(r.id == null ? '' : r.id)];
+    var sty  = [5, pick(i,6,14), pick(i,7,15), pick(i,8,16), pick(i,8,16), pick(i,7,15), pick(i,7,15), pick(i,9,17), pick(i, (expSty[st]||expSty.na)[0], (expSty[st]||expSty.na)[1]), stSty[st] || 25, pick(i,7,15), 12, 12, pick(i,7,15), pick(i,13,19), pick(i,8,16), pick(i,24,29)];
     return { ht: _xlHt(vals.map(function(v,k){ return k === 0 ? '' : v; }), invCols.map(function(c){ return c.w; }), 26),
              cells: vals.map(function(v, k){ return k === 0 ? { t: v, s: 5, n: true } : { t: v, s: sty[k] }; }) };
   });
   var sheet1 = _xlSheet(sst, { title:'NVIDIA Process Lab \u2014 Adhesives Inventory', subtitle:'Process Lab \u00B7 Adhesives & Epoxy Management  \u00B7  Exported: ' + D, footer:'NVIDIA Confidential  \u00B7  Process Lab  \u00B7  ' + D, cols: invCols, rows: invRows });
 
   // ── Sheet 2: Shipment Status ──
-  var shCols = [{h:'#',w:5},{h:'Adhesive',w:22},{h:'Vendor',w:16},{h:'Carrier',w:10},{h:'Amount',w:12},{h:'Syringe',w:12},{h:'NV PR #',w:14},{h:'Requested By',w:14},{h:'Request Date',w:13},{h:'Expected Arrival',w:15},{h:'Tracking #',w:22},{h:'Status',w:14},{h:'Comments',w:28},{h:'Actual Arrival',w:14}];
+  var shCols = [{h:'#',w:5},{h:'Adhesive',w:22},{h:'Vendor',w:16},{h:'Carrier',w:10},{h:'Amount',w:12},{h:'Syringe',w:12},{h:'NV PR #',w:14},{h:'Requested By',w:14},{h:'Request Date',w:13},{h:'Expected Arrival',w:15},{h:'Tracking #',w:22},{h:'Status',w:14},{h:'Comments',w:28},{h:'Actual Arrival',w:14},{h:'ID',w:16}];
   var shLabel = { pending:'Pending', transit:'In Transit', delivered:'Delivered', delayed:'Delayed', cancelled:'Cancelled' };
   var shSty   = { pending:12, transit:11, delivered:23, delayed:21, cancelled:25 };
   var shRows = shipments.map(function(s, i) {
-    var vals = [i + 1, s.name, s.vendor, s.carrier, s.amount, s.syringe, s.nvpr, s.requester, s.reqdate, s.eta, s.tracking, shLabel[s.status] || 'Pending', s.comments, s.arrived];
-    var sty  = [5, pick(i,6,14), pick(i,7,15), pick(i,7,15), pick(i,7,15), pick(i,7,15), pick(i,8,16), pick(i,7,15), pick(i,7,15), pick(i,7,15), pick(i,8,16), shSty[s.status] || 12, pick(i,13,19), pick(i,7,15)];
+    var vals = [i + 1, s.name, s.vendor, s.carrier, s.amount, s.syringe, s.nvpr, s.requester, s.reqdate, s.eta, s.tracking, shLabel[s.status] || 'Pending', s.comments, s.arrived, String(s.id == null ? '' : s.id)];
+    var sty  = [5, pick(i,6,14), pick(i,7,15), pick(i,7,15), pick(i,7,15), pick(i,7,15), pick(i,8,16), pick(i,7,15), pick(i,7,15), pick(i,7,15), pick(i,8,16), shSty[s.status] || 12, pick(i,13,19), pick(i,7,15), pick(i,24,29)];
     return { ht: _xlHt(vals.map(function(v,k){ return k === 0 ? '' : v; }), shCols.map(function(c){ return c.w; }), 26),
              cells: vals.map(function(v, k){ return k === 0 ? { t: v, s: 5, n: true } : { t: v, s: sty[k] }; }) };
   });
   var sheet2 = _xlSheet(sst, { title:'NVIDIA Process Lab \u2014 Shipment Status', subtitle:'Requirement & Shipment Tracking  \u00B7  Exported: ' + D, footer:'NVIDIA Confidential  \u00B7  Process Lab  \u00B7  ' + D, cols: shCols, rows: shRows });
 
   // ── Sheet 3: Requirements (discussion board) ──
-  var rqCols = [{h:'#',w:5},{h:'Author',w:16},{h:'Type',w:16},{h:'Adhesive',w:22},{h:'Message',w:52},{h:'Date',w:16}];
+  var rqCols = [{h:'#',w:5},{h:'Author',w:16},{h:'Type',w:16},{h:'Adhesive',w:22},{h:'Message',w:52},{h:'Date',w:16},{h:'ID',w:16}];
   var tgLabel = { note:'Note', order:'Order Request', urgent:'URGENT', resolved:'Resolved' };
   var tgSty   = { note:23, order:12, urgent:21, resolved:25 };
   var rqRows = comments.map(function(c, i) {
     var when = c.time ? _xlDate(new Date(c.time)) : '';
-    var vals = [i + 1, c.author, tgLabel[c.tag] || 'Note', c.adhesive, c.text, when];
-    var sty  = [5, pick(i,6,14), tgSty[c.tag] || 23, pick(i,28,22), pick(i,13,19), pick(i,7,15)];
+    var vals = [i + 1, c.author, tgLabel[c.tag] || 'Note', c.adhesive, c.text, when, String(c.id == null ? '' : c.id)];
+    var sty  = [5, pick(i,6,14), tgSty[c.tag] || 23, pick(i,28,22), pick(i,13,19), pick(i,7,15), pick(i,24,29)];
     return { ht: _xlHt(vals.map(function(v,k){ return k === 0 ? '' : v; }), rqCols.map(function(c){ return c.w; }), 45),
              cells: vals.map(function(v, k){ return k === 0 ? { t: v, s: 5, n: true } : { t: v, s: sty[k] }; }) };
   });
   var sheet3 = _xlSheet(sst, { title:'NVIDIA Process Lab \u2014 Lab Requirements & Requests', subtitle:'Discussion Board & Order Requests  \u00B7  Exported: ' + D, footer:'NVIDIA Confidential  \u00B7  Process Lab  \u00B7  ' + D, cols: rqCols, rows: rqRows });
+
+  // ── Sheet 4: short instructions (ignored by Import) ──
+  var howTxt = [
+    'EDIT: change any cell on the Inventory, Shipment Status or Requirements sheet, save the file, then click \uD83D\uDCE5 Import Excel in the platform. The platform is updated to match this file (you see a summary and confirm first).',
+    'ADD: add a new row at the bottom of a table and leave its ID cell empty. The Adhesive name (or Message for Requirements) is required.',
+    'DELETE: delete the whole row. The import summary lists everything that will be removed, and nothing changes until you confirm.',
+    'ID column (last column): do not change it. It ties each row to its datasheet file. Rows you copy get a new ID automatically if you clear the ID cell.',
+    'DATES: type 2027-01-15 or a normal Excel date. Status (OK / Expiring / Expired) is calculated by the platform \u2014 editing it does nothing.',
+    'DATASHEET: a web link (https://\u2026) can be edited here. Uploaded PDF files cannot be added or removed from Excel \u2014 use Edit in the platform. They always stay attached to their row.',
+    'SHIPMENT STATUS: Pending, In Transit, Delivered, Delayed, Cancelled.  REQUIREMENT TYPE: Note, Order Request, URGENT, Resolved.',
+    'Do not rename the sheets or the header row (row 4). Save as .xlsx.'
+  ];
+  var sheet4 = _xlSheet(sst, { title:'NVIDIA Process Lab \u2014 How to use this Excel', subtitle:'Edit \u2192 Save \u2192 Import Excel in the platform  \u00B7  Exported: ' + D, footer:'NVIDIA Confidential  \u00B7  Process Lab  \u00B7  ' + D,
+    cols:[{h:'#',w:5},{h:'How to use this file',w:120}],
+    rows: howTxt.map(function(t, i){ return { ht: _xlHt([ '', t ], [5, 120], 30), cells: [{ t: i + 1, s: 5, n: true }, { t: t, s: pick(i,13,19) }] }; }) });
 
   var sstXml = '<sst xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" count="' + sst.count + '" uniqueCount="' + sst.list.length + '">' +
     sst.list.map(function(t){ return '<si><t>' + _xe(t) + '</t></si>'; }).join('') + '</sst>';
   var REL = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships/';
   var iso = now.toISOString().replace(/\.\d+Z$/, 'Z');
   var blob = _zipStore([
-    { name:'[Content_Types].xml', text:'<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/><Override PartName="/xl/theme/theme1.xml" ContentType="application/vnd.openxmlformats-officedocument.theme+xml"/><Override PartName="/xl/sharedStrings.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sharedStrings+xml"/><Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/><Override PartName="/docProps/app.xml" ContentType="application/vnd.openxmlformats-officedocument.extended-properties+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/worksheets/sheet2.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/worksheets/sheet3.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/></Types>' },
+    { name:'[Content_Types].xml', text:'<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/><Override PartName="/xl/theme/theme1.xml" ContentType="application/vnd.openxmlformats-officedocument.theme+xml"/><Override PartName="/xl/sharedStrings.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sharedStrings+xml"/><Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/><Override PartName="/docProps/app.xml" ContentType="application/vnd.openxmlformats-officedocument.extended-properties+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/worksheets/sheet2.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/worksheets/sheet3.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/worksheets/sheet4.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/></Types>' },
     { name:'_rels/.rels', text:'<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Type="' + REL + 'officeDocument" Target="xl/workbook.xml" Id="rId1"/><Relationship Type="http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties" Target="docProps/core.xml" Id="rId2"/><Relationship Type="' + REL + 'extended-properties" Target="docProps/app.xml" Id="rId3"/></Relationships>' },
     { name:'docProps/app.xml', text:'<Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/extended-properties"><Application>Process Lab Adhesives Inventory</Application></Properties>' },
     { name:'docProps/core.xml', text:'<cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties"><dc:creator xmlns:dc="http://purl.org/dc/elements/1.1/">Process Lab</dc:creator><dcterms:created xmlns:dcterms="http://purl.org/dc/terms/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="dcterms:W3CDTF">' + iso + '</dcterms:created><dcterms:modified xmlns:dcterms="http://purl.org/dc/terms/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="dcterms:W3CDTF">' + iso + '</dcterms:modified></cp:coreProperties>' },
-    { name:'xl/workbook.xml', text:'<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><workbookPr/><workbookProtection/><bookViews><workbookView visibility="visible" minimized="0" showHorizontalScroll="1" showVerticalScroll="1" showSheetTabs="1" tabRatio="600" firstSheet="0" activeTab="0" autoFilterDateGrouping="1"/></bookViews><sheets><sheet xmlns:r="' + REL.slice(0,-1) + '" name="Inventory" sheetId="1" state="visible" r:id="rId1"/><sheet xmlns:r="' + REL.slice(0,-1) + '" name="Shipment Status" sheetId="2" state="visible" r:id="rId2"/><sheet xmlns:r="' + REL.slice(0,-1) + '" name="Requirements" sheetId="3" state="visible" r:id="rId3"/></sheets><definedNames/><calcPr calcId="124519" fullCalcOnLoad="1"/></workbook>' },
-    { name:'xl/_rels/workbook.xml.rels', text:'<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="' + REL + 'worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="' + REL + 'worksheet" Target="worksheets/sheet2.xml"/><Relationship Id="rId3" Type="' + REL + 'worksheet" Target="worksheets/sheet3.xml"/><Relationship Id="rId4" Type="' + REL + 'styles" Target="styles.xml"/><Relationship Id="rId5" Type="' + REL + 'theme" Target="theme/theme1.xml"/><Relationship Id="rId6" Type="' + REL + 'sharedStrings" Target="sharedStrings.xml"/></Relationships>' },
+    { name:'xl/workbook.xml', text:'<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><workbookPr/><workbookProtection/><bookViews><workbookView visibility="visible" minimized="0" showHorizontalScroll="1" showVerticalScroll="1" showSheetTabs="1" tabRatio="600" firstSheet="0" activeTab="0" autoFilterDateGrouping="1"/></bookViews><sheets><sheet xmlns:r="' + REL.slice(0,-1) + '" name="Inventory" sheetId="1" state="visible" r:id="rId1"/><sheet xmlns:r="' + REL.slice(0,-1) + '" name="Shipment Status" sheetId="2" state="visible" r:id="rId2"/><sheet xmlns:r="' + REL.slice(0,-1) + '" name="Requirements" sheetId="3" state="visible" r:id="rId3"/><sheet xmlns:r="' + REL.slice(0,-1) + '" name="How to use" sheetId="4" state="visible" r:id="rId4"/></sheets><definedNames/><calcPr calcId="124519" fullCalcOnLoad="1"/></workbook>' },
+    { name:'xl/_rels/workbook.xml.rels', text:'<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="' + REL + 'worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="' + REL + 'worksheet" Target="worksheets/sheet2.xml"/><Relationship Id="rId3" Type="' + REL + 'worksheet" Target="worksheets/sheet3.xml"/><Relationship Id="rId4" Type="' + REL + 'worksheet" Target="worksheets/sheet4.xml"/><Relationship Id="rId5" Type="' + REL + 'styles" Target="styles.xml"/><Relationship Id="rId6" Type="' + REL + 'theme" Target="theme/theme1.xml"/><Relationship Id="rId7" Type="' + REL + 'sharedStrings" Target="sharedStrings.xml"/></Relationships>' },
 
     { name:'xl/styles.xml', text:_XL_STYLES },
     { name:'xl/theme/theme1.xml', text:_XL_THEME },
     { name:'xl/sharedStrings.xml', text:sstXml },
     { name:'xl/worksheets/sheet1.xml', text:sheet1 },
     { name:'xl/worksheets/sheet2.xml', text:sheet2 },
-    { name:'xl/worksheets/sheet3.xml', text:sheet3 }
+    { name:'xl/worksheets/sheet3.xml', text:sheet3 },
+    { name:'xl/worksheets/sheet4.xml', text:sheet4 }
   ]);
   var url = URL.createObjectURL(blob), a = document.createElement('a');
   a.href = url; a.download = 'NVIDIA_Lab_Adhesives_' + now.toISOString().slice(0, 10) + '.xlsx';
@@ -2014,201 +2030,273 @@ function exportExcel() {
 }
 
 
-// ── Import from Excel (.xlsx) ────────────────────────────────────
+// ── Import from Excel (.xlsx) — updates the platform to match the file ──
+// Rows are matched by the ID column, so edited rows keep their datasheet file and history.
+//   changed cells -> updated   |   new row (empty ID) -> added   |   row deleted in Excel -> removed
+// Nothing is changed until you confirm the summary. No external library is needed.
+
+function _xlUnesc(s) {
+  return String(s == null ? '' : s)
+    .replace(/_x([0-9A-Fa-f]{4})_/g, function(m, h){ return String.fromCharCode(parseInt(h, 16)); })
+    .replace(/&#x([0-9a-fA-F]+);/g, function(m, h){ return String.fromCodePoint(parseInt(h, 16)); })
+    .replace(/&#(\d+);/g, function(m, d){ return String.fromCodePoint(parseInt(d, 10)); })
+    .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&apos;/g, "'").replace(/&amp;/g, '&');
+}
+
+// --- reading the .xlsx (a zip file) ---
+async function _xlOpenZip(buf) {
+  var u8 = new Uint8Array(buf), dv = new DataView(buf), e = u8.length - 22, min = Math.max(0, u8.length - 65557);
+  while (e >= min && dv.getUint32(e, true) !== 0x06054b50) e--;
+  if (e < min) throw new Error('This is not a valid .xlsx file. In Excel use Save As \u2192 "Excel Workbook (*.xlsx)".');
+  var n = dv.getUint16(e + 10, true), p = dv.getUint32(e + 16, true), ent = {}, td = new TextDecoder();
+  for (var i = 0; i < n; i++) {
+    if (dv.getUint32(p, true) !== 0x02014b50) break;
+    var method = dv.getUint16(p + 10, true), csize = dv.getUint32(p + 20, true), nl = dv.getUint16(p + 28, true), el = dv.getUint16(p + 30, true), cl = dv.getUint16(p + 32, true), lho = dv.getUint32(p + 42, true);
+    ent[td.decode(u8.subarray(p + 46, p + 46 + nl))] = { method: method, csize: csize, lho: lho };
+    p += 46 + nl + el + cl;
+  }
+  return { u8: u8, dv: dv, ent: ent };
+}
+async function _xlReadEntry(z, name) {
+  var en = z.ent[name]; if (!en) return null;
+  var nl = z.dv.getUint16(en.lho + 26, true), el = z.dv.getUint16(en.lho + 28, true), st = en.lho + 30 + nl + el;
+  var raw = z.u8.subarray(st, st + en.csize);
+  if (en.method === 0) return new TextDecoder().decode(raw);
+  if (en.method !== 8) throw new Error('Unsupported compression inside the .xlsx file.');
+  var out = await new Response(new Blob([raw]).stream().pipeThrough(new DecompressionStream('deflate-raw'))).arrayBuffer();
+  return new TextDecoder().decode(out);
+}
+function _loadJSZip() {   // only used on very old browsers without built-in decompression
+  return new Promise(function(res, rej) {
+    if (typeof JSZip !== 'undefined') return res();
+    var urls = ['https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js', 'https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js'], i = 0;
+    (function next() {
+      if (i >= urls.length) return rej(new Error('This browser cannot open Excel files here (no ZIP support).'));
+      var s = document.createElement('script'); s.src = urls[i++]; s.onload = function(){ res(); }; s.onerror = next; document.head.appendChild(s);
+    })();
+  });
+}
+async function _xlReader(buf) {
+  if (typeof DecompressionStream !== 'undefined') { var z = await _xlOpenZip(buf); return function(n){ return _xlReadEntry(z, n); }; }
+  await _loadJSZip(); var zip = await JSZip.loadAsync(buf);
+  return async function(n){ var f = zip.file(n); return f ? await f.async('string') : null; };
+}
+async function _xlWorkbook(rd) {
+  var wb = await rd('xl/workbook.xml'); if (!wb) throw new Error('This file is not an Excel workbook.');
+  var rels = (await rd('xl/_rels/workbook.xml.rels')) || '', relMap = {}, sheets = {};
+  (rels.match(/<Relationship\b[^>]*>/g) || []).forEach(function(t){ var id = (t.match(/\sId="([^"]*)"/) || [])[1], tg = (t.match(/\sTarget="([^"]*)"/) || [])[1]; if (id && tg) relMap[id] = tg; });
+  (wb.match(/<sheet\b[^>]*>/g) || []).forEach(function(t){
+    var nm = (t.match(/\sname="([^"]*)"/) || [])[1], rid = (t.match(/\sr:id="([^"]*)"/) || [])[1];
+    if (nm && rid && relMap[rid]) { var tg = relMap[rid]; sheets[_xlUnesc(nm)] = tg.charAt(0) === '/' ? tg.slice(1) : 'xl/' + tg; }
+  });
+  var sst = [], ssx = await rd('xl/sharedStrings.xml');
+  if (ssx) (ssx.match(/<si\b[\s\S]*?<\/si>|<si\s*\/>/g) || []).forEach(function(si){
+    si = si.replace(/<rPh\b[\s\S]*?<\/rPh>/g, '');
+    sst.push(_xlUnesc(Array.from(si.matchAll(/<t\b[^>]*>([\s\S]*?)<\/t>/g)).map(function(m){ return m[1]; }).join('')));
+  });
+  return { sheets: sheets, sst: sst };
+}
+function _xlParseSheet(xml, sst) {
+  var rows = [];
+  (xml.match(/<row\b[^>]*?(?:\/>|>[\s\S]*?<\/row>)/g) || []).forEach(function(rx) {
+    var rn = parseInt((rx.match(/\sr="(\d+)"/) || [])[1] || '0', 10), cells = {};
+    Array.from(rx.matchAll(/<c\b([^>]*?)(?:\/>|>([\s\S]*?)<\/c>)/g)).forEach(function(m) {
+      var at = m[1], inner = m[2] || '', ref = (at.match(/\sr="([A-Z]+)\d+"/) || [])[1]; if (!ref) return;
+      var t = (at.match(/\st="([^"]*)"/) || [])[1] || 'n', v = (inner.match(/<v>([\s\S]*?)<\/v>/) || [])[1], val = '';
+      if (t === 's') val = v != null ? (sst[parseInt(v, 10)] || '') : '';
+      else if (t === 'inlineStr') val = _xlUnesc(Array.from(inner.matchAll(/<t\b[^>]*>([\s\S]*?)<\/t>/g)).map(function(x){ return x[1]; }).join(''));
+      else if (v != null) val = _xlUnesc(v);
+      cells[ref] = val;
+    });
+    rows.push({ r: rn, cells: cells });
+  });
+  return rows;
+}
+
+// --- understanding the cells ---
+function _xlNorm(s) { return String(s == null ? '' : s).toLowerCase().replace(/\s+/g, ' ').trim(); }
+function _xlISO(y, m, d) { return y + '-' + String(m).padStart(2, '0') + '-' + String(d).padStart(2, '0'); }
+function _xlNormDate(v) {   // any date a person may type in Excel -> YYYY-MM-DD
+  v = String(v == null ? '' : v).trim(); if (!v) return '';
+  var m;
+  if (/^\d+(\.\d+)?$/.test(v)) { var n = parseFloat(v); if (n > 20000 && n < 80000) return new Date(Date.UTC(1899, 11, 30) + Math.floor(n) * 86400000).toISOString().slice(0, 10); return v; }
+  if ((m = v.match(/^(\d{4})[-\/.](\d{1,2})[-\/.](\d{1,2})/))) return _xlISO(m[1], +m[2], +m[3]);
+  if ((m = v.match(/^(\d{1,2})[\/.\-](\d{1,2})[\/.\-](\d{2,4})$/))) {
+    var a = +m[1], b = +m[2], y = +m[3]; if (y < 100) y += 2000;
+    if (b > 12 && a <= 12) { var t = a; a = b; b = t; }   // 03/25/2027 -> month/day
+    return _xlISO(y, b, a);                               // otherwise day/month/year
+  }
+  if ((m = v.match(/^(\d{1,2})\s+([A-Za-z]{3,})\.?,?\s+(\d{4})$/))) {
+    var mi = ['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'].indexOf(m[2].slice(0, 3).toLowerCase());
+    if (mi >= 0) return _xlISO(m[3], mi + 1, +m[1]);
+  }
+  return v;
+}
+function _xlNormId(v) {
+  v = String(v == null ? '' : v).trim(); if (!v) return '';
+  if (/^[\d.]+(e[+-]?\d+)?$/i.test(v)) { var n = Number(v); if (isFinite(n) && n === Math.floor(n)) return String(n); }
+  return v;
+}
+function _xlText(v) { v = String(v == null ? '' : v).trim(); return /^-?\d+\.0+$/.test(v) ? v.replace(/\.0+$/, '') : v; }
+function _xlLocalISO(d) { d = new Date(d); return isNaN(d.getTime()) ? '' : _xlISO(d.getFullYear(), d.getMonth() + 1, d.getDate()); }
+
+var _XL_INV  = { 'adhesive':'name','name':'name','vendor':'vendor','nv pn':'nvpn','supplier pn':'spn','where used':'used','syringe sizes':'syringe','syringe':'syringe','qty':'qty','expiry date':'expiry','expiry':'expiry','freezer':'freezer','shelf #':'shelf','shelf':'shelf','storage temp':'temp','owner':'owner','comments':'comments','datasheet':'_ds','id':'_id' };
+var _XL_SHIP = { 'adhesive':'name','vendor':'vendor','carrier':'carrier','amount':'amount','syringe':'syringe','nv pr #':'nvpr','requested by':'requester','request date':'reqdate','expected arrival':'eta','tracking #':'tracking','status':'_status','comments':'comments','actual arrival':'arrived','id':'_id' };
+var _XL_COMM = { 'author':'author','type':'_tag','adhesive':'adhesive','message':'text','date':'_date','id':'_id' };
+
+function _xlTable(rows, aliases, anchor) {   // find the header row, then read every row below it
+  var hdr = null;
+  for (var i = 0; i < Math.min(rows.length, 20); i++) {
+    var vals = Object.keys(rows[i].cells).map(function(k){ return _xlNorm(rows[i].cells[k]); });
+    if (vals.indexOf(anchor) >= 0) { hdr = rows[i]; break; }
+  }
+  if (!hdr) return null;
+  var map = {}, fields = [];
+  Object.keys(hdr.cells).forEach(function(col){ var f = aliases[_xlNorm(hdr.cells[col])]; if (f && fields.indexOf(f) < 0) { map[col] = f; fields.push(f); } });
+  var items = [];
+  rows.forEach(function(row) {
+    if (row.r <= hdr.r) return;
+    var f = {}, any = false;
+    Object.keys(map).forEach(function(col){ var v = _xlText(row.cells[col]); f[map[col]] = v; if (v && map[col] !== '_id') any = true; });
+    var first = Object.keys(row.cells).map(function(k){ return row.cells[k]; }).join(' ');
+    if (!any || /Confidential/.test(first)) return;
+    items.push(f);
+  });
+  return { fields: fields, hasId: fields.indexOf('_id') >= 0, items: items };
+}
+function _xlMatch(existing, tbl, keyFn) {   // tie every Excel row to an existing row (by ID, else by name when the file has no ID column)
+  var byId = {}, used = {};
+  existing.forEach(function(r){ byId[String(r.id)] = r; });
+  var out = tbl.items.map(function(f){ return { f: f, ex: null }; });
+  out.forEach(function(it){ var id = _xlNormId(it.f._id); if (id && byId[id] && !used[id]) { used[id] = 1; it.ex = byId[id]; } });
+  if (!tbl.hasId) out.forEach(function(it){
+    var k = keyFn(it.f), m = existing.find(function(r){ return !used[String(r.id)] && keyFn(r) === k; });
+    if (m) { used[String(m.id)] = 1; it.ex = m; }
+  });
+  return { rows: out, removed: existing.filter(function(r){ return !used[String(r.id)]; }) };
+}
+function _xlSame(a, b, keys) { return keys.every(function(k){ return String(a[k] == null ? '' : a[k]) === String(b[k] == null ? '' : b[k]); }); }
+
+async function _xlPlan(buf) {
+  var rd = await _xlReader(buf), wb = await _xlWorkbook(rd), plan = { notes: [] }, nid = Date.now();
+  var newId = function(){ return ++nid; };
+  async function sheet(name, aliases, anchor) {
+    var path = wb.sheets[name]; if (!path) return null;
+    var xml = await rd(path); if (!xml) return null;
+    return _xlTable(_xlParseSheet(xml, wb.sst), aliases, anchor);
+  }
+  var idFor = function(f, taken){ var id = _xlNormId(f._id); if (id && !taken[id]) { taken[id] = 1; return /^\d{1,15}$/.test(id) ? Number(id) : id; } var n = newId(); taken[n] = 1; return n; };
+
+  // ---- Inventory ----
+  var inv = await sheet('Inventory', _XL_INV, 'adhesive');
+  if (!inv) plan.notes.push('Sheet "Inventory" not found \u2014 adhesives not changed.');
+  else if (!inv.items.length) plan.notes.push('Sheet "Inventory" has no rows \u2014 adhesives not changed (to remove everything, delete items in the platform).');
+  else {
+    var IF = ['name','vendor','nvpn','spn','used','syringe','qty','expiry','freezer','shelf','temp','owner','comments'], mt = _xlMatch(data, inv, function(r){ return _xlNorm(r.name); }), taken = {}, upd = 0, add = 0, skipped = 0, rows = [];
+    mt.rows.forEach(function(it){ if (it.ex) taken[String(it.ex.id)] = 1; });
+    mt.rows.forEach(function(it) {
+      var f = it.f, ex = it.ex; if (!f.name) { skipped++; return; }
+      var row = ex ? Object.assign({}, ex) : { dsType: 'url', datasheet: '', dsFileName: '' };
+      inv.fields.forEach(function(k){ if (IF.indexOf(k) >= 0) row[k] = k === 'expiry' ? _xlNormDate(f[k]) : f[k]; });
+      if (inv.fields.indexOf('_ds') >= 0) {
+        var ds = f._ds || '';
+        if (ex && ex.dsType === 'file') { if (/^https?:\/\//i.test(ds) && ds !== ex.dsFileName) { row.datasheet = ds; row.dsType = 'url'; } }   // uploaded files stay attached
+        else if (!ex || ds !== (ex.datasheet || '')) { row.datasheet = ds; row.dsType = 'url'; }   // links: only touched when the cell really changed
+      }
+      if (ex) { row.id = ex.id; taken[String(ex.id)] = 1; if (!_xlSame(row, ex, IF.concat(['datasheet','dsType']))) upd++; }
+      else { row.id = idFor(f, taken); add++; }
+      rows.push(row);
+    });
+    plan.inv = { rows: rows, upd: upd, add: add, rem: mt.removed };
+    if (skipped) plan.notes.push(skipped + ' Inventory row(s) without an Adhesive name were ignored.');
+  }
+
+  // ---- Shipments ----
+  var sh = await sheet('Shipment Status', _XL_SHIP, 'adhesive');
+  if (sh) {
+    var SF = ['name','vendor','carrier','amount','syringe','nvpr','requester','reqdate','eta','tracking','comments','arrived'], SD = ['reqdate','eta','arrived'];
+    var SM = { 'pending':'pending','in transit':'transit','transit':'transit','delivered':'delivered','delayed':'delayed','cancelled':'cancelled','canceled':'cancelled' };
+    var ms = _xlMatch(shipments, sh, function(r){ return _xlNorm(r.name) + '|' + _xlNorm(r.nvpr); }), taken2 = {}, u2 = 0, a2 = 0, sk2 = 0, rows2 = [];
+    ms.rows.forEach(function(it){ if (it.ex) taken2[String(it.ex.id)] = 1; });
+    ms.rows.forEach(function(it) {
+      var f = it.f, ex = it.ex; if (!f.name) { sk2++; return; }
+      var row = ex ? Object.assign({}, ex) : { status: 'pending' };
+      sh.fields.forEach(function(k){ if (SF.indexOf(k) >= 0) row[k] = SD.indexOf(k) >= 0 ? _xlNormDate(f[k]) : f[k]; });
+      if (sh.fields.indexOf('_status') >= 0) { var s = SM[_xlNorm(f._status)]; if (s) row.status = s; }
+      if (ex) { row.id = ex.id; taken2[String(ex.id)] = 1; if (!_xlSame(row, ex, SF.concat(['status']))) u2++; }
+      else { row.id = idFor(f, taken2); a2++; }
+      rows2.push(row);
+    });
+    plan.ship = { rows: rows2, upd: u2, add: a2, rem: ms.removed };
+    if (sk2) plan.notes.push(sk2 + ' Shipment row(s) without an Adhesive name were ignored.');
+  }
+
+  // ---- Requirements (comments) ----
+  var cm = await sheet('Requirements', _XL_COMM, 'author');
+  if (cm) {
+    var CM = { 'note':'note','order request':'order','order':'order','urgent':'urgent','resolved':'resolved' };
+    var mc = _xlMatch(comments, cm, function(r){ return _xlNorm(r.author) + '|' + _xlNorm(r.text).slice(0, 40); }), taken3 = {}, u3 = 0, a3 = 0, sk3 = 0, rows3 = [];
+    mc.rows.forEach(function(it){ if (it.ex) taken3[String(it.ex.id)] = 1; });
+    mc.rows.forEach(function(it) {
+      var f = it.f, ex = it.ex; if (!f.text) { sk3++; return; }
+      var row = ex ? Object.assign({}, ex) : { tag: 'note', adhesive: '', author: '' };
+      cm.fields.forEach(function(k){ if (['author','adhesive','text'].indexOf(k) >= 0) row[k] = f[k]; });
+      if (cm.fields.indexOf('_tag') >= 0) { var t = CM[_xlNorm(f._tag)]; if (t) row.tag = t; }
+      if (cm.fields.indexOf('_date') >= 0) {
+        var iso = _xlNormDate(f._date);
+        if (ex && ex.time && (!iso || iso === _xlLocalISO(ex.time))) row.time = ex.time;
+        else if (/^\d{4}-\d{2}-\d{2}$/.test(iso)) row.time = new Date(iso + 'T12:00:00').toISOString();
+        else row.time = (ex && ex.time) || new Date().toISOString();
+      } else if (!row.time) row.time = new Date().toISOString();
+      if (ex) { row.id = ex.id; taken3[String(ex.id)] = 1; if (!_xlSame(row, ex, ['author','adhesive','text','tag','time'])) u3++; }
+      else { row.id = idFor(f, taken3); a3++; }
+      rows3.push(row);
+    });
+    plan.com = { rows: rows3, upd: u3, add: a3, rem: mc.removed };
+    if (sk3) plan.notes.push(sk3 + ' Requirements row(s) without a Message were ignored.');
+  }
+  return plan;
+}
+
+function _xlLine(label, p) {
+  if (!p) return label + ':  (sheet not in file \u2014 unchanged)';
+  if (!p.upd && !p.add && !p.rem.length) return label + ':  no changes';
+  return label + ':  ' + p.upd + ' updated \u00B7 ' + p.add + ' added \u00B7 ' + p.rem.length + ' removed';
+}
 function importExcel() {
-  const inp = document.createElement('input');
-  inp.type = 'file';
-  inp.accept = '.xlsx,.xls';
-  inp.onchange = e => {
-    const file = e.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = ev => {
-      try {
-        // Parse xlsx as ZIP and extract sheet XMLs
-        parseXlsx(ev.target.result, (result) => {
-          if (!result || (!result.data?.length && !result.shipments?.length)) {
-            alert('No valid data found.\nMake sure you are importing a file exported from this app.');
-            return;
-          }
-          const msg = 'Import from Excel?\n\n' +
-            '· Adhesives: ' + (result.data?.length||0) + '\n' +
-            '· Shipments: ' + (result.shipments?.length||0) + '\n' +
-            '· Comments: '  + (result.comments?.length||0) + '\n\nThis will replace all current data.';
-          if (confirm(msg)) {
-            if (result.data?.length)      data      = result.data;
-            if (result.shipments?.length) shipments = result.shipments;
-            if (result.comments?.length)  comments  = result.comments;
-            render(); populateAdhesiveDropdown(); renderComments(); renderShipments();
-            document.getElementById('tc-inventory').textContent = data.length;
-            document.getElementById('tc-shipments').textContent = shipments.length;
-            saveState();
-            showSaveToast('✅ Imported: '+data.length+' adhesives, '+shipments.length+' shipments');
-          }
-        });
-      } catch(err) {
-        console.error(err);
-        alert('Import failed: ' + err.message);
-      }
-    };
-    reader.readAsArrayBuffer(file);
+  if (!_gistReady) { alert('The cloud is not connected, so an import could not be saved.\nPlease reload the page and try again.'); return; }
+  var inp = document.createElement('input');
+  inp.type = 'file'; inp.accept = '.xlsx';
+  inp.onchange = async function(e) {
+    var file = e.target.files[0]; if (!file) return;
+    try {
+      var plan = await _xlPlan(await file.arrayBuffer());
+      var parts = [plan.inv, plan.ship, plan.com];
+      if (!parts.some(function(p){ return p; })) { alert('No data found in this file.\n\n' + plan.notes.join('\n') + '\n\nUse a file made with "Export Excel" (sheets: Inventory, Shipment Status, Requirements).'); return; }
+      var changes = parts.reduce(function(n, p){ return n + (p ? p.upd + p.add + p.rem.length : 0); }, 0);
+      if (!changes) { alert('No changes \u2014 the Excel file already matches the platform.' + (plan.notes.length ? '\n\n' + plan.notes.join('\n') : '')); return; }
+      var removed = [].concat(
+        plan.inv  ? plan.inv.rem.map(function(r){ return r.name; }) : [],
+        plan.ship ? plan.ship.rem.map(function(r){ return 'shipment: ' + r.name; }) : [],
+        plan.com  ? plan.com.rem.map(function(r){ return 'comment by ' + r.author; }) : []);
+      var msg = 'Import from "' + file.name + '"?\n\n' +
+        _xlLine('Adhesives', plan.inv) + '\n' + _xlLine('Shipments', plan.ship) + '\n' + _xlLine('Comments', plan.com) + '\n' +
+        (removed.length ? '\nWILL BE REMOVED: ' + removed.slice(0, 12).join(', ') + (removed.length > 12 ? ' \u2026 (+' + (removed.length - 12) + ' more)' : '') + '\n' : '') +
+        (plan.notes.length ? '\n' + plan.notes.join('\n') + '\n' : '') +
+        '\nThe platform will be updated to match this Excel file.\nUploaded datasheet files stay attached to their rows.\n\nContinue?';
+      if (!confirm(msg)) return;
+      if (plan.inv)  data      = plan.inv.rows;
+      if (plan.ship) shipments = plan.ship.rows;
+      if (plan.com)  comments  = plan.com.rows;
+      refreshAll();
+      saveState();
+      showSaveToast('\u2705 Imported: ' + parts.map(function(p, i){ return p ? ['adhesives','shipments','comments'][i] + ' +' + p.add + ' ~' + p.upd + ' \u2212' + p.rem.length : ''; }).filter(Boolean).join('  \u00B7  '));
+    } catch (err) {
+      console.error(err);
+      alert('Import failed: ' + err.message + '\nNothing was changed.');
+    }
   };
-  document.body.appendChild(inp);
-  inp.click();
-  document.body.removeChild(inp);
-}
-
-// ── Pure JS xlsx parser (no library needed) ──────────────────────
-function parseXlsx(arrayBuffer, callback) {
-  // Use JSZip via CDN to unzip, then parse XML
-  const script = document.createElement('script');
-  script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js';
-  script.onerror = () => {
-    // CDN blocked — try alternative
-    const s2 = document.createElement('script');
-    s2.src = 'https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js';
-    s2.onerror = () => { alert('Cannot load ZIP library on this network. Import unavailable.'); };
-    s2.onload  = () => doParseXlsx(arrayBuffer, callback);
-    document.head.appendChild(s2);
-  };
-  script.onload = () => doParseXlsx(arrayBuffer, callback);
-  if (typeof JSZip !== 'undefined') {
-    doParseXlsx(arrayBuffer, callback);
-  } else {
-    document.head.appendChild(script);
-  }
-}
-
-async function doParseXlsx(arrayBuffer, callback) {
-  try {
-    const zip = await JSZip.loadAsync(arrayBuffer);
-
-    // Get shared strings
-    const ssFile = zip.file('xl/sharedStrings.xml');
-    const sharedStrings = [];
-    if (ssFile) {
-      const ssXml = await ssFile.async('string');
-      const matches = ssXml.matchAll(/<si>[\s\S]*?<\/si>/g);
-      for (const m of matches) {
-        const texts = [...m[0].matchAll(/<t[^>]*>([^<]*)<\/t>/g)].map(x=>x[1]);
-        sharedStrings.push(texts.join(''));
-      }
-    }
-
-    // Helper: get cell value
-    function getCellValue(cellNode, cellXml, sharedStrings) {
-      const tMatch = cellNode.match(/t="([^"]*)"/);
-      const vMatch = cellXml.match(/<v>([^<]*)<\/v>/);
-      if (!vMatch) return '';
-      const val = vMatch[1];
-      if (tMatch && tMatch[1] === 's') return sharedStrings[parseInt(val)] || '';
-      return val;
-    }
-
-    // Parse a sheet into rows array
-    async function parseSheet(sheetName) {
-      const files = Object.keys(zip.files);
-      // Find sheet by name via workbook.xml
-      const wbXml = await zip.file('xl/workbook.xml').async('string');
-      const sheetMatches = [...wbXml.matchAll(/<sheet[^>]+name="([^"]*)"[^>]+r:id="([^"]*)"/g)];
-      const relsXml = await zip.file('xl/_rels/workbook.xml.rels').async('string');
-      
-      let sheetFile = null;
-      for (const m of sheetMatches) {
-        if (m[1] === sheetName) {
-          const rId = m[2];
-          const relMatch = relsXml.match(new RegExp(`Id="${rId}"[^>]+Target="([^"]*)"`));
-          if (relMatch) {
-            sheetFile = 'xl/' + relMatch[1].replace(/^\//,'');
-          }
-          break;
-        }
-      }
-      if (!sheetFile || !zip.file(sheetFile)) return [];
-
-      const xml = await zip.file(sheetFile).async('string');
-      const rows = [];
-      const rowMatches = [...xml.matchAll(/<row[^>]*>([\s\S]*?)<\/row>/g)];
-      for (const rowM of rowMatches) {
-        const cells = {};
-        const cellMatches = [...rowM[1].matchAll(/<c r="([A-Z]+)\d+"([^>]*)>([\s\S]*?)<\/c>/g)];
-        for (const cellM of cellMatches) {
-          const col = cellM[1];
-          const cellNode = '<c r="'+cellM[1]+'"'+cellM[2]+'>';
-          const val = getCellValue(cellNode, cellM[0], sharedStrings);
-          cells[col] = val;
-        }
-        rows.push(cells);
-      }
-      return rows;
-    }
-
-    // Convert column letter to index (A=0, B=1, ...)
-    function colIdx(col) {
-      let n = 0;
-      for (const c of col) n = n * 26 + c.charCodeAt(0) - 64;
-      return n - 1;
-    }
-
-    // Parse headers from row (skip first 3 banner rows, header is row 4 = index 3)
-    function extractData(rows, colMap) {
-      if (rows.length < 4) return [];
-      // Find header row by looking for row with most data
-      let hdrRowIdx = 3;
-      const results = [];
-      for (let i = hdrRowIdx+1; i < rows.length; i++) {
-        const row = rows[i];
-        const obj = {id: Date.now() + i};
-        let hasData = false;
-        Object.entries(colMap).forEach(([col, field]) => {
-          const val = row[col] || '';
-          if (val && !val.includes('Confidential')) {
-            obj[field] = val;
-            if (field === 'name') hasData = true;
-          }
-        });
-        // Skip if name is a number (wrong column) or contains 'Confidential'
-      if (hasData && obj.name && isNaN(obj.name) && !obj.name.includes('Confidential')) results.push(obj);
-      }
-      return results;
-    }
-
-    // Sheet 1: Inventory
-    // Columns: A=#, B=Adhesive, C=Vendor, D=NV PN, E=Supplier PN, F=Where Used,
-    //          G=Syringe Sizes, H=Qty, I=Expiry Date, J=Status(skip), K=Freezer,
-    //          L=Shelf#, M=Storage Temp, N=Owner, O=Comments
-    const invRows = await parseSheet('Inventory');
-    const invData = extractData(invRows, {
-      B:'name', C:'vendor', D:'nvpn', E:'spn', F:'used',
-      G:'syringe', H:'qty', I:'expiry', K:'freezer',
-      L:'shelf', M:'temp', N:'owner', O:'comments'
-    });
-
-    // Sheet 2: Shipments (B=name, C=vendor, D=carrier, E=amount, F=syringe, G=nvpr, H=requester, I=reqdate, J=eta, K=tracking, L=status, M=comments)
-    const shipRows = await parseSheet('Shipment Status');
-    const STATUS_RMAP = {'Pending':'pending','In Transit':'transit','Delivered':'delivered','Delayed':'delayed','Cancelled':'cancelled'};
-    const shipData = extractData(shipRows, {
-      B:'name', C:'vendor', D:'carrier', E:'amount', F:'syringe',
-      G:'nvpr', H:'requester', I:'reqdate', J:'eta', K:'tracking', L:'_status', M:'comments'
-    }).map(s => { s.status = STATUS_RMAP[s._status]||'pending'; delete s._status; return s; });
-
-    // Sheet 3: Requirements (B=author, C=tag, D=adhesive, E=text, F=date)
-    const reqRows = await parseSheet('Requirements');
-    const TAG_RMAP = {'Note':'note','Order Request':'order','URGENT':'urgent','Resolved':'resolved'};
-    const reqData = extractData(reqRows, {
-      B:'author', C:'_tag', D:'adhesive', E:'text', F:'_date'
-    }).map(c => {
-      c.tag = TAG_RMAP[c._tag]||'note'; delete c._tag;
-      try { c.time = new Date(c._date).toISOString(); } catch(e) { c.time = new Date().toISOString(); }
-      delete c._date;
-      return c;
-    });
-
-    callback({ data: invData, shipments: shipData, comments: reqData });
-  } catch(err) {
-    console.error('parseXlsx error:', err);
-    alert('Could not read Excel file: ' + err.message);
-  }
+  document.body.appendChild(inp); inp.click(); document.body.removeChild(inp);
 }
 
 
