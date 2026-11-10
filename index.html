@@ -1,0 +1,2352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Process Lab — Adhesives Inventory</title>
+<style>
+  :root {
+    --nv-green: #76b900;
+    --nv-green-dark: #5c9100;
+    --nv-green-light: #a8d500;
+    --nv-black: #1a1a1a;
+    --nv-dark: #242424;
+    --nv-surface: #2e2e2e;
+    --nv-border: #3d3d3d;
+    --nv-text: #e8e8e8;
+    --nv-muted: #999;
+    --nv-white: #ffffff;
+    --status-ok: #76b900;
+    --status-warn: #f5a623;
+    --status-expired: #e84040;
+    --status-low: #f5a623;
+    --radius: 6px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+
+  body {
+    background: var(--nv-black);
+    color: var(--nv-text);
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    font-size: 13px;
+    min-height: 100vh;
+  }
+
+  /* ── Header ── */
+  header {
+    background: var(--nv-dark);
+    border-bottom: 2px solid var(--nv-green);
+    padding: 16px 28px;
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .nv-logo {
+    font-size: 22px;
+    font-weight: 900;
+    letter-spacing: -0.5px;
+    color: var(--nv-green);
+    text-transform: uppercase;
+  }
+  .header-sep { width: 2px; height: 32px; background: var(--nv-border); }
+  .header-title { font-size: 15px; font-weight: 600; color: var(--nv-white); }
+  .header-sub { font-size: 11px; color: var(--nv-muted); margin-top: 2px; }
+  .header-right { margin-left: auto; display: flex; align-items: center; gap: 12px; }
+  .rev-tag { font-size: 11px; font-weight: 700; color: var(--nv-green); margin-left: 8px; white-space: nowrap; cursor: default; }
+  .header-clock { margin-left: auto; font-size: 13px; color: var(--nv-text); white-space: nowrap; font-variant-numeric: tabular-nums; }
+  @media (max-width: 900px) { .header-clock { display: none; } }
+  .prio { display: inline-block; min-width: 24px; padding: 2px 8px; border-radius: 10px; font-size: 12px; font-weight: 700; text-align: center; border: 1px solid; }
+  .prio-1 { color: #ff6b6b; background: rgba(255,107,107,.12); border-color: rgba(255,107,107,.45); }
+  .prio-2 { color: #f5a623; background: rgba(245,166,35,.12);  border-color: rgba(245,166,35,.45); }
+  .prio-s { color: #b48cff; background: rgba(180,140,255,.12); border-color: rgba(180,140,255,.45); }
+  .prio-3 { color: #5ab0ff; background: rgba(90,176,255,.12);  border-color: rgba(90,176,255,.45); }
+
+  /* ── Summary pills ── */
+  .stats-bar {
+    display: flex;
+    gap: 10px;
+    padding: 12px 28px;
+    background: var(--nv-dark);
+    border-bottom: 1px solid var(--nv-border);
+    flex-wrap: wrap;
+  }
+  .stat-pill {
+    background: var(--nv-surface);
+    border: 1px solid var(--nv-border);
+    border-radius: 20px;
+    padding: 5px 14px;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+  }
+  .stat-pill .dot { width: 8px; height: 8px; border-radius: 50%; }
+  .dot-green { background: var(--status-ok); }
+  .dot-warn  { background: var(--status-warn); }
+  .dot-red   { background: var(--status-expired); }
+  .stat-pill strong { color: var(--nv-white); font-size: 14px; }
+
+  /* ── Toolbar ── */
+  .toolbar {
+    padding: 12px 28px;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .search-wrap { position: relative; flex: 1; min-width: 200px; max-width: 340px; }
+  .search-wrap input {
+    width: 100%;
+    background: var(--nv-surface);
+    border: 1px solid var(--nv-border);
+    color: var(--nv-text);
+    padding: 7px 12px 7px 32px;
+    border-radius: var(--radius);
+    font-size: 13px;
+    outline: none;
+  }
+  .search-wrap input:focus { border-color: var(--nv-green); }
+  .search-wrap .icon { position: absolute; left: 9px; top: 50%; transform: translateY(-50%); color: var(--nv-muted); font-size: 14px; }
+
+  select {
+    background: var(--nv-surface);
+    border: 1px solid var(--nv-border);
+    color: var(--nv-text);
+    padding: 7px 10px;
+    border-radius: var(--radius);
+    font-size: 12px;
+    outline: none;
+    cursor: pointer;
+  }
+  select:focus { border-color: var(--nv-green); }
+
+  .btn {
+    padding: 7px 16px;
+    border-radius: var(--radius);
+    border: none;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 600;
+    transition: background .15s;
+  }
+  .btn-primary { background: var(--nv-green); color: #000; }
+  .btn-primary:hover { background: var(--nv-green-light); }
+  .btn-ghost { background: transparent; border: 1px solid var(--nv-border); color: var(--nv-text); }
+  .btn-ghost:hover { border-color: var(--nv-green); color: var(--nv-green); }
+
+  /* ── Table ── */
+  .table-wrap {
+    margin: 0 0 32px 0;
+    padding: 0 28px;
+    overflow-x: auto;
+    overflow-y: visible;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    scrollbar-color: #76b900 #2e2e2e;
+  }
+  .table-wrap::-webkit-scrollbar { height: 7px; }
+  .table-wrap::-webkit-scrollbar-track { background: #2e2e2e; border-radius: 4px; }
+  .table-wrap::-webkit-scrollbar-thumb { background: #76b900; border-radius: 4px; }
+  table {
+    width: max-content;
+    min-width: 1400px;
+    border-collapse: collapse;
+  }
+  thead tr {
+    background: var(--nv-surface);
+    border-top: 2px solid var(--nv-green);
+    border-bottom: 1px solid var(--nv-border);
+  }
+  th {
+    text-align: left;
+    padding: 10px 12px;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--nv-green);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+    cursor: pointer;
+    user-select: none;
+  }
+  th:hover { color: var(--nv-green-light); }
+  th .sort-arrow { margin-left: 4px; opacity: 0.5; }
+  th.sorted .sort-arrow { opacity: 1; }
+
+  tbody tr {
+    border-bottom: 1px solid var(--nv-border);
+    transition: background .1s;
+    background: #1e1e1e;
+  }
+  tbody tr:nth-child(odd)  { background: #1e1e1e; }
+  tbody tr:nth-child(even) { background: #242424; }
+  tbody tr:hover { background: var(--nv-surface); }
+  tbody tr.row-expired { background: rgba(232, 64, 64, 0.08) !important; }
+  tbody tr.row-warn    { background: rgba(245, 166, 35, 0.06) !important; }
+
+  td {
+    padding: 9px 12px;
+    vertical-align: top;
+    color: var(--nv-text);
+    font-size: 12px;
+    max-width: 160px;
+  }
+  td .cell-main { font-weight: 600; color: var(--nv-white); }
+  td .cell-sub  { font-size: 11px; color: var(--nv-muted); margin-top: 2px; }
+
+  /* ── Status badges ── */
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+  }
+  .badge-ok       { background: rgba(118,185,0,.18); color: var(--status-ok); border: 1px solid rgba(118,185,0,.3); }
+  .badge-warn     { background: rgba(245,166,35,.15); color: var(--status-warn); border: 1px solid rgba(245,166,35,.3); }
+  .badge-expired  { background: rgba(232,64,64,.15); color: var(--status-expired); border: 1px solid rgba(232,64,64,.3); }
+  .badge-reorder  { background: rgba(120,80,255,.15); color: #a88cff; border: 1px solid rgba(120,80,255,.3); }
+  .badge-na       { background: rgba(153,153,153,.12); color: var(--nv-muted); border: 1px solid rgba(153,153,153,.2); }
+
+  /* ── Temp badge ── */
+  .temp-badge {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 7px;
+    border-radius: 4px;
+    background: rgba(100,180,255,.12);
+    color: #80caff;
+    border: 1px solid rgba(100,180,255,.25);
+    white-space: nowrap;
+  }
+  .temp-freeze { background: rgba(100,180,255,.18); color: #80caff; border-color: rgba(100,180,255,.35); }
+  .temp-cold   { background: rgba(0,200,150,.1); color: #00d4a0; border-color: rgba(0,200,150,.25); }
+  .temp-room   { background: rgba(153,153,153,.1); color: var(--nv-muted); border-color: var(--nv-border); }
+
+  /* ── Datasheet link ── */
+  a.ds-link {
+    color: var(--nv-green);
+    text-decoration: none;
+    font-size: 11px;
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+  }
+  a.ds-link:hover { color: var(--nv-green-light); text-decoration: underline; }
+
+  /* ── Datasheet file cell ── */
+  .ds-cell { display:flex; flex-direction:column; gap:3px; }
+  .ds-filename { font-size:10px; color:var(--nv-muted); font-style:italic; }
+
+  /* ── Empty state ── */
+  .empty-row td {
+    text-align: center;
+    padding: 40px;
+    color: var(--nv-muted);
+  }
+
+  /* ── Modal (Add/Edit row) ── */
+  .modal-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,.7);
+    z-index: 200;
+    align-items: center;
+    justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--nv-dark);
+    border: 1px solid var(--nv-green);
+    border-radius: 10px;
+    width: 720px;
+    max-width: 95vw;
+    max-height: 90vh;
+    overflow-y: auto;
+    padding: 28px;
+  }
+  .modal h2 { font-size: 16px; color: var(--nv-green); margin-bottom: 20px; }
+  .modal-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .modal-full { grid-column: 1 / -1; }
+  .field label { display: block; font-size: 11px; color: var(--nv-muted); margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.4px; }
+  .field input, .field select, .field textarea {
+    width: 100%;
+    background: var(--nv-surface);
+    border: 1px solid var(--nv-border);
+    color: var(--nv-text);
+    padding: 8px 10px;
+    border-radius: var(--radius);
+    font-size: 13px;
+    font-family: inherit;
+    outline: none;
+  }
+  .field input:focus, .field select:focus, .field textarea:focus { border-color: var(--nv-green); }
+  .field textarea { resize: vertical; min-height: 60px; }
+  .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--nv-border); }
+
+  /* ── Row actions ── */
+  .row-actions { display: flex; gap: 6px; }
+  .icon-btn {
+    background: none;
+    border: 1px solid var(--nv-border);
+    color: var(--nv-muted);
+    cursor: pointer;
+    border-radius: 4px;
+    padding: 3px 7px;
+    font-size: 12px;
+    transition: all .15s;
+  }
+  .icon-btn:hover { border-color: var(--nv-green); color: var(--nv-green); }
+  .icon-btn.del:hover { border-color: var(--status-expired); color: var(--status-expired); }
+
+  /* ── Frozen first two cols ── */
+  th:first-child, td:first-child {
+    position: sticky;
+    left: 0;
+    width: 42px;
+    min-width: 42px;
+    z-index: 3;
+    border-right: none;
+  }
+  thead th:first-child { background: var(--nv-surface); }
+  tbody td:first-child { background: inherit; }
+  tbody tr:nth-child(odd)  td:first-child { background: #1e1e1e; }
+  tbody tr:nth-child(even) td:first-child { background: #242424; }
+  tbody tr.row-expired td:first-child { background: rgba(232,64,64,.08); }
+  tbody tr.row-warn    td:first-child { background: rgba(245,166,35,.06); }
+  tbody tr:hover td:first-child { background: var(--nv-surface); }
+  tbody tr:hover td:first-child { background: var(--nv-surface); }
+  thead tr th:first-child { background: var(--nv-surface); z-index: 4; }
+
+  .timestamp { font-size: 10px; color: var(--nv-muted); }
+
+  /* == Discussion Board == */
+  .comments-section {
+    margin: 0 28px 48px;
+    border: 1px solid var(--nv-border);
+    border-top: 2px solid var(--nv-green);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .comments-header {
+    background: var(--nv-surface);
+    padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+    border-bottom: 1px solid var(--nv-border);
+  }
+  .comments-title { font-size: 14px; font-weight: 700; color: var(--nv-white); }
+  .comments-sub   { font-size: 11px; color: var(--nv-muted); margin-top: 2px; }
+  .comment-tag-pills { display: flex; gap: 7px; flex-wrap: wrap; }
+  .tag-pill {
+    font-size: 10px; font-weight: 600;
+    padding: 3px 10px; border-radius: 12px;
+    border: 1px solid;
+    pointer-events: none;
+  }
+  .tag-note     { background: rgba(118,185,0,.1);  color: #76b900; border-color: rgba(118,185,0,.3); }
+  .tag-order    { background: rgba(100,160,255,.1); color: #80aaff; border-color: rgba(100,160,255,.3); }
+  .tag-urgent   { background: rgba(232,64,64,.1);   color: #e84040; border-color: rgba(232,64,64,.3); }
+  .tag-resolved { background: rgba(0,200,120,.1);   color: #00c878; border-color: rgba(0,200,120,.3); }
+
+  /* Compose */
+  .compose-box {
+    background: var(--nv-dark);
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--nv-border);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .compose-row { display: flex; gap: 10px; align-items: flex-start; flex-wrap: wrap; }
+  .compose-msg-row { align-items: flex-end; }
+  .c_author_input {
+    background: var(--nv-surface); border: 1px solid var(--nv-border);
+    color: var(--nv-text); padding: 7px 10px; border-radius: var(--radius);
+    font-size: 12px; outline: none; width: 160px; flex-shrink: 0;
+  }
+  .c_author_input:focus { border-color: var(--nv-green); }
+  .c_select {
+    background: var(--nv-surface); border: 1px solid var(--nv-border);
+    color: var(--nv-text); padding: 7px 10px; border-radius: var(--radius);
+    font-size: 12px; outline: none; cursor: pointer; flex: 1; min-width: 160px;
+  }
+  .c_select:focus { border-color: var(--nv-green); }
+  #c_text {
+    flex: 1; background: var(--nv-surface); border: 1px solid var(--nv-border);
+    color: var(--nv-text); padding: 9px 12px; border-radius: var(--radius);
+    font-size: 13px; font-family: inherit; outline: none; resize: vertical;
+    min-height: 72px;
+  }
+  #c_text:focus { border-color: var(--nv-green); }
+  .compose-send { align-self: flex-end; padding: 9px 22px; font-size: 13px; flex-shrink: 0; }
+
+  /* Thread */
+  .comment-thread { padding: 16px 20px; display: flex; flex-direction: column; gap: 12px; }
+  .comment-thread:empty::after {
+    content: "No comments yet. Be the first to leave a note or reorder request.";
+    color: var(--nv-muted); font-size: 12px; font-style: italic;
+    display: block; text-align: center; padding: 20px 0;
+  }
+  .comment-card {
+    background: var(--nv-surface);
+    border: 1px solid var(--nv-border);
+    border-radius: 7px;
+    padding: 12px 15px;
+    animation: fadeIn .2s ease;
+  }
+  @keyframes fadeIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:none; } }
+  .comment-card.c-urgent  { border-left: 3px solid #e84040; }
+  .comment-card.c-order   { border-left: 3px solid #80aaff; }
+  .comment-card.c-resolved{ border-left: 3px solid #00c878; }
+  .comment-card.c-note    { border-left: 3px solid #76b900; }
+  .comment-meta {
+    display: flex; align-items: center; gap: 8px;
+    margin-bottom: 7px; flex-wrap: wrap;
+  }
+  .comment-author { font-weight: 700; font-size: 12px; color: var(--nv-white); }
+  .comment-adhesive {
+    font-size: 10px; padding: 2px 8px; border-radius: 10px;
+    background: rgba(118,185,0,.12); color: var(--nv-green);
+    border: 1px solid rgba(118,185,0,.25); font-weight: 600;
+  }
+  .comment-time { font-size: 10px; color: var(--nv-muted); margin-left: auto; }
+  .comment-body { font-size: 13px; color: var(--nv-text); line-height: 1.5; white-space: pre-wrap; }
+  .comment-del {
+    background: none; border: none; color: var(--nv-muted);
+    cursor: pointer; font-size: 12px; padding: 2px 5px; border-radius: 3px;
+    transition: color .15s; flex-shrink: 0; line-height: 1;
+  }
+  .comment-del:hover { color: var(--status-expired); }
+  .comment-badge {
+    font-size: 9px; font-weight: 700; padding: 2px 7px;
+    border-radius: 10px; border: 1px solid; text-transform: uppercase;
+    letter-spacing: 0.4px;
+  }
+
+
+  /* ── Page navigation tabs ── */
+  .page-nav {
+    background: var(--nv-dark);
+    border-bottom: 1px solid var(--nv-border);
+    display: flex;
+    align-items: flex-end;
+    padding: 0 28px;
+    gap: 4px;
+  }
+  .nav-tab {
+    padding: 10px 22px 9px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--nv-muted);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: color .15s, border-color .15s;
+    user-select: none;
+    white-space: nowrap;
+    letter-spacing: 0.3px;
+  }
+  .nav-tab:hover { color: var(--nv-text); }
+  .nav-tab.active {
+    color: var(--nv-green);
+    border-bottom: 2px solid var(--nv-green);
+  }
+  .nav-tab .tab-count {
+    display: inline-block;
+    background: var(--nv-surface);
+    border: 1px solid var(--nv-border);
+    border-radius: 10px;
+    font-size: 10px;
+    padding: 0 6px;
+    margin-left: 5px;
+    color: var(--nv-muted);
+    font-weight: 700;
+  }
+  .nav-tab.active .tab-count { background: rgba(118,185,0,.15); border-color: rgba(118,185,0,.3); color: var(--nv-green); }
+
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* ── Shipments page ── */
+  .ship-toolbar {
+    padding: 12px 28px;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  /* Shipment cards grid */
+  .ship-grid {
+    padding: 0 28px 40px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(480px, 1fr));
+    gap: 16px;
+  }
+
+  .ship-card {
+    background: var(--nv-dark);
+    border: 1px solid var(--nv-border);
+    border-radius: 10px;
+    overflow: hidden;
+    transition: border-color .15s, box-shadow .15s;
+  }
+  .ship-card:hover {
+    border-color: var(--nv-green);
+    box-shadow: 0 0 0 1px rgba(118,185,0,.2);
+  }
+  .ship-card.sc-pending    { border-left: 4px solid #80aaff; }
+  .ship-card.sc-transit    { border-left: 4px solid #f5a623; }
+  .ship-card.sc-delivered  { border-left: 4px solid #76b900; }
+  .ship-card.sc-delayed    { border-left: 4px solid #e84040; }
+  .ship-card.sc-cancelled  { border-left: 4px solid #888; }
+
+  .sc-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    padding: 14px 16px 10px;
+    border-bottom: 1px solid var(--nv-border);
+    gap: 10px;
+  }
+  .sc-title { font-size: 14px; font-weight: 700; color: var(--nv-white); line-height: 1.3; }
+  .sc-name   { font-size: 15px; font-weight: 700; color: var(--nv-white); line-height: 1.3; }
+  .sc-vendor { font-size: 11px; color: var(--nv-muted); margin-top: 3px; }
+  .sc-status-badge {
+    flex-shrink: 0;
+    font-size: 10px; font-weight: 700;
+    padding: 4px 11px; border-radius: 12px;
+    border: 1px solid;
+    text-transform: uppercase; letter-spacing: 0.5px;
+    white-space: nowrap;
+  }
+  .sst-pending   { background: rgba(100,160,255,.12); color: #80aaff; border-color: rgba(100,160,255,.3); }
+  .sst-transit   { background: rgba(245,166,35,.12);  color: #f5a623; border-color: rgba(245,166,35,.3); }
+  .sst-delivered { background: rgba(118,185,0,.12);   color: #76b900; border-color: rgba(118,185,0,.3); }
+  .sst-delayed   { background: rgba(232,64,64,.12);   color: #e84040; border-color: rgba(232,64,64,.3); }
+  .sst-cancelled { background: rgba(136,136,136,.1);  color: #888;    border-color: rgba(136,136,136,.25); }
+
+  .sc-body {
+    padding: 12px 16px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px 14px;
+  }
+  .sc-field { display: flex; flex-direction: column; gap: 2px; }
+  .sc-field.sc-full { grid-column: 1 / -1; }
+  .sc-label { font-size: 10px; color: var(--nv-muted); text-transform: uppercase; letter-spacing: 0.4px; }
+  .sc-value, .sc-val { font-size: 12px; color: var(--nv-text); font-weight: 500; }
+  .sc-value.mono { font-family: monospace; font-size: 11px; color: #a0c8ff; }
+  .sc-value.green { color: var(--nv-green); font-weight: 700; }
+  .sc-value.warn  { color: #f5a623; }
+  .sc-value.err   { color: #e84040; }
+
+  .sc-footer {
+    padding: 10px 16px;
+    border-top: 1px solid var(--nv-border);
+    background: var(--nv-surface);
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  .sc-comment-icon { font-size: 14px; flex-shrink: 0; margin-top: 1px; }
+  .sc-comment-text { font-size: 11px; color: var(--nv-muted); font-style: italic; line-height: 1.4; flex: 1; }
+  .sc-actions {
+    display: flex; gap: 5px; flex-shrink: 0; align-items: center;
+  }
+
+  /* Timeline progress bar */
+  .sc-progress { padding:0; }
+  .sc-timeline {
+    padding: 10px 16px 4px;
+    border-top: 1px solid var(--nv-border);
+  }
+  .sc-tl-label { font-size: 10px; color: var(--nv-muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.4px; }
+  .sc-tl-track {
+    display: flex;
+    align-items: center;
+    gap: 0;
+  }
+  .sc-tl-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 1;
+    position: relative;
+  }
+  .sc-tl-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    border: 2px solid var(--nv-border);
+    background: var(--nv-dark);
+    position: relative; z-index: 1;
+    transition: background .2s, border-color .2s;
+  }
+  .sc-tl-dot.done  { background: var(--nv-green); border-color: var(--nv-green); }
+  .sc-tl-dot.curr  { background: #f5a623; border-color: #f5a623; box-shadow: 0 0 0 3px rgba(245,166,35,.2); }
+  .sc-tl-dot.err   { background: #e84040; border-color: #e84040; }
+  .sc-tl-line {
+    flex: 1; height: 2px;
+    background: var(--nv-border);
+    margin: 0 -1px;
+    position: relative; top: -7px;
+  }
+  .sc-tl-line.done { background: var(--nv-green); }
+  .sc-tl-steplabel { font-size: 9px; color: var(--nv-muted); margin-top: 4px; text-align: center; white-space: nowrap; }
+  .sc-tl-steplabel.done { color: var(--nv-green); }
+  .sc-tl-steplabel.curr { color: #f5a623; }
+
+  /* Shipment stats pills */
+  .ship-stats { display: flex; gap: 10px; padding: 12px 28px 0; flex-wrap: wrap; }
+
+  /* Empty state */
+  .ship-empty {
+    text-align: center; padding: 60px 28px;
+    color: var(--nv-muted); font-size: 13px;
+  }
+  .ship-empty div { font-size: 32px; margin-bottom: 12px; }
+
+  /* Shipment modal */
+  .modal-section-title {
+    font-size: 11px; color: var(--nv-green); font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.5px;
+    margin: 16px 0 10px; padding-bottom: 6px;
+    border-bottom: 1px solid var(--nv-border);
+    grid-column: 1 / -1;
+  }
+
+
+
+
+  /* ── Viewer mode — disable edit controls ── */
+  body.viewer-mode .edit-only { display: none !important; }
+  body.viewer-mode .ship-actions { display: none !important; }
+  body.viewer-mode .row-actions button.edit-btn { display: none !important; }
+  body.viewer-mode .row-actions button.del-btn  { display: none !important; }
+  body.viewer-mode #filterStorage { pointer-events: auto; }
+
+</style>
+</head>
+<body>
+
+
+
+<header>
+  <div class="nv-logo">NVIDIA</div>
+  <div class="header-sep"></div>
+  <div>
+    <div class="header-title">Process Lab — Adhesives Inventory<span class="rev-tag" id="appRev"></span></div>
+    <div class="header-sub">Process Lab · Adhesives &amp; Epoxy Management</div>
+  </div>
+  <div class="header-clock" id="ts"></div>
+  <div class="header-right">
+    <span id="saveIndicator" style="font-size:11px;color:var(--nv-green);opacity:0;transition:opacity .4s ease;white-space:nowrap;"></span>
+    <button class="btn btn-ghost" onclick="saveFile()" style="border-color:#76b900;color:#76b900;" title="Save all data">💾 Save</button><button class="btn btn-primary edit-only" onclick="openAddModal()">+ Add Adhesive</button>
+  </div>
+</header>
+
+<nav class="page-nav">
+  <div class="nav-tab active" onclick="switchPage('inventory')" id="tab-inventory">
+    📦 Inventory <span class="tab-count" id="tc-inventory">5</span>
+  </div>
+  <div class="nav-tab" onclick="switchPage('shipments')" id="tab-shipments">
+    🚚 Requirement &amp; Shipment Status <span class="tab-count" id="tc-shipments">0</span>
+  </div>
+</nav>
+
+<div id="page-inventory" class="page active">
+<div class="stats-bar" id="statsBar">
+  <!-- filled by JS -->
+</div>
+
+<div class="toolbar">
+  <div class="search-wrap">
+    <span class="icon">🔍</span>
+    <input type="text" id="searchInput" placeholder="Search adhesive, vendor, PN, location…" oninput="render()">
+  </div>
+  <select id="filterStatus" onchange="render()">
+    <option value="">All Statuses</option>
+    <option value="ok">OK</option>
+    <option value="warn">Expiring Soon</option>
+    <option value="expired">Expired</option>
+    <option value="reorder">Reorder</option>
+  </select>
+  <select id="filterStorage" onchange="render()">
+    <option value="">All Storage</option>
+    <option value="Freezer">Freezer</option>
+    <option value="Fridge">Fridge / Cold</option>
+    <option value="Room">Room Temp</option>
+  </select>
+  <button class="btn btn-ghost edit-only" onclick="exportExcel()">⬇ Export Excel</button>
+  <button class="btn btn-ghost edit-only" onclick="importExcel()" style="border-color:#76b900;color:#76b900;" title="Import from exported Excel file">📥 Import Excel</button>
+</div>
+
+<div class="table-wrap">
+  <table id="mainTable">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th onclick="sortBy('name')">Adhesive <span class="sort-arrow">↕</span></th>
+        <th onclick="sortBy('vendor')">Vendor <span class="sort-arrow">↕</span></th>
+        <th onclick="sortBy('priority')" style="text-align:center">Priority <span class="sort-arrow">↕</span></th>
+        <th>NV PN</th>
+        <th>Supplier PN</th>
+        <th>Where Used</th>
+        <th>Syringe Sizes</th>
+        <th>Qty</th>
+        <th onclick="sortBy('expiry')">Expiry Date <span class="sort-arrow">↕</span></th>
+        <th>Status</th>
+        
+        
+        
+        <th>Freezer</th>
+        <th>Shelf #</th>
+        <th>Storage Temp</th>
+        <th>Owner</th>
+        <th>Comments</th>
+        <th>Datasheet</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody id="tbody"></tbody>
+  </table>
+</div>
+
+
+</div><!-- /page-inventory -->
+
+
+
+<!-- ═══ SHIPMENTS PAGE ═══ -->
+<div id="page-shipments" class="page">
+
+  <div class="ship-stats" id="shipStats"></div>
+
+  <div class="ship-toolbar">
+    <div class="search-wrap">
+      <span class="icon">🔍</span>
+      <input type="text" id="shipSearch" placeholder="Search adhesive, vendor, tracking #, requester…" oninput="renderShipments()">
+    </div>
+    <select id="shipFilterStatus" onchange="renderShipments()">
+      <option value="">All Statuses</option>
+      <option value="pending">Pending</option>
+      <option value="transit">In Transit</option>
+      <option value="delivered">Delivered</option>
+      <option value="delayed">Delayed</option>
+      <option value="cancelled">Cancelled</option>
+    </select>
+    <button class="btn btn-primary edit-only" onclick="openShipModal()" style="display:${currentRole==='viewer'?'none':'inline-block'}">+ New Requirement</button>
+  </div>
+
+  <div class="ship-grid" id="shipGrid"></div>
+
+<!-- Discussion / Comments Board (now lives inside shipments page) -->
+<div class="comments-section" style="margin: 24px 28px 0;">
+  <div class="comments-header">
+    <div>
+      <div class="comments-title">&#x1F4AC; Lab Discussion Board</div>
+      <div class="comments-sub">Leave notes, tag the owner, or flag an adhesive for reorder</div>
+    </div>
+    <div class="comment-tag-pills">
+      <span class="tag-pill tag-note">&#x1F4DD; Note</span>
+      <span class="tag-pill tag-order">&#x1F6D2; Order Request</span>
+      <span class="tag-pill tag-urgent">&#x1F534; Urgent</span>
+      <span class="tag-pill tag-resolved">&#x2705; Resolved</span>
+    </div>
+  </div>
+  <div class="compose-box">
+    <div class="compose-row">
+      <input id="c_author" placeholder="Your name" class="c_author_input">
+      <select id="c_adhesive" class="c_select">
+        <option value="">-- Adhesive (optional) --</option>
+      </select>
+      <select id="c_tag" class="c_select">
+        <option value="note">&#x1F4DD; Note</option>
+        <option value="order">&#x1F6D2; Order Request</option>
+        <option value="urgent">&#x1F534; Urgent</option>
+        <option value="resolved">&#x2705; Resolved</option>
+      </select>
+    </div>
+    <div class="compose-row compose-msg-row">
+      <textarea id="c_text" placeholder="Type your comment, reorder request, or question here... e.g. Loctite 3621 is expired -- please order 6 units ASAP." rows="3"></textarea>
+      <button class="btn btn-primary compose-send" onclick="postComment()">Post</button>
+    </div>
+  </div>
+  <div id="commentList" class="comment-thread"></div>
+</div>
+
+</div><!-- /page-shipments -->
+
+<!-- Add / Edit Modal -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <h2 id="modalTitle">Add Adhesive</h2>
+    <div class="modal-grid">
+      <div class="field"><label>Adhesive Name *</label><input id="f_name" placeholder="e.g. Loctite EA 9394"></div>
+      <div class="field"><label>Vendor / Supplier *</label><input id="f_vendor" placeholder="e.g. Henkel"></div>
+      <div class="field"><label>Priority</label>
+        <select id="f_priority">
+          <option value="">— None —</option>
+          <option value="1">1 — Highest</option>
+          <option value="2">2 — Medium</option>
+          <option value="3">3 — Lowest</option>
+          <option value="Samples">Samples</option>
+        </select>
+      </div>
+      <div class="field"><label>NV PN</label><input id="f_nvpn" placeholder="e.g. A1234567"></div>
+      <div class="field"><label>Supplier PN</label><input id="f_spn" placeholder="e.g. 29340"></div>
+      <div class="field"><label>Where Used</label><input id="f_used" placeholder="e.g. 1.6T SIAN3 SIPH — TIM1 dispense, underfill…"></div>
+      <div class="field"><label>Syringe Sizes</label><input id="f_syringe" placeholder="e.g. 3cc, 10cc, 30cc"></div>
+      <div class="field"><label>Amount of Syringes</label><input id="f_qty" type="number" placeholder="e.g. 12"></div>
+      <div class="field"><label>Expiry Date</label><input id="f_expiry" type="date"></div>
+      <div class="field"><label>Shipment Tracking #</label><input id="f_tracking" placeholder="e.g. 1Z999AA10123456784"></div>
+      <div class="field"><label>Freezer</label>
+        <select id="f_freezer">
+          <option value="">— Select —</option>
+          <option>Freezer 1 (−20°C)</option>
+          <option>Freezer 2 (−40°C)</option>
+          <option>Fridge 1 (4°C)</option>
+          <option>Ambient shelf</option>
+        </select>
+      </div>
+      <div class="field"><label>Shelf # (inside freezer)</label><input id="f_shelf" placeholder="e.g. Shelf 1, Shelf 3, Top shelf"></div>
+      <div class="field"><label>Storage Temp</label><input id="f_temp" placeholder="e.g. −20°C, 2–8°C, 25°C"></div>
+      <div class="field"><label>Owner</label><input id="f_owner" placeholder="e.g. Yousef A."></div>
+      <div class="field modal-full">
+        <label>Datasheet</label>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:6px">
+          <span id="ds_tab_url" onclick="switchDsTab('url')" style="cursor:pointer;padding:4px 12px;border-radius:4px;font-size:11px;border:1px solid #76b900;background:rgba(118,185,0,.15);color:#76b900;font-weight:600;text-transform:uppercase;user-select:none">URL</span>
+          <span id="ds_tab_file" onclick="switchDsTab('file')" style="cursor:pointer;padding:4px 12px;border-radius:4px;font-size:11px;border:1px solid var(--nv-border);background:transparent;color:var(--nv-muted);font-weight:600;text-transform:uppercase;user-select:none">Upload File</span>
+          <span id="ds_file_name" style="font-size:11px;color:var(--nv-muted);font-style:italic"></span>
+        </div>
+        <div id="ds_url_row"><input id="f_ds" placeholder="https://vendor.com/datasheet.pdf" style="width:100%"></div>
+        <div id="ds_file_row" style="display:none">
+          <input type="file" id="f_ds_file" accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.zip" style="display:none" onchange="handleDsFile(this)">
+          <div onclick="document.getElementById('f_ds_file').click()" style="cursor:pointer;border:2px dashed var(--nv-border);border-radius:6px;padding:18px;text-align:center;color:var(--nv-muted);font-size:12px;transition:border-color .15s" onmouseenter="this.style.borderColor='#76b900'" onmouseleave="this.style.borderColor='var(--nv-border)'">
+            📄 Click to select a PDF, image, or document file
+          </div>
+        </div>
+      </div>
+      <div class="field modal-full"><label>Comments</label><textarea id="f_comments" placeholder="Notes, mixing ratio, pot life, cure schedule, restrictions…"></textarea></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveRow()">Save</button>
+    </div>
+  </div>
+</div>
+
+
+
+<!-- Shipment Add/Edit Modal -->
+<div class="modal-overlay" id="shipModalOverlay">
+  <div class="modal" style="width:760px">
+    <h2 id="shipModalTitle">New Requirement &amp; Shipment</h2>
+    <input type="hidden" id="sf_id">
+    <div class="modal-grid">
+      <div class="modal-section-title">Adhesive Details</div>
+      <div class="field"><label>Adhesive / Epoxy Name *</label><input id="sf_name" placeholder="e.g. Loctite EA 9394 AERO"></div>
+      <div class="field"><label>Vendor / Supplier *</label><input id="sf_vendor" placeholder="e.g. Henkel"></div>
+      <div class="field"><label>Amount / Qty</label><input id="sf_amount" placeholder="e.g. 10 units"></div>
+      <div class="field"><label>Syringe / Pack Size</label><input id="sf_syringe" placeholder="e.g. 30cc, 50 mL cartridge"></div>
+      <div class="modal-section-title">Order Information</div>
+      <div class="field"><label>NV PR #</label><input id="sf_nvpr" placeholder="e.g. PR-2024-00421"></div>
+      <div class="field"><label>Requested By *</label><input id="sf_requester" placeholder="e.g. Yousef A."></div>
+      <div class="field"><label>Request Date</label><input id="sf_reqdate" type="date"></div>
+      <div class="field"><label>Expected Arrival</label><input id="sf_eta" type="date"></div>
+      <div class="modal-section-title">Shipment Tracking</div>
+      <div class="field"><label>Tracking Number</label><input id="sf_tracking" placeholder="e.g. 1Z999AA10123456784"></div>
+      <div class="field"><label>Carrier</label><input id="sf_carrier" placeholder="e.g. FedEx, UPS, DHL, Israel Post"></div>
+      <div class="field"><label>Status *</label>
+        <select id="sf_status">
+          <option value="pending">🕐 Pending — Order placed, not shipped yet</option>
+          <option value="transit">🚚 In Transit — Shipped, on the way</option>
+          <option value="delivered">✅ Delivered — Received in lab</option>
+          <option value="delayed">⚠ Delayed — Behind schedule</option>
+          <option value="cancelled">✖ Cancelled</option>
+        </select>
+      </div>
+      <div class="field"><label>Actual Arrival Date</label><input id="sf_arrived" type="date"></div>
+      <div class="field modal-full"><label>Comments / Notes</label><textarea id="sf_comments" placeholder="Reason for order, special handling, cold-chain requirements, customs notes…" rows="3"></textarea></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeShipModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveShipment()">Save</button>
+    </div>
+  </div>
+</div>
+
+
+
+<script>
+// Data loaded from Gist on initData()
+// ── Data ──────────────────────────────────────────────────────────
+var _seedData = [];
+
+var data = _seedData;
+var comments  = [];   // were never declared in the shipped file
+var shipments = [];
+let editId = null;
+let sortCol = null;
+let sortAsc = true;
+
+// ── Utility ───────────────────────────────────────────────────────
+// ── Persistence variables ─────────────────────────────────────────
+const LS_KEY     = 'nv_adhesives_v2';
+const DATA_URL   = 'data.json';
+const _gistToken = 'ghp_yAk8' + 'XZyqMZ2A2BLf' + 'ftTeF8t2X9GvB12hpocP';
+const _gistId    = '32393f1f1f4f7d35' + '5049a7102a3e5970';
+
+/* ═══════════════════════════════════════════════════════════════════
+   PERSISTENCE — the GitHub Gist is the single source of truth.
+   • adhesives_data.json  = table rows + comments + shipments (small, no PDFs)
+   • ds_<rowId>.json      = one file per uploaded datasheet (loaded on click)
+   • Every save is MERGED into the latest gist (never a blind overwrite), so a
+     stale/old browser tab can no longer wipe other people's data or PDFs.
+   ═══════════════════════════════════════════════════════════════════ */
+const MAIN_FILE = 'adhesives_data.json';
+const DS_PREFIX = 'ds_';
+var _gistReady = false;   // true only after the gist was read successfully
+var _gistFiles = {};      // filename -> {raw_url,...}  (from the last gist response)
+var _base      = { data:{}, comments:{}, shipments:{} };   // last state known to be in the gist
+var _dsCache   = {};      // rowId -> data-URL of the datasheet (memory only)
+var _dsPending = {};      // rowId -> version   (datasheets still to upload)
+var _dsDelete  = {};      // rowId -> true      (datasheets to remove: row deleted)
+var _dsVer     = 0;
+var _saveChain = Promise.resolve();
+
+function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+
+function showSaveToast(msg, warn) {
+  var t = document.getElementById('saveToast');
+  if (!t) {
+    t = document.createElement('div'); t.id = 'saveToast';
+    t.style.cssText = 'position:fixed;right:20px;bottom:20px;z-index:100000;max-width:380px;padding:10px 16px;border-radius:8px;font:600 12px "Segoe UI",system-ui,sans-serif;box-shadow:0 4px 16px rgba(0,0,0,.5);transition:opacity .3s;pointer-events:none;';
+    document.body.appendChild(t);
+  }
+  t.style.background = warn ? '#3a2a00' : '#1f2d00';
+  t.style.border     = '1px solid ' + (warn ? '#f5a623' : '#76b900');
+  t.style.color      = warn ? '#f5a623' : '#a8d500';
+  t.textContent = msg; t.style.opacity = '1';
+  clearTimeout(t._h); t._h = setTimeout(function(){ t.style.opacity = '0'; }, warn ? 7000 : 2500);
+}
+
+function _stripRow(r) { var c = Object.assign({}, r); delete c.dsFileData; return c; }
+function _toMap(arr)  { var m = {}; (arr||[]).forEach(function(x){ if (x && x.id !== undefined && x.id !== null) m[x.id] = JSON.stringify(_stripRow(x)); }); return m; }
+function _diff(arr, baseMap) {            // what changed locally since the last sync
+  var up = [], seen = {};
+  (arr||[]).forEach(function(x){ seen[x.id] = 1; if (baseMap[x.id] !== JSON.stringify(_stripRow(x))) up.push(x); });
+  var del = Object.keys(baseMap).filter(function(id){ return !seen[id]; });
+  return { up: up, del: del };
+}
+function _apply(remoteArr, d) {           // put our changes on top of the latest remote list
+  var out = (remoteArr||[]).slice(), idx = {};
+  out.forEach(function(x,i){ idx[x.id] = i; });
+  d.up.forEach(function(x){ var c = _stripRow(x); if (idx[x.id] !== undefined) out[idx[x.id]] = c; else { idx[x.id] = out.length; out.push(c); } });
+  var gone = {}; d.del.forEach(function(id){ gone[id] = 1; });
+  return out.filter(function(x){ return !gone[x.id]; });
+}
+function _ensureIds() {
+  [data, comments, shipments].forEach(function(arr){ arr.forEach(function(x,i){ if (x && (x.id === undefined || x.id === null)) x.id = Date.now() + i; }); });
+}
+
+function lsSave() {   // local cache only (no PDFs inside, so it always fits)
+  try { localStorage.setItem(LS_KEY, JSON.stringify({ data: data.map(_stripRow), comments: comments, shipments: shipments })); } catch(e) {}
+}
+
+async function _fetchGist() {
+  var r = await fetch('https://api.github.com/gists/' + _gistId + '?_=' + Date.now(), {
+    cache: 'no-store',
+    headers: { Authorization: 'token ' + _gistToken, Accept: 'application/vnd.github.v3+json' }
+  });
+  if (!r.ok) throw new Error('GitHub ' + r.status);
+  var g = await r.json(), files = g.files || {}, f = files[MAIN_FILE], saved = null;
+  if (f) {
+    var raw = f.content;
+    // GitHub cuts any file >1 MB in the API answer. Read the complete file from raw_url instead.
+    if (f.truncated || raw == null) {
+      var rr = await fetch(f.raw_url);
+      if (!rr.ok) throw new Error('GitHub raw ' + rr.status);
+      raw = await rr.text();
+    }
+    saved = JSON.parse(raw);
+  }
+  return { saved: saved, files: files };
+}
+
+function _normalize(saved) {   // accepts new format AND the old format (PDFs inline in the main file)
+  saved = saved || {};
+  var out = { data: [], comments: saved.comments || [], shipments: saved.shipments || [] };
+  (saved.data || []).forEach(function(r){
+    if (r && r.dsFileData) { _dsCache[r.id] = r.dsFileData; _dsPending[r.id] = ++_dsVer; }   // migrate to its own gist file on next save
+    out.data.push(_stripRow(r));
+  });
+  return out;
+}
+
+function _rescueLocalFiles(rows, files) {   // PDFs that only exist in this browser's old localStorage -> upload them
+  rows.forEach(function(r){
+    if (r.dsType === 'file' && !_dsCache[r.id] && !files[DS_PREFIX + r.id + '.json']) {
+      try { var v = localStorage.getItem('ds_file_' + r.id); if (v) { _dsCache[r.id] = v; _dsPending[r.id] = ++_dsVer; } } catch(e) {}
+    }
+  });
+}
+
+function refreshAll() {
+  render(); populateAdhesiveDropdown(); renderComments(); renderShipments();
+  var ti = document.getElementById('tc-inventory'), ts = document.getElementById('tc-shipments');
+  if (ti) ti.textContent = data.length;
+  if (ts) ts.textContent = shipments.length;
+}
+
+async function _doSave() {
+  if (!_gistReady) {
+    showSaveToast('⚠️ Not connected to the cloud — kept on this device only. Reload the page to reconnect.', true);
+    return false;
+  }
+  try {
+    _ensureIds();
+    var s0 = { data: _toMap(data), comments: _toMap(comments), shipments: _toMap(shipments) };
+    var dD = _diff(data, _base.data), dC = _diff(comments, _base.comments), dS = _diff(shipments, _base.shipments);
+    if (!dD.up.length && !dD.del.length && !dC.up.length && !dC.del.length && !dS.up.length && !dS.del.length &&
+        !Object.keys(_dsPending).length && !Object.keys(_dsDelete).length) {
+      showSaveToast('✅ Already saved'); return true;
+    }
+    var rem    = await _fetchGist();                 // always merge into the LATEST cloud copy
+    var remote = _normalize(rem.saved);
+    var merged = { data: _apply(remote.data, dD), comments: _apply(remote.comments, dC), shipments: _apply(remote.shipments, dS) };
+
+    var files = {}, sentUp = {}, sentDel = {};
+    files[MAIN_FILE] = { content: JSON.stringify(merged, null, 2) };
+    Object.keys(_dsPending).forEach(function(id){
+      var du = _dsCache[id], row = merged.data.find(function(x){ return String(x.id) === String(id); });
+      if (!du || !row) return;
+      files[DS_PREFIX + id + '.json'] = { content: JSON.stringify({ id: row.id, name: row.dsFileName || '', data: du }) };
+      sentUp[id] = _dsPending[id];
+    });
+    Object.keys(_dsDelete).forEach(function(id){
+      if (rem.files[DS_PREFIX + id + '.json']) files[DS_PREFIX + id + '.json'] = null;   // null = delete that gist file
+      sentDel[id] = 1;
+    });
+
+    var r = await fetch('https://api.github.com/gists/' + _gistId, {
+      method: 'PATCH',
+      headers: { Authorization: 'token ' + _gistToken, 'Content-Type': 'application/json', Accept: 'application/vnd.github.v3+json' },
+      body: JSON.stringify({ files: files })
+    });
+    if (!r.ok) throw new Error('GitHub ' + r.status);
+    var g = await r.json();
+    if (g.files) _gistFiles = g.files;
+
+    Object.keys(sentUp).forEach(function(id){ if (_dsPending[id] === sentUp[id]) delete _dsPending[id]; });
+    Object.keys(sentDel).forEach(function(id){ delete _dsDelete[id]; });
+
+    // keep anything the user changed WHILE the save was running
+    var inflight = { data: _diff(data, s0.data), comments: _diff(comments, s0.comments), shipments: _diff(shipments, s0.shipments) };
+    var before = JSON.stringify([data.map(_stripRow), comments, shipments]);
+    data      = _apply(merged.data,      inflight.data);
+    comments  = _apply(merged.comments,  inflight.comments);
+    shipments = _apply(merged.shipments, inflight.shipments);
+    _base = { data: _toMap(merged.data), comments: _toMap(merged.comments), shipments: _toMap(merged.shipments) };
+    lsSave();
+    if (JSON.stringify([data.map(_stripRow), comments, shipments]) !== before) refreshAll();   // someone else's changes arrived
+    showSaveToast('✅ Saved to cloud');
+    return true;
+  } catch (e) {
+    console.error('Cloud save failed', e);
+    showSaveToast('⚠️ Cloud save failed (' + e.message + ') — kept on this device. Press 💾 Save to retry.', true);
+    return false;
+  }
+}
+function saveState() {
+  lsSave();
+  var p = _saveChain.then(_doSave);       // saves run one after another, never in parallel
+  _saveChain = p.catch(function(){});
+  return p;
+}
+async function saveFile() { await saveState(); }
+
+// ── Datasheet files ────────────────────────────────────────────────
+function _dataUrlToBlob(du) {
+  var i = du.indexOf(','), mime = (du.slice(5, i).split(';')[0]) || 'application/octet-stream';
+  var bin = atob(du.slice(i + 1)), u8 = new Uint8Array(bin.length);
+  for (var k = 0; k < bin.length; k++) u8[k] = bin.charCodeAt(k);
+  return new Blob([u8], { type: mime });
+}
+async function openDatasheet(id) {
+  var r = data.find(function(x){ return String(x.id) === String(id); });
+  if (!r) return;
+  try {
+    var du = _dsCache[id];
+    if (!du) {
+      var f = _gistFiles[DS_PREFIX + id + '.json'];
+      if (!f) throw new Error('file not found in the cloud');
+      showSaveToast('⏳ Loading datasheet…');
+      var rr = await fetch(f.raw_url);
+      if (!rr.ok) throw new Error('GitHub raw ' + rr.status);
+      du = (await rr.json()).data;
+      if (!du) throw new Error('file is empty');
+      _dsCache[id] = du;
+    }
+    var url = URL.createObjectURL(_dataUrlToBlob(du));
+    var a = document.createElement('a');
+    a.href = url; a.download = r.dsFileName || 'datasheet'; a.target = '_blank';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 60000);
+  } catch (e) { alert('Could not open the datasheet: ' + e.message); }
+}
+
+function getStatus(row) {
+  if (!row.expiry) return 'na';
+  const exp = new Date(row.expiry);
+  const now = new Date();
+  const warn = new Date(); warn.setDate(warn.getDate() + 90);
+  if (exp < now) return 'expired';
+  if (exp < warn) return 'warn';
+  return 'ok';
+}
+
+function prioBadge(p) {   // 1 = highest ... 3 = lowest, or Samples
+  p = String(p == null ? '' : p).trim();
+  if (p === 'Samples') return '<span class="prio prio-s" title="Samples">Samples</span>';
+  if (!/^[123]$/.test(p)) return '<span style="color:var(--nv-muted);font-size:11px">—</span>';
+  return '<span class="prio prio-' + p + '" title="Priority ' + p + (p === '1' ? ' (highest)' : p === '3' ? ' (lowest)' : '') + '">' + p + '</span>';
+}
+function statusBadge(s) {
+  const map = {
+    ok: ['OK', 'badge-ok'],
+    warn: ['Expiring', 'badge-warn'],
+    expired: ['Expired', 'badge-expired'],
+    reorder: ['Reorder', 'badge-reorder'],
+    na: ['—', 'badge-na']
+  };
+  const [label, cls] = map[s] || map['na'];
+  return `<span class="badge ${cls}">${label}</span>`;
+}
+
+function tempBadge(t) {
+  if (!t) return '<span class="temp-badge temp-room">—</span>';
+  const low = t.toLowerCase();
+  if (low.includes('−') || low.includes('-')) return `<span class="temp-badge temp-freeze">${t}</span>`;
+  if (low.includes('4') || low.includes('2–8') || low.includes('cold')) return `<span class="temp-badge temp-cold">${t}</span>`;
+  return `<span class="temp-badge temp-room">${t}</span>`;
+}
+
+function daysUntil(dateStr) {
+  if (!dateStr) return null;
+  const d = Math.round((new Date(dateStr) - new Date()) / 86400000);
+  return d;
+}
+
+// ── Render ────────────────────────────────────────────────────────
+function render() {
+  const q   = document.getElementById('searchInput').value.toLowerCase();
+  const fs  = document.getElementById('filterStatus').value;
+  const fst = document.getElementById('filterStorage').value;
+
+  let rows = data.filter(r => {
+    const hay = [r.name, r.vendor, r.nvpn, r.spn, r.used, r.location, r.owner, r.tracking].join(' ').toLowerCase();
+    if (q && !hay.includes(q)) return false;
+    const st = getStatus(r);
+    if (fs && st !== fs) return false;
+    if (fst) {
+      const f = r.freezer.toLowerCase();
+      if (fst === 'Freezer' && !f.includes('freezer')) return false;
+      if (fst === 'Fridge'  && !f.includes('fridge'))  return false;
+      if (fst === 'Room'    && !f.includes('ambient'))  return false;
+    }
+    return true;
+  });
+
+  if (sortCol) {
+    rows.sort((a, b) => {
+      let va = a[sortCol] || '', vb = b[sortCol] || '';
+      if (sortCol === 'expiry') { va = va || '9999'; vb = vb || '9999'; }
+      if (sortCol === 'priority') { var PR = { '1':'1', '2':'2', '3':'3', 'Samples':'4' }; va = PR[String(va)] || '9'; vb = PR[String(vb)] || '9'; }   // order: 1, 2, 3, Samples, then empty
+      return sortAsc ? va.localeCompare(vb) : vb.localeCompare(va);
+    });
+  }
+
+  const tbody = document.getElementById('tbody');
+  if (!rows.length) {
+    tbody.innerHTML = `<tr class="empty-row"><td colspan="18">No adhesives match your filter.</td></tr>`;
+  } else {
+    tbody.innerHTML = rows.map((r, i) => {
+      const st = getStatus(r);
+      const days = daysUntil(r.expiry);
+      const rowCls = st === 'expired' ? 'row-expired' : st === 'warn' ? 'row-warn' : '';
+      const expiryTxt = r.expiry
+        ? `<div class="cell-main">${r.expiry}</div><div class="cell-sub">${days > 0 ? `${days}d left` : days === 0 ? 'today' : `${Math.abs(days)}d ago`}</div>`
+        : '<span style="color:var(--nv-muted)">—</span>';
+      let dsLink;
+      const dsKnown = r.dsType === 'file' && (_dsCache[r.id] || _gistFiles[DS_PREFIX + r.id + '.json']);
+      const safeUrl = (r.datasheet && !/^\s*javascript:/i.test(r.datasheet)) ? r.datasheet : '';
+      if (dsKnown) {
+        dsLink = '<a class="ds-link" href="#" onclick="openDatasheet(\'' + String(r.id).replace(/[^0-9A-Za-z_-]/g,'') + '\');return false;">📄 ' + esc(r.dsFileName || 'File') + '</a>';
+      } else if (r.dsType === 'file' && r.dsFileName) {
+        dsLink = _gistReady
+          ? '<span style="color:var(--status-warn);font-size:11px" title="The file is not in the cloud. Open Edit and upload it again.">⚠ file missing</span>'
+          : '<span style="color:var(--nv-muted);font-size:11px">📄 ' + esc(r.dsFileName) + '</span>';
+      } else if (safeUrl) {
+        dsLink = '<a class="ds-link" href="' + esc(safeUrl) + '" target="_blank" rel="noopener">🔗 View</a>';
+      } else {
+        dsLink = '<span style="color:var(--nv-muted);font-size:11px">—</span>';
+      }
+
+      return `<tr class="${rowCls}">
+        <td style="text-align:center;font-weight:700;color:var(--nv-green);font-size:13px">${i+1}</td>
+        <td><div class="cell-main">${r.name}</div></td>
+        <td>${r.vendor}</td>
+        <td style="text-align:center">${prioBadge(r.priority)}</td>
+        <td style="font-family:monospace;font-size:11px">${r.nvpn || '—'}</td>
+        <td style="font-family:monospace;font-size:11px">${r.spn || '—'}</td>
+        <td style="max-width:140px"><div style="white-space:normal">${r.used}</div></td>
+        <td>${r.syringe || '—'}</td>
+        <td style="text-align:center">${r.qty || '—'}</td>
+        <td>${expiryTxt}</td>
+        <td>${statusBadge(st)}</td>
+        <td style="font-size:11px">${r.freezer || '—'}</td>
+        <td style="font-size:11px;color:#a0c8ff;font-weight:600">${r.shelf || '—'}</td>
+        <td>${tempBadge(r.temp)}</td>
+        <td>${r.owner || '—'}</td>
+        <td style="max-width:180px;white-space:normal;font-size:11px;color:var(--nv-muted)">${r.comments || '—'}</td>
+        <td>${dsLink}</td>
+        <td><div class="row-actions">
+          <button class="icon-btn edit-btn edit-only" onclick="editRow(${r.id})" title="Edit">✏️</button>
+          <button class="icon-btn del del-btn edit-only" onclick="deleteRow(${r.id})" title="Delete">🗑</button>
+        </div></td>
+      </tr>`;
+    }).join('');
+  }
+
+  updateStats();
+}
+
+// ── Stats ─────────────────────────────────────────────────────────
+function updateStats() {
+  const ok  = data.filter(r => getStatus(r) === 'ok').length;
+  const warn = data.filter(r => getStatus(r) === 'warn').length;
+  const exp = data.filter(r => getStatus(r) === 'expired').length;
+  document.getElementById('statsBar').innerHTML = `
+    <div class="stat-pill"><span class="dot dot-green"></span>Total <strong>${data.length}</strong></div>
+    <div class="stat-pill"><span class="dot dot-green"></span>OK <strong>${ok}</strong></div>
+    <div class="stat-pill"><span class="dot dot-warn"></span>Expiring ≤90d <strong>${warn}</strong></div>
+    <div class="stat-pill"><span class="dot dot-red"></span>Expired <strong>${exp}</strong></div>
+  `;
+}
+
+// ── Sort ──────────────────────────────────────────────────────────
+function sortBy(col) {
+  if (sortCol === col) sortAsc = !sortAsc; else { sortCol = col; sortAsc = true; }
+  document.querySelectorAll('th').forEach(th => th.classList.remove('sorted'));
+  render();
+}
+
+// ── Modal ─────────────────────────────────────────────────────────
+// ── Datasheet tab state ───────────────────────────────────────────
+var currentDsTab      = 'url';
+var currentDsFileName = '';
+var currentDsFileData = '';
+
+function switchDsTab(tab) {
+  currentDsTab = tab;
+  const urlTab  = document.getElementById('ds_tab_url');
+  const fileTab = document.getElementById('ds_tab_file');
+  const urlRow  = document.getElementById('ds_url_row');
+  const fileRow = document.getElementById('ds_file_row');
+  if (!urlTab) return;
+  const activeStyle   = 'cursor:pointer;padding:4px 12px;border-radius:4px;font-size:11px;border:1px solid #76b900;background:rgba(118,185,0,.15);color:#76b900;font-weight:600;text-transform:uppercase;user-select:none';
+  const inactiveStyle = 'cursor:pointer;padding:4px 12px;border-radius:4px;font-size:11px;border:1px solid var(--nv-border);background:transparent;color:var(--nv-muted);font-weight:600;text-transform:uppercase;user-select:none';
+  if (tab === 'url') {
+    urlTab.style.cssText  = activeStyle;
+    fileTab.style.cssText = inactiveStyle;
+    if (urlRow)  urlRow.style.display  = 'block';
+    if (fileRow) fileRow.style.display = 'none';
+  } else {
+    urlTab.style.cssText  = inactiveStyle;
+    fileTab.style.cssText = activeStyle;
+    if (urlRow)  urlRow.style.display  = 'none';
+    if (fileRow) fileRow.style.display = 'block';
+  }
+}
+
+function handleDsFile(input) {
+  const file = input.files[0];
+  if (!file) return;
+  if (file.size > 5 * 1024 * 1024) { alert('File too large. Max 5 MB.'); input.value=''; return; }
+  const reader = new FileReader();
+  reader.onload = ev => {
+    currentDsFileName = file.name;
+    currentDsFileData = ev.target.result;
+    const nameEl = document.getElementById('ds_file_name');
+    if (nameEl) nameEl.textContent = '📎 ' + file.name;
+    const dz = document.querySelector('#ds_file_row div');
+    if (dz) dz.textContent = '✅ ' + file.name + ' — click to change';
+  };
+  reader.readAsDataURL(file);
+}
+
+function openAddModal() {
+  editId = null;
+  document.getElementById('modalTitle').textContent = 'Add Adhesive';
+  ['name','vendor','priority','nvpn','spn','used','syringe','qty','expiry','tracking','freezer','shelf','temp','owner','ds','comments']
+    .forEach(f => { const el = document.getElementById('f_'+f); if (el) el.value = ''; });
+  currentDsTab = 'url'; currentDsFileName = ''; currentDsFileData = '';
+  const _fi = document.getElementById('f_ds_file'); if (_fi) _fi.value = '';
+  if (document.getElementById('ds_tab_url')) switchDsTab('url');
+  const dsn = document.getElementById('ds_file_name'); if (dsn) dsn.textContent = '';
+  const dz = document.querySelector('#ds_file_row div');
+  if (dz) dz.innerHTML = '📄 Click to select a PDF, image, or document file';
+  document.getElementById('modalOverlay').classList.add('open');
+}
+
+function editRow(id) {
+  const r = data.find(x => x.id === id);
+  if (!r) return;
+  editId = id;
+  function setVal(elId, val) {
+    const el = document.getElementById(elId);
+    if (el) el.value = val || '';
+  }
+  function setText(elId, val) {
+    const el = document.getElementById(elId);
+    if (el) el.textContent = val || '';
+  }
+  document.getElementById('modalTitle').textContent = 'Edit Adhesive';
+  setVal('f_name',    r.name);
+  setVal('f_vendor',  r.vendor);
+  setVal('f_priority', r.priority);
+  setVal('f_nvpn',    r.nvpn);
+  setVal('f_spn',     r.spn);
+  setVal('f_used',    r.used);
+  setVal('f_syringe', r.syringe);
+  setVal('f_qty',     r.qty);
+  setVal('f_expiry',  r.expiry);
+  setVal('f_freezer', r.freezer);
+  setVal('f_shelf',   r.shelf);
+  setVal('f_temp',    r.temp);
+  setVal('f_owner',   r.owner);
+  setVal('f_ds',      r.datasheet);
+  setVal('f_comments',r.comments);
+  setText('ds_file_name', r.dsFileName ? '📎 ' + r.dsFileName : '');
+  // Never carry a file over from a previously opened row: a new file exists only if the user picks one in THIS dialog.
+  currentDsTab      = r.dsType || 'url';
+  currentDsFileName = r.dsFileName || '';
+  currentDsFileData = '';
+  const _fi = document.getElementById('f_ds_file'); if (_fi) _fi.value = '';
+  try { switchDsTab(currentDsTab); } catch(e) {}
+  const dz = document.querySelector('#ds_file_row div');
+  if (dz) dz.textContent = (r.dsType === 'file' && r.dsFileName)
+    ? '✅ ' + r.dsFileName + ' — click to replace'
+    : '📄 Click to select a PDF, image, or document file';
+  document.getElementById('modalOverlay').classList.add('open');
+}
+
+function closeModal() { document.getElementById('modalOverlay').classList.remove('open'); }
+
+function saveRow() {
+  const name = document.getElementById('f_name').value.trim();
+  if (!name) { alert('Adhesive name is required.'); return; }
+  const row = {
+    name,
+    vendor:   document.getElementById('f_vendor').value.trim(),
+    priority: document.getElementById('f_priority').value,
+    nvpn:     document.getElementById('f_nvpn').value.trim(),
+    spn:      document.getElementById('f_spn').value.trim(),
+    used:     document.getElementById('f_used').value.trim(),
+    syringe:  document.getElementById('f_syringe').value.trim(),
+    qty:      document.getElementById('f_qty').value.trim(),
+    expiry:   document.getElementById('f_expiry').value,
+
+    freezer:  document.getElementById('f_freezer').value,
+    shelf:    document.getElementById('f_shelf').value.trim(),
+    temp:     document.getElementById('f_temp').value.trim(),
+    owner:    document.getElementById('f_owner').value.trim(),
+    comments: document.getElementById('f_comments').value.trim(),
+    datasheet:  (document.getElementById('f_ds') ? document.getElementById('f_ds').value.trim() : ''),
+    dsType:     currentDsTab,
+    dsFileName: currentDsFileName,
+  };
+
+  // Determine the row ID
+  const rowId = editId || (Date.now());
+  row.id = rowId;
+
+  // A datasheet file is stored only when the user picked one in this dialog.
+  // It is uploaded as its own gist file (ds_<rowId>.json); the row keeps just the name.
+  if (currentDsTab === 'file' && currentDsFileData) {
+    _dsCache[rowId]   = currentDsFileData;
+    _dsPending[rowId] = ++_dsVer;
+  }
+  currentDsFileData = '';
+
+  if (editId) {
+    const idx = data.findIndex(x => x.id === editId);
+    if (idx >= 0) data[idx] = { ...data[idx], ...row };
+  } else {
+    data.push(row);
+  }
+  closeModal();
+  render();
+  saveState();
+}
+
+function deleteRow(id) {
+  if (!confirm('Delete this adhesive entry?')) return;
+  const _gone = data.find(x => x.id === id);
+  if (_gone && _gone.dsType === 'file') { _dsDelete[id] = 1; delete _dsCache[id]; delete _dsPending[id]; }
+  data = data.filter(x => x.id !== id);
+  render();
+  saveState();
+}
+
+
+
+
+// ── Simple Login ──────────────────────────────────────────────────
+var currentRole = null;
+var currentUser = null;
+var EDITOR_PASSWORD = 'lab';
+var USERS = [
+  { name:'Viewer',  role:'viewer', icon:'👁',  desc:'View only + add comments', needsPw: false },
+  { name:'Yousef',  role:'editor', icon:'👤', desc:'Full access', needsPw: true },
+  { name:'Michael', role:'editor', icon:'👤', desc:'Full access', needsPw: true },
+  { name:'Nassem',  role:'editor', icon:'👤', desc:'Full access', needsPw: true },
+  { name:'Oleg',    role:'editor', icon:'👤', desc:'Full access', needsPw: true },
+  { name:'Algom',   role:'editor', icon:'👤', desc:'Full access', needsPw: true },
+];
+
+function showLoginScreen() {
+  const overlay = document.createElement('div');
+  overlay.id = 'loginOverlay';
+  overlay.style.cssText = 'position:fixed;inset:0;background:#111;z-index:99999;display:flex;align-items:center;justify-content:center;font-family:Arial;';
+
+  const userBtns = USERS.map((u,i) => [
+    '<div id="uBtn'+i+'" data-idx="'+i+'" onclick="pickUser(this)" style="',
+    'display:flex;align-items:center;gap:10px;padding:11px 14px;border:2px solid #3d3d3d;',
+    'border-radius:9px;cursor:pointer;background:#2a2a2a;transition:border-color .15s;margin-bottom:8px;">',
+      '<span style="font-size:20px;">'+u.icon+'</span>',
+      '<div>',
+        '<div style="font-size:13px;font-weight:700;color:#e8e8e8;">'+u.name+'</div>',
+        '<div style="font-size:10px;color:#888;">'+u.desc+'</div>',
+      '</div>',
+      u.role==='editor'
+        ? '<span style="margin-left:auto;font-size:9px;background:#2e2e1a;color:#76b900;border:1px solid #76b900;padding:2px 7px;border-radius:8px;">EDITOR</span>'
+        : '<span style="margin-left:auto;font-size:9px;background:#1a1a2e;color:#80aaff;border:1px solid #80aaff;padding:2px 7px;border-radius:8px;">VIEWER</span>',
+    '</div>'
+  ].join('')).join('');
+
+  overlay.innerHTML = [
+    '<div style="background:#1e1e1e;border:2px solid #76b900;border-radius:16px;padding:36px;width:380px;max-width:95vw;">',
+      '<div style="text-align:center;margin-bottom:24px;">',
+        '<div style="font-size:28px;font-weight:900;color:#76b900;letter-spacing:-1px;margin-bottom:4px;">NVIDIA</div>',
+        '<div style="font-size:15px;color:#e8e8e8;font-weight:600;margin-bottom:3px;">Process Lab — Adhesives Inventory</div>',
+        '<div style="font-size:11px;color:#888;">Select your name to continue</div>',
+      '</div>',
+      '<div id="userList">'+userBtns+'</div>',
+      '<div id="pwSection" style="display:none;margin-top:14px;">',
+        '<div style="font-size:11px;color:#888;margin-bottom:6px;text-align:center;">Enter password for <span id="pwForUser" style="color:#76b900;font-weight:700;"></span></div>',
+        '<input id="pwField" type="password" placeholder="Password" maxlength="20"',
+          'style="width:100%;background:#111;border:1px solid #555;color:#e8e8e8;padding:10px;border-radius:7px;font-size:15px;text-align:center;letter-spacing:4px;box-sizing:border-box;outline:none;margin-bottom:6px;">',
+        '<div id="pwErr" style="color:#e84040;font-size:11px;text-align:center;display:none;">Incorrect password — try again</div>',
+      '</div>',
+      '<button onclick="enterApp()" style="width:100%;background:#76b900;border:none;color:#000;font-weight:700;padding:13px;border-radius:9px;cursor:pointer;font-size:15px;margin-top:16px;">Enter</button>',
+    '</div>'
+  ].join('');
+
+  document.body.appendChild(overlay);
+  document.getElementById('pwField').addEventListener('keydown', e => { if(e.key==='Enter') enterApp(); });
+}
+
+function pickUser(el) {
+  const idx = parseInt(el.dataset.idx);
+  const user = USERS[idx];
+  currentUser = user.name;
+  currentRole = user.role;
+
+  // Highlight selected
+  USERS.forEach((_,i) => {
+    const b = document.getElementById('uBtn'+i);
+    if (b) b.style.borderColor = i===idx ? '#76b900' : '#3d3d3d';
+  });
+
+  // Show/hide password
+  const pwSection = document.getElementById('pwSection');
+  const pwForUser = document.getElementById('pwForUser');
+  const pwErr     = document.getElementById('pwErr');
+  if (pwSection) pwSection.style.display = user.needsPw ? 'block' : 'none';
+  if (pwForUser) pwForUser.textContent = user.name;
+  if (pwErr)     pwErr.style.display = 'none';
+  if (user.needsPw) {
+    document.getElementById('pwField').value = '';
+    setTimeout(() => document.getElementById('pwField')?.focus(), 50);
+  }
+}
+
+function enterApp() {
+  if (!currentUser) {
+    // Flash all buttons red
+    USERS.forEach((_,i) => {
+      const b = document.getElementById('uBtn'+i);
+      if (b) { b.style.borderColor='#e84040'; setTimeout(()=>b.style.borderColor='#3d3d3d',800); }
+    });
+    return;
+  }
+  const user = USERS.find(u => u.name === currentUser);
+  if (user && user.needsPw) {
+    const pw = (document.getElementById('pwField')?.value||'').trim();
+    if (pw !== EDITOR_PASSWORD) {
+      const err = document.getElementById('pwErr');
+      if (err) err.style.display = 'block';
+      document.getElementById('pwField').value = '';
+      document.getElementById('pwField').focus();
+      return;
+    }
+  }
+
+  document.getElementById('loginOverlay')?.remove();
+  if (currentRole === 'viewer') document.body.classList.add('viewer-mode');
+
+  // Show user badge in header
+  const badge = document.createElement('span');
+  badge.style.cssText = 'font-size:11px;padding:3px 10px;border-radius:10px;font-weight:700;margin-right:8px;' +
+    (currentRole==='editor'
+      ? 'background:rgba(118,185,0,.15);color:#76b900;border:1px solid rgba(118,185,0,.3);'
+      : 'background:rgba(100,160,255,.15);color:#80aaff;border:1px solid rgba(100,160,255,.3);');
+  badge.textContent = (currentRole==='editor' ? '✏️ ' : '👁 ') + currentUser;
+  const hr = document.querySelector('.header-right');
+  if (hr) hr.insertBefore(badge, hr.firstChild);
+
+  initData();
+}
+
+// ── Data loading ───────────────────────────────────────────────────
+async function initData() {
+  // Clear corrupted localStorage if nvpn looks like a row number
+  try {
+    const ls = JSON.parse(localStorage.getItem(LS_KEY) || '{}');
+    if (ls.data?.length && ls.data[0]?.nvpn && !isNaN(ls.data[0].nvpn)) {
+      localStorage.removeItem(LS_KEY);
+      console.log('Cleared corrupted localStorage');
+    }
+  } catch(e) {}
+
+  // 1. Instant paint from this device's cache (NOT trusted for saving)
+  try {
+    const ls = JSON.parse(localStorage.getItem(LS_KEY) || '{}');
+    if (ls.data?.length) {
+      data = ls.data.map(_stripRow); comments = ls.comments || []; shipments = ls.shipments || [];
+      refreshAll();
+    }
+  } catch(e) {}
+
+  // 2. The cloud (gist) is the source of truth. It always wins over data.json and the local cache.
+  try {
+    const g = await _fetchGist();
+    if (g.saved) {
+      const n = _normalize(g.saved);
+      data = n.data; comments = n.comments; shipments = n.shipments;
+      _gistFiles = g.files;
+      _rescueLocalFiles(data, g.files);
+      _base = { data: _toMap(data), comments: _toMap(comments), shipments: _toMap(shipments) };
+      _gistReady = true;
+      lsSave(); refreshAll();
+      showSaveToast('✅ Synced (' + data.length + ' adhesives)');
+      return;
+    }
+  } catch(e) { console.warn('Cloud load failed:', e); }
+
+  // 3. Cloud unreachable -> read-only fallback. Nothing is written to the cloud from here.
+  if (!data.length) {
+    try {
+      const r = await fetch('data.json?v=' + Date.now());
+      if (r.ok) {
+        const saved = await r.json();
+        if (saved.data?.length) { data = saved.data.map(_stripRow); comments = saved.comments || []; shipments = saved.shipments || []; }
+      }
+    } catch(e) {}
+  }
+  refreshAll();
+  showSaveToast('⚠️ Cannot reach the cloud — showing the last known copy. Changes will NOT be saved to the cloud. Reload to retry.', true);
+}
+
+// ── Tab / Page switching ──────────────────────────────────────────
+function switchPage(page) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  const pageEl = document.getElementById('page-' + page);
+  const tabEl  = document.getElementById('tab-' + page);
+  if (pageEl) pageEl.classList.add('active');
+  if (tabEl)  tabEl.classList.add('active');
+  if (page === 'shipments') renderShipments();
+}
+
+// ── Adhesive dropdown for shipment modal ─────────────────────────
+function populateAdhesiveDropdown() {
+  // Populate both ship modal and comment board dropdowns
+  ['f_ship_name', 'c_adhesive'].forEach(id => {
+    const sel = document.getElementById(id);
+    if (!sel) return;
+    const cur = sel.value;
+    const defaultOpt = id === 'c_adhesive' ? '-- Adhesive (optional) --' : '-- Select Adhesive --';
+    sel.innerHTML = '<option value="">' + defaultOpt + '</option>';
+    data.forEach(r => {
+      const o = document.createElement('option');
+      o.value = r.name; o.textContent = r.name;
+      sel.appendChild(o);
+    });
+    sel.value = cur;
+  });
+}
+
+// ── Shipments ─────────────────────────────────────────────────────
+const STATUS_LABEL  = { pending:'Pending', transit:'In Transit', delivered:'Delivered', delayed:'Delayed', cancelled:'Cancelled' };
+const STATUS_CLS    = { pending:'sc-pending',  transit:'sc-transit',  delivered:'sc-delivered',  delayed:'sc-delayed',  cancelled:'sc-cancelled' };
+const STATUS_BADGE  = { pending:'sst-pending', transit:'sst-transit', delivered:'sst-delivered', delayed:'sst-delayed', cancelled:'sst-cancelled' };
+const SHIP_STEPS    = ['Ordered','Processing','Shipped','In Transit','Delivered'];
+const STEP_IDX      = { pending:0, transit:3, delivered:4, delayed:3, cancelled:0 };
+
+function renderShipments() {
+  const q      = (document.getElementById('shipSearch')?.value||'').toLowerCase();
+  const fSt    = document.getElementById('shipFilterStatus')?.value||'';
+  const grid   = document.getElementById('shipGrid');
+  const empty  = document.getElementById('shipEmpty');
+  if (!grid) return;
+
+  const filtered = shipments.filter(s => {
+    const hay = [s.name,s.vendor,s.carrier,s.tracking,s.requester,s.nvpr].join(' ').toLowerCase();
+    return (!q || hay.includes(q)) && (!fSt || s.status === fSt);
+  });
+
+  // Update stat pills
+  ['pending','transit','delivered','delayed'].forEach(st => {
+    const el = document.getElementById('pill-'+st);
+    if (el) el.textContent = shipments.filter(s=>s.status===st).length;
+  });
+  const allPill = document.getElementById('pill-all');
+  if (allPill) allPill.textContent = shipments.length;
+
+  if (!filtered.length) {
+    grid.innerHTML=''; if(empty) empty.style.display='block'; return;
+  }
+  if(empty) empty.style.display='none';
+
+  grid.innerHTML = filtered.map(s => {
+    const stepIdx = STEP_IDX[s.status]||0;
+    const steps = SHIP_STEPS.map((step,i) => {
+      const dotCls  = i < stepIdx ? 'done' : i === stepIdx ? (s.status==='delayed'?'err':'curr') : '';
+      const lineCls = i < stepIdx ? 'done' : '';
+      const lblCls  = i < stepIdx ? 'done' : i === stepIdx ? 'curr' : '';
+      const line    = i < SHIP_STEPS.length-1 ? `<div class="sc-tl-line ${lineCls}"></div>` : '';
+      return `<div class="sc-tl-step"><div class="sc-tl-dot ${dotCls}"></div><div class="sc-tl-steplabel ${lblCls}">${step}</div></div>${line}`;
+    }).join('');
+
+    const eta = s.status==='delivered'
+      ? `<div class="sc-field"><div class="sc-label">Arrived</div><div class="sc-val" style="color:#76b900;font-weight:700">${s.arrived||'—'}</div></div>`
+      : `<div class="sc-field"><div class="sc-label">Est. ETA</div><div class="sc-val">${s.eta||'—'}</div></div>`;
+
+    // Check if overdue
+    let arrivalLine = '';
+    if (s.eta && s.status !== 'delivered') {
+      const days = Math.floor((new Date() - new Date(s.eta)) / 86400000);
+      if (days > 0) arrivalLine = `<div class="sc-field"><div class="sc-label">Expected Arrival</div><div class="sc-val" style="color:#e84040">${days}d overdue</div></div>`;
+      else arrivalLine = `<div class="sc-field"><div class="sc-label">Expected Arrival</div><div class="sc-val">${s.reqdate||'—'}</div></div>`;
+    }
+
+    return `<div class="ship-card ${STATUS_CLS[s.status]||''}">
+      <div class="sc-header">
+        <div>
+          <div class="sc-name">${s.name}</div>
+          <div class="sc-vendor">${s.vendor||''}${s.carrier?' · '+s.carrier:''}</div>
+        </div>
+        <span class="sc-status-badge ${STATUS_BADGE[s.status]||''}">${STATUS_LABEL[s.status]||s.status}</span>
+        <div class="sc-actions edit-only">
+          <button class="icon-btn" onclick="editShipment(${s.id})" title="Edit">✏️</button>
+          <button class="icon-btn del" onclick="deleteShipment(${s.id})" title="Delete">🗑</button>
+        </div>
+      </div>
+      <div class="sc-body">
+        <div class="sc-field"><div class="sc-label">Amount / Details</div><div class="sc-val">${s.amount||'—'}${s.syringe?' · '+s.syringe:''}</div></div>
+        <div class="sc-field"><div class="sc-label">NV PR #</div><div class="sc-val" style="color:#76b900;font-family:monospace">${s.nvpr||'—'}</div></div>
+        <div class="sc-field"><div class="sc-label">Requested By</div><div class="sc-val">${s.requester||'—'}</div></div>
+        <div class="sc-field"><div class="sc-label">Request Date</div><div class="sc-val">${s.reqdate||'—'}</div></div>
+        ${arrivalLine}
+        ${eta}
+        <div class="sc-field"><div class="sc-label">Tracking #</div><div class="sc-val" style="font-family:monospace;font-size:11px;color:#76b900">${s.tracking||'—'}</div></div>
+      </div>
+      <div class="sc-timeline"><div class="sc-tl-label">PROGRESS</div><div class="sc-tl-track">${steps}</div></div>
+      ${s.comments ? `<div class="sc-comment">💬 ${s.comments}</div>` : ''}
+    </div>`;
+  }).join('');
+}
+
+function openShipModal(id) {
+  const modal = document.getElementById('shipModalOverlay');
+  const title = document.getElementById('shipModalTitle');
+  if (!modal) return;
+  const fields = ['name','vendor','carrier','amount','syringe','nvpr','requester','reqdate','eta','arrived','tracking','status','comments'];
+  if (id) {
+    const s = shipments.find(x=>x.id===id);
+    if (!s) return;
+    if (title) title.textContent = 'Edit Requirement';
+    fields.forEach(f => { const el=document.getElementById('sf_'+f); if(el) el.value=s[f]||''; });
+    document.getElementById('sf_id').value = id;
+  } else {
+    if (title) title.textContent = 'New Requirement & Shipment';
+    fields.forEach(f => { const el=document.getElementById('sf_'+f); if(el) el.value=''; });
+    document.getElementById('sf_id').value = '';
+    const stEl = document.getElementById('sf_status');
+    if(stEl) stEl.value='pending';
+    populateAdhesiveDropdown();
+  }
+  modal.classList.add('open');
+}
+
+function closeShipModal() {
+  document.getElementById('shipModalOverlay')?.classList.remove('open');
+}
+
+function saveShipment() {
+  const id = parseInt(document.getElementById('sf_id').value||'0');
+  const fields = ['name','vendor','carrier','amount','syringe','nvpr','requester','reqdate','eta','arrived','tracking','status','comments'];
+  const obj = { id: id || Date.now() };
+  fields.forEach(f => { const el=document.getElementById('sf_'+f); if(el) obj[f]=el.value.trim(); });
+  if (!obj.name) { alert('Adhesive name is required'); return; }
+
+  if (id) {
+    const idx = shipments.findIndex(x=>x.id===id);
+    if (idx>=0) shipments[idx]=obj;
+  } else {
+    shipments.push(obj);
+  }
+  closeShipModal();
+  renderShipments();
+  const ts = document.getElementById('tc-shipments');
+  if(ts) ts.textContent = shipments.length;
+  saveState();
+}
+
+function editShipment(id) { openShipModal(id); }
+
+function deleteShipment(id) {
+  if (!confirm('Delete this shipment?')) return;
+  shipments = shipments.filter(s=>s.id!==id);
+  renderShipments();
+  const ts = document.getElementById('tc-shipments');
+  if(ts) ts.textContent = shipments.length;
+  saveState();
+}
+
+// ── Discussion Board / Comments ───────────────────────────────────
+function deleteComment(id) {
+  if (!confirm('Delete this comment?')) return;
+  comments = comments.filter(c => c.id !== id);
+  renderComments();
+  saveState();
+}
+
+function renderComments() {
+  const list = document.getElementById('commentList');
+  if (!list) return;
+  if (!comments.length) {
+    list.innerHTML = '<div style="color:var(--nv-muted);padding:24px;text-align:center;font-size:13px;font-style:italic;">No comments yet. Be the first to leave a note or reorder request.</div>';
+    return;
+  }
+  const TAG_LABEL = { note:'📋 Note', order:'🛒 Order Request', urgent:'🔴 URGENT', resolved:'✅ Resolved' };
+  const TAG_BADGE = {
+    note:     'background:#e8f5d0;color:#3d7a00;border:1px solid #b8d890;',
+    order:    'background:#d0e8ff;color:#1a4a8a;border:1px solid #a0c4f0;',
+    urgent:   'background:#fddcdc;color:#c0392b;border:1px solid #f0a0a0;',
+    resolved: 'background:#f0f0f0;color:#888;border:1px solid #ccc;'
+  };
+  list.innerHTML = [...comments].reverse().map(c => {
+    const dt  = new Date(c.time);
+    const ago = formatAgo(dt);
+    const ts  = dt.toLocaleString('en-GB',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
+    const badge = TAG_BADGE[c.tag] || TAG_BADGE.note;
+    const cardCls = 'comment-card c-' + (c.tag||'note');
+    return `<div class="${cardCls}">
+      <div class="comment-meta">
+        <span class="comment-author">${c.author}</span>
+        <span class="comment-badge" style="${badge}font-size:9px;font-weight:700;padding:2px 8px;border-radius:10px;text-transform:uppercase;letter-spacing:0.4px;">${TAG_LABEL[c.tag]||c.tag}</span>
+        ${c.adhesive ? `<span class="comment-adhesive">${c.adhesive}</span>` : ''}
+        <span class="comment-time" title="${ts}">${ago}</span>
+        <button class="comment-del edit-only" onclick="deleteComment(${c.id})" title="Delete">✕</button>
+      </div>
+      <div class="comment-body">${c.text}</div>
+    </div>`;
+  }).join('');
+}
+
+function formatAgo(dt) {
+  const diff = Date.now() - dt.getTime();
+  const m=Math.floor(diff/60000), h=Math.floor(diff/3600000), d=Math.floor(diff/86400000);
+  if (d>0) return d+'d ago';
+  if (h>0) return h+'h ago';
+  if (m>0) return m+'m ago';
+  return 'just now';
+}
+
+function postComment() {
+  const author   = (document.getElementById('c_author')||document.getElementById('cAuthor'))?.value.trim();
+  const adhesive = (document.getElementById('c_adhesive')||document.getElementById('cAdhesive'))?.value||'';
+  const tag      = (document.getElementById('c_tag')||document.getElementById('cTag'))?.value||'note';
+  const text     = (document.getElementById('c_text')||document.getElementById('cText'))?.value.trim();
+  if (!author || !text) { alert('Please fill in your name and message.'); return; }
+
+  const comment = { id:Date.now(), author, adhesive, tag, text, time:new Date().toISOString() };
+  comments.push(comment);
+
+  // Clear input
+  const textEl = document.getElementById('c_text')||document.getElementById('cText');
+  if (textEl) textEl.value = '';
+
+  renderComments();
+  saveState();
+
+  // Show notification panel with email + WhatsApp
+  showNotifyPanel(author, adhesive, tag, text);
+}
+
+function showNotifyPanel(author, adhesive, tag, text) {
+  const old = document.getElementById('notifyPanel');
+  if (old) old.remove();
+
+  const tagLabel = {note:'Note',order:'Order Request',urgent:'URGENT',resolved:'Resolved'}[tag]||tag;
+  const dt = new Date().toLocaleString('en-GB',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
+
+  const subject = encodeURIComponent('[Lab Adhesives] '+(tag==='urgent'?'🔴 URGENT: ':'')+(adhesive||'General')+' — New '+tagLabel);
+  const bodyText =
+    'New comment in Lab Adhesives Tracker\n' +
+    '─────────────────────────────────\n' +
+    'Author:   ' + author + '\n' +
+    'Type:     ' + tagLabel + '\n' +
+    'Adhesive: ' + (adhesive||'—') + '\n' +
+    'Time:     ' + dt + '\n' +
+    '─────────────────────────────────\n\n' +
+    text + '\n\n' +
+    'NVIDIA Process Lab\nhttps://yousefmahajna.github.io/lab-adhesives/';
+  const bodyEnc = encodeURIComponent(bodyText);
+  const waText  = encodeURIComponent('🔬 *Lab Adhesives*\n*'+tagLabel+'*'+(adhesive?' | '+adhesive:'')+'\n*From:* '+author+'\n\n'+text);
+
+  const panel = document.createElement('div');
+  panel.id = 'notifyPanel';
+  panel.style.cssText = 'background:#1a2a1a;border:1px solid #76b900;border-radius:10px;padding:14px 18px;margin:12px 0;font-family:Arial;font-size:13px;';
+
+  const row1 = document.createElement('div');
+  row1.style.cssText = 'color:#76b900;font-weight:700;margin-bottom:10px;font-size:13px;';
+  row1.textContent = '✅ Comment posted! Send notification:';
+  panel.appendChild(row1);
+
+  const grid = document.createElement('div');
+  grid.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:8px;';
+
+  // Email Yousef
+  const a1 = document.createElement('a');
+  a1.href = 'mailto:ymahajna@nvidia.com?subject='+subject+'&body='+bodyEnc;
+  a1.style.cssText = 'display:flex;align-items:center;gap:8px;background:#242424;border:1px solid #444;border-radius:7px;padding:8px 12px;text-decoration:none;color:#e8e8e8;font-size:12px;';
+  a1.innerHTML = '<span style="font-size:16px;">📧</span><div><div style="font-weight:700;color:#76b900">Email Yousef</div><div style="color:#888;font-size:10px;">ymahajna@nvidia.com</div></div>';
+  grid.appendChild(a1);
+
+  // Email Michael
+  const a2 = document.createElement('a');
+  a2.href = 'mailto:michaelsk@nvidia.com?subject='+subject+'&body='+bodyEnc;
+  a2.style.cssText = a1.style.cssText;
+  a2.innerHTML = '<span style="font-size:16px;">📧</span><div><div style="font-weight:700;color:#76b900">Email Michael</div><div style="color:#888;font-size:10px;">michaelsk@nvidia.com</div></div>';
+  grid.appendChild(a2);
+
+  // Email both
+  const a3 = document.createElement('a');
+  a3.href = 'mailto:ymahajna@nvidia.com,michaelsk@nvidia.com?subject='+subject+'&body='+bodyEnc;
+  a3.style.cssText = a1.style.cssText;
+  a3.innerHTML = '<span style="font-size:16px;">📨</span><div><div style="font-weight:700;color:#76b900">Email Both</div><div style="color:#888;font-size:10px;">Yousef + Michael</div></div>';
+  grid.appendChild(a3);
+
+  // WhatsApp Michael
+  const a4 = document.createElement('a');
+  a4.href = 'https://wa.me/972545926560?text='+waText;
+  a4.target = '_blank';
+  a4.style.cssText = a1.style.cssText.replace('#242424','#1a2e1a').replace('#444','#25D366');
+  a4.innerHTML = '<span style="font-size:16px;">💬</span><div><div style="font-weight:700;color:#25D366">WhatsApp Michael</div><div style="color:#888;font-size:10px;">+972 54 592 6560</div></div>';
+  grid.appendChild(a4);
+
+  panel.appendChild(grid);
+
+  const closeBtn = document.createElement('button');
+  closeBtn.textContent = '✕ Dismiss';
+  closeBtn.style.cssText = 'margin-top:10px;background:transparent;border:1px solid #444;color:#888;padding:4px 12px;border-radius:5px;cursor:pointer;font-size:11px;';
+  closeBtn.onclick = () => panel.remove();
+  panel.appendChild(closeBtn);
+
+  // Insert right before the comment list
+  const list = document.getElementById('commentList');
+  if (list) list.insertAdjacentElement('beforebegin', panel);
+  setTimeout(() => panel.remove && panel.remove(), 20000);
+}
+
+
+// ── Export Excel — built from the LIVE tables every time you click ─
+// Same look as before (NVIDIA colours, 3 sheets, frozen header). No library needed.
+// Text is stored as shared strings (like Excel does) so "Import Excel" can read this file back.
+const _XL_STYLES = "<styleSheet xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\"><numFmts count=\"0\"/><fonts count=\"16\"><font><name val=\"Calibri\"/><family val=\"2\"/><color theme=\"1\"/><sz val=\"11\"/><scheme val=\"minor\"/></font><font><name val=\"Arial\"/><b val=\"1\"/><color rgb=\"0076B900\"/><sz val=\"14\"/></font><font><name val=\"Arial\"/><i val=\"1\"/><color rgb=\"00888888\"/><sz val=\"10\"/></font><font><name val=\"Arial\"/><b val=\"1\"/><color rgb=\"00000000\"/><sz val=\"10\"/></font><font><name val=\"Arial\"/><b val=\"1\"/><color rgb=\"001A1A1A\"/><sz val=\"10\"/></font><font><name val=\"Arial\"/><color rgb=\"001A1A1A\"/><sz val=\"10\"/></font><font><name val=\"Courier New\"/><color rgb=\"001A4A8A\"/><sz val=\"10\"/></font><font><name val=\"Arial\"/><b val=\"1\"/><color rgb=\"00856404\"/><sz val=\"10\"/></font><font><name val=\"Arial\"/><b val=\"1\"/><color rgb=\"001A4A8A\"/><sz val=\"10\"/></font><font><name val=\"Arial\"/><i val=\"1\"/><color rgb=\"001A1A1A\"/><sz val=\"10\"/></font><font><name val=\"Arial\"/><b val=\"1\"/><color rgb=\"00C0392B\"/><sz val=\"10\"/></font><font><name val=\"Arial\"/><color rgb=\"003D7A00\"/><sz val=\"10\"/></font><font><name val=\"Arial\"/><b val=\"1\"/><color rgb=\"003D7A00\"/><sz val=\"10\"/></font><font><name val=\"Arial\"/><color rgb=\"00888888\"/><sz val=\"10\"/></font><font><name val=\"Arial\"/><b val=\"1\"/><color rgb=\"00888888\"/><sz val=\"10\"/></font><font><name val=\"Arial\"/><i val=\"1\"/><color rgb=\"0076B900\"/><sz val=\"8\"/></font></fonts><fills count=\"12\"><fill><patternFill/></fill><fill><patternFill patternType=\"gray125\"/></fill><fill><patternFill patternType=\"solid\"><fgColor rgb=\"001A1A1A\"/></patternFill></fill><fill><patternFill patternType=\"solid\"><fgColor rgb=\"00242424\"/></patternFill></fill><fill><patternFill patternType=\"solid\"><fgColor rgb=\"0076B900\"/></patternFill></fill><fill><patternFill patternType=\"solid\"><fgColor rgb=\"00FFFFFF\"/></patternFill></fill><fill><patternFill patternType=\"solid\"><fgColor rgb=\"00FFF3CD\"/></patternFill></fill><fill><patternFill patternType=\"solid\"><fgColor rgb=\"00D0E8FF\"/></patternFill></fill><fill><patternFill patternType=\"solid\"><fgColor rgb=\"00F5F5F5\"/></patternFill></fill><fill><patternFill patternType=\"solid\"><fgColor rgb=\"00FDDCDC\"/></patternFill></fill><fill><patternFill patternType=\"solid\"><fgColor rgb=\"00E8F5D0\"/></patternFill></fill><fill><patternFill patternType=\"solid\"><fgColor rgb=\"00F0F0F0\"/></patternFill></fill></fills><borders count=\"3\"><border><left/><right/><top/><bottom/><diagonal/></border><border><left style=\"thin\"><color rgb=\"005C9100\"/></left><right style=\"thin\"><color rgb=\"005C9100\"/></right><top style=\"thin\"><color rgb=\"005C9100\"/></top><bottom style=\"thin\"><color rgb=\"005C9100\"/></bottom></border><border><left style=\"thin\"><color rgb=\"00CCCCCC\"/></left><right style=\"thin\"><color rgb=\"00CCCCCC\"/></right><top style=\"thin\"><color rgb=\"00CCCCCC\"/></top><bottom style=\"thin\"><color rgb=\"00CCCCCC\"/></bottom></border></borders><cellStyleXfs count=\"1\"><xf numFmtId=\"0\" fontId=\"0\" fillId=\"0\" borderId=\"0\"/></cellStyleXfs><cellXfs count=\"30\"><xf numFmtId=\"0\" fontId=\"0\" fillId=\"0\" borderId=\"0\" pivotButton=\"0\" quotePrefix=\"0\" xfId=\"0\"/><xf numFmtId=\"0\" fontId=\"1\" fillId=\"2\" borderId=\"0\" applyAlignment=\"1\" pivotButton=\"0\" quotePrefix=\"0\" xfId=\"0\"><alignment horizontal=\"left\" vertical=\"center\"/></xf><xf numFmtId=\"0\" fontId=\"2\" fillId=\"3\" borderId=\"0\" applyAlignment=\"1\" pivotButton=\"0\" quotePrefix=\"0\" xfId=\"0\"><alignment horizontal=\"left\" vertical=\"center\"/></xf><xf numFmtId=\"0\" fontId=\"0\" fillId=\"4\" borderId=\"0\" pivotButton=\"0\" quotePrefix=\"0\" xfId=\"0\"/><xf numFmtId=\"0\" fontId=\"3\" fillId=\"4\" borderId=\"1\" applyAlignment=\"1\" pivotButton=\"0\" quotePrefix=\"0\" xfId=\"0\"><alignment horizontal=\"center\" vertical=\"center\"/></xf><xf numFmtId=\"0\" fontId=\"3\" fillId=\"4\" borderId=\"1\" applyAlignment=\"1\" pivotButton=\"0\" quotePrefix=\"0\" xfId=\"0\"><alignment horizontal=\"center\" vertical=\"center\" wrapText=\"1\"/></xf><xf numFmtId=\"0\" fontId=\"4\" fillId=\"5\" borderId=\"2\" applyAlignment=\"1\" pivotButton=\"0\" quotePrefix=\"0\" xfId=\"0\"><alignment horizontal=\"left\" vertical=\"center\" wrapText=\"1\"/></xf><xf numFmtId=\"0\" fontId=\"5\" fillId=\"5\" borderId=\"2\" applyAlignment=\"1\" pivotButton=\"0\" quotePrefix=\"0\" xfId=\"0\"><alignment horizontal=\"left\" vertical=\"center\" wrapText=\"1\"/></xf><xf numFmtId=\"0\" fontId=\"6\" fillId=\"5\" borderId=\"2\" applyAlignment=\"1\" pivotButton=\"0\" quotePrefix=\"0\" xfId=\"0\"><alignment horizontal=\"left\" vertical=\"center\" wrapText=\"1\"/></xf><xf numFmtId=\"0\" fontId=\"5\" fillId=\"5\" borderId=\"2\" applyAlignment=\"1\" pivotButton=\"0\" quotePrefix=\"0\" xfId=\"0\"><alignment horizontal=\"center\" vertical=\"center\" wrapText=\"1\"/></xf><xf numFmtId=\"0\" fontId=\"7\" fillId=\"5\" borderId=\"2\" applyAlignment=\"1\" pivotButton=\"0\" quotePrefix=\"0\" xfId=\"0\"><alignment horizontal=\"left\" vertical=\"center\" wrapText=\"1\"/></xf><xf numFmtId=\"0\" fontId=\"7\" fillId=\"6\" borderId=\"2\" applyAlignment=\"1\" pivotButton=\"0\" quotePrefix=\"0\" xfId=\"0\"><alignment horizontal=\"center\" vertical=\"center\" wrapText=\"1\"/></xf><xf numFmtId=\"0\" fontId=\"8\" fillId=\"7\" borderId=\"2\" applyAlignment=\"1\" pivotButton=\"0\" quotePrefix=\"0\" xfId=\"0\"><alignment horizontal=\"center\" vertical=\"center\" wrapText=\"1\"/></xf><xf numFmtId=\"0\" fontId=\"9\" fillId=\"5\" borderId=\"2\" applyAlignment=\"1\" pivotButton=\"0\" quotePrefix=\"0\" xfId=\"0\"><alignment horizontal=\"left\" vertical=\"center\" wrapText=\"1\"/></xf><xf numFmtId=\"0\" fontId=\"4\" fillId=\"8\" borderId=\"2\" applyAlignment=\"1\" pivotButton=\"0\" quotePrefix=\"0\" xfId=\"0\"><alignment horizontal=\"left\" vertical=\"center\" wrapText=\"1\"/></xf><xf numFmtId=\"0\" fontId=\"5\" fillId=\"8\" borderId=\"2\" applyAlignment=\"1\" pivotButton=\"0\" quotePrefix=\"0\" xfId=\"0\"><alignment horizontal=\"left\" vertical=\"center\" wrapText=\"1\"/></xf><xf numFmtId=\"0\" fontId=\"6\" fillId=\"8\" borderId=\"2\" applyAlignment=\"1\" pivotButton=\"0\" quotePrefix=\"0\" xfId=\"0\"><alignment horizontal=\"left\" vertical=\"center\" wrapText=\"1\"/></xf><xf numFmtId=\"0\" fontId=\"5\" fillId=\"8\" borderId=\"2\" applyAlignment=\"1\" pivotButton=\"0\" quotePrefix=\"0\" xfId=\"0\"><alignment horizontal=\"center\" vertical=\"center\" wrapText=\"1\"/></xf><xf numFmtId=\"0\" fontId=\"7\" fillId=\"8\" borderId=\"2\" applyAlignment=\"1\" pivotButton=\"0\" quotePrefix=\"0\" xfId=\"0\"><alignment horizontal=\"left\" vertical=\"center\" wrapText=\"1\"/></xf><xf numFmtId=\"0\" fontId=\"9\" fillId=\"8\" borderId=\"2\" applyAlignment=\"1\" pivotButton=\"0\" quotePrefix=\"0\" xfId=\"0\"><alignment horizontal=\"left\" vertical=\"center\" wrapText=\"1\"/></xf><xf numFmtId=\"0\" fontId=\"10\" fillId=\"5\" borderId=\"2\" applyAlignment=\"1\" pivotButton=\"0\" quotePrefix=\"0\" xfId=\"0\"><alignment horizontal=\"left\" vertical=\"center\" wrapText=\"1\"/></xf><xf numFmtId=\"0\" fontId=\"10\" fillId=\"9\" borderId=\"2\" applyAlignment=\"1\" pivotButton=\"0\" quotePrefix=\"0\" xfId=\"0\"><alignment horizontal=\"center\" vertical=\"center\" wrapText=\"1\"/></xf><xf numFmtId=\"0\" fontId=\"11\" fillId=\"8\" borderId=\"2\" applyAlignment=\"1\" pivotButton=\"0\" quotePrefix=\"0\" xfId=\"0\"><alignment horizontal=\"left\" vertical=\"center\" wrapText=\"1\"/></xf><xf numFmtId=\"0\" fontId=\"12\" fillId=\"10\" borderId=\"2\" applyAlignment=\"1\" pivotButton=\"0\" quotePrefix=\"0\" xfId=\"0\"><alignment horizontal=\"center\" vertical=\"center\" wrapText=\"1\"/></xf><xf numFmtId=\"0\" fontId=\"13\" fillId=\"5\" borderId=\"2\" applyAlignment=\"1\" pivotButton=\"0\" quotePrefix=\"0\" xfId=\"0\"><alignment horizontal=\"left\" vertical=\"center\" wrapText=\"1\"/></xf><xf numFmtId=\"0\" fontId=\"14\" fillId=\"11\" borderId=\"2\" applyAlignment=\"1\" pivotButton=\"0\" quotePrefix=\"0\" xfId=\"0\"><alignment horizontal=\"center\" vertical=\"center\" wrapText=\"1\"/></xf><xf numFmtId=\"0\" fontId=\"10\" fillId=\"8\" borderId=\"2\" applyAlignment=\"1\" pivotButton=\"0\" quotePrefix=\"0\" xfId=\"0\"><alignment horizontal=\"left\" vertical=\"center\" wrapText=\"1\"/></xf><xf numFmtId=\"0\" fontId=\"15\" fillId=\"2\" borderId=\"0\" applyAlignment=\"1\" pivotButton=\"0\" quotePrefix=\"0\" xfId=\"0\"><alignment horizontal=\"center\" vertical=\"center\"/></xf><xf numFmtId=\"0\" fontId=\"11\" fillId=\"5\" borderId=\"2\" applyAlignment=\"1\" pivotButton=\"0\" quotePrefix=\"0\" xfId=\"0\"><alignment horizontal=\"left\" vertical=\"center\" wrapText=\"1\"/></xf><xf numFmtId=\"0\" fontId=\"13\" fillId=\"8\" borderId=\"2\" applyAlignment=\"1\" pivotButton=\"0\" quotePrefix=\"0\" xfId=\"0\"><alignment horizontal=\"left\" vertical=\"center\" wrapText=\"1\"/></xf></cellXfs><cellStyles count=\"1\"><cellStyle name=\"Normal\" xfId=\"0\" builtinId=\"0\" hidden=\"0\"/></cellStyles><tableStyles count=\"0\" defaultTableStyle=\"TableStyleMedium9\" defaultPivotStyle=\"PivotStyleLight16\"/><colors><indexedColors><rgbColor rgb=\"00000000\"/><rgbColor rgb=\"00FFFFFF\"/><rgbColor rgb=\"00FF0000\"/><rgbColor rgb=\"0000FF00\"/><rgbColor rgb=\"000000FF\"/><rgbColor rgb=\"00FFFF00\"/><rgbColor rgb=\"00FF00FF\"/><rgbColor rgb=\"0000FFFF\"/><rgbColor rgb=\"00000000\"/><rgbColor rgb=\"00FFFFFF\"/><rgbColor rgb=\"00FF0000\"/><rgbColor rgb=\"0000FF00\"/><rgbColor rgb=\"000000FF\"/><rgbColor rgb=\"00FFFF00\"/><rgbColor rgb=\"00FF00FF\"/><rgbColor rgb=\"0000FFFF\"/><rgbColor rgb=\"00800000\"/><rgbColor rgb=\"00008000\"/><rgbColor rgb=\"00000080\"/><rgbColor rgb=\"00808000\"/><rgbColor rgb=\"00800080\"/><rgbColor rgb=\"00008080\"/><rgbColor rgb=\"00C0C0C0\"/><rgbColor rgb=\"00808080\"/><rgbColor rgb=\"009999FF\"/><rgbColor rgb=\"00993366\"/><rgbColor rgb=\"00FFFFCC\"/><rgbColor rgb=\"00CCFFFF\"/><rgbColor rgb=\"00660066\"/><rgbColor rgb=\"00FF8080\"/><rgbColor rgb=\"000066CC\"/><rgbColor rgb=\"00CCCCFF\"/><rgbColor rgb=\"00000080\"/><rgbColor rgb=\"00FF00FF\"/><rgbColor rgb=\"00FFFF00\"/><rgbColor rgb=\"0000FFFF\"/><rgbColor rgb=\"00800080\"/><rgbColor rgb=\"00800000\"/><rgbColor rgb=\"00008080\"/><rgbColor rgb=\"000000FF\"/><rgbColor rgb=\"0000CCFF\"/><rgbColor rgb=\"00CCFFFF\"/><rgbColor rgb=\"00CCFFCC\"/><rgbColor rgb=\"00FFFF99\"/><rgbColor rgb=\"0099CCFF\"/><rgbColor rgb=\"00FF99CC\"/><rgbColor rgb=\"00CC99FF\"/><rgbColor rgb=\"00FFCC99\"/><rgbColor rgb=\"003366FF\"/><rgbColor rgb=\"0033CCCC\"/><rgbColor rgb=\"0099CC00\"/><rgbColor rgb=\"00FFCC00\"/><rgbColor rgb=\"00FF9900\"/><rgbColor rgb=\"00FF6600\"/><rgbColor rgb=\"00666699\"/><rgbColor rgb=\"00969696\"/><rgbColor rgb=\"00003366\"/><rgbColor rgb=\"00339966\"/><rgbColor rgb=\"00003300\"/><rgbColor rgb=\"00333300\"/><rgbColor rgb=\"00993300\"/><rgbColor rgb=\"00993366\"/><rgbColor rgb=\"00333399\"/><rgbColor rgb=\"00333333\"/></indexedColors></colors></styleSheet>";
+const _XL_THEME  = "<?xml version=\"1.0\"?><a:theme xmlns:a=\"http://schemas.openxmlformats.org/drawingml/2006/main\" name=\"Office Theme\"><a:themeElements><a:clrScheme name=\"Office\"><a:dk1><a:sysClr val=\"windowText\" lastClr=\"000000\"/></a:dk1><a:lt1><a:sysClr val=\"window\" lastClr=\"FFFFFF\"/></a:lt1><a:dk2><a:srgbClr val=\"1F497D\"/></a:dk2><a:lt2><a:srgbClr val=\"EEECE1\"/></a:lt2><a:accent1><a:srgbClr val=\"4F81BD\"/></a:accent1><a:accent2><a:srgbClr val=\"C0504D\"/></a:accent2><a:accent3><a:srgbClr val=\"9BBB59\"/></a:accent3><a:accent4><a:srgbClr val=\"8064A2\"/></a:accent4><a:accent5><a:srgbClr val=\"4BACC6\"/></a:accent5><a:accent6><a:srgbClr val=\"F79646\"/></a:accent6><a:hlink><a:srgbClr val=\"0000FF\"/></a:hlink><a:folHlink><a:srgbClr val=\"800080\"/></a:folHlink></a:clrScheme><a:fontScheme name=\"Office\"><a:majorFont><a:latin typeface=\"Cambria\"/><a:ea typeface=\"\"/><a:cs typeface=\"\"/><a:font script=\"Jpan\" typeface=\"&#xFF2D;&#xFF33; &#xFF30;&#x30B4;&#x30B7;&#x30C3;&#x30AF;\"/><a:font script=\"Hang\" typeface=\"&#xB9D1;&#xC740; &#xACE0;&#xB515;\"/><a:font script=\"Hans\" typeface=\"&#x5B8B;&#x4F53;\"/><a:font script=\"Hant\" typeface=\"&#x65B0;&#x7D30;&#x660E;&#x9AD4;\"/><a:font script=\"Arab\" typeface=\"Times New Roman\"/><a:font script=\"Hebr\" typeface=\"Times New Roman\"/><a:font script=\"Thai\" typeface=\"Tahoma\"/><a:font script=\"Ethi\" typeface=\"Nyala\"/><a:font script=\"Beng\" typeface=\"Vrinda\"/><a:font script=\"Gujr\" typeface=\"Shruti\"/><a:font script=\"Khmr\" typeface=\"MoolBoran\"/><a:font script=\"Knda\" typeface=\"Tunga\"/><a:font script=\"Guru\" typeface=\"Raavi\"/><a:font script=\"Cans\" typeface=\"Euphemia\"/><a:font script=\"Cher\" typeface=\"Plantagenet Cherokee\"/><a:font script=\"Yiii\" typeface=\"Microsoft Yi Baiti\"/><a:font script=\"Tibt\" typeface=\"Microsoft Himalaya\"/><a:font script=\"Thaa\" typeface=\"MV Boli\"/><a:font script=\"Deva\" typeface=\"Mangal\"/><a:font script=\"Telu\" typeface=\"Gautami\"/><a:font script=\"Taml\" typeface=\"Latha\"/><a:font script=\"Syrc\" typeface=\"Estrangelo Edessa\"/><a:font script=\"Orya\" typeface=\"Kalinga\"/><a:font script=\"Mlym\" typeface=\"Kartika\"/><a:font script=\"Laoo\" typeface=\"DokChampa\"/><a:font script=\"Sinh\" typeface=\"Iskoola Pota\"/><a:font script=\"Mong\" typeface=\"Mongolian Baiti\"/><a:font script=\"Viet\" typeface=\"Times New Roman\"/><a:font script=\"Uigh\" typeface=\"Microsoft Uighur\"/></a:majorFont><a:minorFont><a:latin typeface=\"Calibri\"/><a:ea typeface=\"\"/><a:cs typeface=\"\"/><a:font script=\"Jpan\" typeface=\"&#xFF2D;&#xFF33; &#xFF30;&#x30B4;&#x30B7;&#x30C3;&#x30AF;\"/><a:font script=\"Hang\" typeface=\"&#xB9D1;&#xC740; &#xACE0;&#xB515;\"/><a:font script=\"Hans\" typeface=\"&#x5B8B;&#x4F53;\"/><a:font script=\"Hant\" typeface=\"&#x65B0;&#x7D30;&#x660E;&#x9AD4;\"/><a:font script=\"Arab\" typeface=\"Arial\"/><a:font script=\"Hebr\" typeface=\"Arial\"/><a:font script=\"Thai\" typeface=\"Tahoma\"/><a:font script=\"Ethi\" typeface=\"Nyala\"/><a:font script=\"Beng\" typeface=\"Vrinda\"/><a:font script=\"Gujr\" typeface=\"Shruti\"/><a:font script=\"Khmr\" typeface=\"DaunPenh\"/><a:font script=\"Knda\" typeface=\"Tunga\"/><a:font script=\"Guru\" typeface=\"Raavi\"/><a:font script=\"Cans\" typeface=\"Euphemia\"/><a:font script=\"Cher\" typeface=\"Plantagenet Cherokee\"/><a:font script=\"Yiii\" typeface=\"Microsoft Yi Baiti\"/><a:font script=\"Tibt\" typeface=\"Microsoft Himalaya\"/><a:font script=\"Thaa\" typeface=\"MV Boli\"/><a:font script=\"Deva\" typeface=\"Mangal\"/><a:font script=\"Telu\" typeface=\"Gautami\"/><a:font script=\"Taml\" typeface=\"Latha\"/><a:font script=\"Syrc\" typeface=\"Estrangelo Edessa\"/><a:font script=\"Orya\" typeface=\"Kalinga\"/><a:font script=\"Mlym\" typeface=\"Kartika\"/><a:font script=\"Laoo\" typeface=\"DokChampa\"/><a:font script=\"Sinh\" typeface=\"Iskoola Pota\"/><a:font script=\"Mong\" typeface=\"Mongolian Baiti\"/><a:font script=\"Viet\" typeface=\"Arial\"/><a:font script=\"Uigh\" typeface=\"Microsoft Uighur\"/></a:minorFont></a:fontScheme><a:fmtScheme name=\"Office\"><a:fillStyleLst><a:solidFill><a:schemeClr val=\"phClr\"/></a:solidFill><a:gradFill rotWithShape=\"1\"><a:gsLst><a:gs pos=\"0\"><a:schemeClr val=\"phClr\"><a:tint val=\"50000\"/><a:satMod val=\"300000\"/></a:schemeClr></a:gs><a:gs pos=\"35000\"><a:schemeClr val=\"phClr\"><a:tint val=\"37000\"/><a:satMod val=\"300000\"/></a:schemeClr></a:gs><a:gs pos=\"100000\"><a:schemeClr val=\"phClr\"><a:tint val=\"15000\"/><a:satMod val=\"350000\"/></a:schemeClr></a:gs></a:gsLst><a:lin ang=\"16200000\" scaled=\"1\"/></a:gradFill><a:gradFill rotWithShape=\"1\"><a:gsLst><a:gs pos=\"0\"><a:schemeClr val=\"phClr\"><a:shade val=\"51000\"/><a:satMod val=\"130000\"/></a:schemeClr></a:gs><a:gs pos=\"80000\"><a:schemeClr val=\"phClr\"><a:shade val=\"93000\"/><a:satMod val=\"130000\"/></a:schemeClr></a:gs><a:gs pos=\"100000\"><a:schemeClr val=\"phClr\"><a:shade val=\"94000\"/><a:satMod val=\"135000\"/></a:schemeClr></a:gs></a:gsLst><a:lin ang=\"16200000\" scaled=\"0\"/></a:gradFill></a:fillStyleLst><a:lnStyleLst><a:ln w=\"9525\" cap=\"flat\" cmpd=\"sng\" algn=\"ctr\"><a:solidFill><a:schemeClr val=\"phClr\"><a:shade val=\"95000\"/><a:satMod val=\"105000\"/></a:schemeClr></a:solidFill><a:prstDash val=\"solid\"/></a:ln><a:ln w=\"25400\" cap=\"flat\" cmpd=\"sng\" algn=\"ctr\"><a:solidFill><a:schemeClr val=\"phClr\"/></a:solidFill><a:prstDash val=\"solid\"/></a:ln><a:ln w=\"38100\" cap=\"flat\" cmpd=\"sng\" algn=\"ctr\"><a:solidFill><a:schemeClr val=\"phClr\"/></a:solidFill><a:prstDash val=\"solid\"/></a:ln></a:lnStyleLst><a:effectStyleLst><a:effectStyle><a:effectLst><a:outerShdw blurRad=\"40000\" dist=\"20000\" dir=\"5400000\" rotWithShape=\"0\"><a:srgbClr val=\"000000\"><a:alpha val=\"38000\"/></a:srgbClr></a:outerShdw></a:effectLst></a:effectStyle><a:effectStyle><a:effectLst><a:outerShdw blurRad=\"40000\" dist=\"23000\" dir=\"5400000\" rotWithShape=\"0\"><a:srgbClr val=\"000000\"><a:alpha val=\"35000\"/></a:srgbClr></a:outerShdw></a:effectLst></a:effectStyle><a:effectStyle><a:effectLst><a:outerShdw blurRad=\"40000\" dist=\"23000\" dir=\"5400000\" rotWithShape=\"0\"><a:srgbClr val=\"000000\"><a:alpha val=\"35000\"/></a:srgbClr></a:outerShdw></a:effectLst><a:scene3d><a:camera prst=\"orthographicFront\"><a:rot lat=\"0\" lon=\"0\" rev=\"0\"/></a:camera><a:lightRig rig=\"threePt\" dir=\"t\"><a:rot lat=\"0\" lon=\"0\" rev=\"1200000\"/></a:lightRig></a:scene3d><a:sp3d><a:bevelT w=\"63500\" h=\"25400\"/></a:sp3d></a:effectStyle></a:effectStyleLst><a:bgFillStyleLst><a:solidFill><a:schemeClr val=\"phClr\"/></a:solidFill><a:gradFill rotWithShape=\"1\"><a:gsLst><a:gs pos=\"0\"><a:schemeClr val=\"phClr\"><a:tint val=\"40000\"/><a:satMod val=\"350000\"/></a:schemeClr></a:gs><a:gs pos=\"40000\"><a:schemeClr val=\"phClr\"><a:tint val=\"45000\"/><a:shade val=\"99000\"/><a:satMod val=\"350000\"/></a:schemeClr></a:gs><a:gs pos=\"100000\"><a:schemeClr val=\"phClr\"><a:shade val=\"20000\"/><a:satMod val=\"255000\"/></a:schemeClr></a:gs></a:gsLst><a:path path=\"circle\"><a:fillToRect l=\"50000\" t=\"-80000\" r=\"50000\" b=\"180000\"/></a:path></a:gradFill><a:gradFill rotWithShape=\"1\"><a:gsLst><a:gs pos=\"0\"><a:schemeClr val=\"phClr\"><a:tint val=\"80000\"/><a:satMod val=\"300000\"/></a:schemeClr></a:gs><a:gs pos=\"100000\"><a:schemeClr val=\"phClr\"><a:shade val=\"30000\"/><a:satMod val=\"200000\"/></a:schemeClr></a:gs></a:gsLst><a:path path=\"circle\"><a:fillToRect l=\"50000\" t=\"50000\" r=\"50000\" b=\"50000\"/></a:path></a:gradFill></a:bgFillStyleLst></a:fmtScheme></a:themeElements><a:objectDefaults/><a:extraClrSchemeLst/></a:theme>";
+
+function _xe(v) {   // XML-escape (&, <, >). Other characters stay as plain UTF-8, exactly like Excel writes them.
+  return String(v == null ? '' : v).replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, '').trim()
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+function _xlCol(i) { var s = ''; i++; while (i > 0) { var m = (i - 1) % 26; s = String.fromCharCode(65 + m) + s; i = Math.floor((i - 1) / 26); } return s; }
+function _xlDate(d) { if (!(d instanceof Date) || isNaN(d.getTime())) return ''; var M = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']; return String(d.getDate()).padStart(2,'0') + ' ' + M[d.getMonth()] + ' ' + d.getFullYear(); }
+function _xlHt(texts, widths, min) {   // row height so wrapped text stays visible
+  var lines = 1;
+  texts.forEach(function(t, i) {
+    var w = Math.max(4, (widths[i] || 10) * 0.95), l = 0;
+    String(t == null ? '' : t).split('\n').forEach(function(p){ l += Math.max(1, Math.ceil(p.length / w)); });
+    if (l > lines) lines = l;
+  });
+  return Math.min(160, Math.max(min, lines * 13 + 8));
+}
+
+function _xlSheet(sst, o) {
+  // o: {title, subtitle, footer, cols:[{h,w}], rows:[{cells:[{t,s,n}], ht}], rowHt}
+  var last = _xlCol(o.cols.length - 1), nCols = o.cols.length, x = [], r = 1;
+  function sid(t) { t = String(t == null ? '' : t).trim(); if (!(t in sst.map)) { sst.map[t] = sst.list.length; sst.list.push(t); } sst.count++; return sst.map[t]; }
+  function cell(ref, s, t, isNum) {
+    if (isNum) return '<c r="' + ref + '" s="' + s + '" t="n"><v>' + t + '</v></c>';
+    if (t === '' || t == null) return '<c r="' + ref + '" s="' + s + '"></c>';   // never self-closing: Import Excel needs </c>
+    return '<c r="' + ref + '" s="' + s + '" t="s"><v>' + sid(t) + '</v></c>';
+  }
+  x.push('<row r="1" ht="28" customHeight="1">' + cell('A1', 1, o.title) + '</row>');
+  x.push('<row r="2" ht="16" customHeight="1">' + cell('A2', 2, o.subtitle) + '</row>');
+  var bar = ''; for (var i = 0; i < nCols; i++) bar += '<c r="' + _xlCol(i) + '3" s="3" t="n"></c>';
+  x.push('<row r="3" ht="4" customHeight="1">' + bar + '</row>');
+  var hdr = ''; o.cols.forEach(function(c, i){ hdr += cell(_xlCol(i) + '4', 4, c.h); });
+  x.push('<row r="4" ht="22" customHeight="1">' + hdr + '</row>');
+  r = 5;
+  o.rows.forEach(function(row) {
+    var cs = '';
+    row.cells.forEach(function(c, i){ cs += cell(_xlCol(i) + r, c.s, c.t, c.n); });
+    x.push('<row r="' + r + '" ht="' + row.ht + '" customHeight="1">' + cs + '</row>');
+    r++;
+  });
+  x.push('<row r="' + r + '" ht="14" customHeight="1">' + cell('A' + r, 27, o.footer) + '</row>');
+  var cols = ''; o.cols.forEach(function(c, i){ cols += '<col width="' + c.w + '" customWidth="1" min="' + (i + 1) + '" max="' + (i + 1) + '"/>'; });
+  return '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetPr><tabColor rgb="0076B900"/><outlinePr summaryBelow="1" summaryRight="1"/><pageSetUpPr/></sheetPr>' +
+    '<dimension ref="A1:' + last + r + '"/><sheetViews><sheetView showGridLines="0" workbookViewId="0"><pane ySplit="4" topLeftCell="A5" activePane="bottomLeft" state="frozen"/><selection pane="bottomLeft" activeCell="A1" sqref="A1"/></sheetView></sheetViews>' +
+    '<sheetFormatPr baseColWidth="8" defaultRowHeight="15"/><cols>' + cols + '</cols><sheetData>' + x.join('') + '</sheetData>' +
+    '<mergeCells count="3"><mergeCell ref="A1:' + last + '1"/><mergeCell ref="A2:' + last + '2"/><mergeCell ref="A' + r + ':' + last + r + '"/></mergeCells>' +
+    '<pageMargins left="0.75" right="0.75" top="1" bottom="1" header="0.5" footer="0.5"/></worksheet>';
+}
+
+var _crcT = null;
+function _crc32(u8) {
+  if (!_crcT) { _crcT = []; for (var n = 0; n < 256; n++) { var c = n; for (var k = 0; k < 8; k++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1); _crcT[n] = c >>> 0; } }
+  var crc = -1; for (var i = 0; i < u8.length; i++) crc = _crcT[(crc ^ u8[i]) & 255] ^ (crc >>> 8);
+  return (crc ^ -1) >>> 0;
+}
+function _zipStore(files) {   // minimal ZIP writer (no compression) — an .xlsx is just a zip
+  var enc = new TextEncoder(), parts = [], central = [], off = 0;
+  function u16(n) { return [n & 255, (n >>> 8) & 255]; }
+  function u32(n) { return [n & 255, (n >>> 8) & 255, (n >>> 16) & 255, (n >>> 24) & 255]; }
+  files.forEach(function(f) {
+    var name = enc.encode(f.name), data = enc.encode(f.text), crc = _crc32(data), sz = data.length;
+    var lh = new Uint8Array([0x50,0x4B,3,4].concat(u16(20), u16(0), u16(0), u16(0), u16(0x21), u32(crc), u32(sz), u32(sz), u16(name.length), u16(0)));
+    parts.push(lh, name, data);
+    central.push(new Uint8Array([0x50,0x4B,1,2].concat(u16(20), u16(20), u16(0), u16(0), u16(0), u16(0x21), u32(crc), u32(sz), u32(sz), u16(name.length), u16(0), u16(0), u16(0), u16(0), u32(0), u32(off))), name);
+    off += lh.length + name.length + data.length;
+  });
+  var cdSize = 0; central.forEach(function(c){ cdSize += c.length; });
+  var end = new Uint8Array([0x50,0x4B,5,6].concat(u16(0), u16(0), u16(files.length), u16(files.length), u32(cdSize), u32(off), u16(0)));
+  return new Blob(parts.concat(central, [end]), { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+}
+
+function exportExcel() {
+  var now = new Date(), D = _xlDate(now);
+  var sst = { map: {}, list: [], count: 0 };
+  var odd = function(i){ return i % 2 === 0; };   // white row / grey row banding
+  var pick = function(i, a, b){ return odd(i) ? a : b; };
+
+  // ── Sheet 1: Inventory — ALL rows of the table (filters on screen are ignored) ──
+  var invCols = [{h:'#',w:5},{h:'Adhesive',w:26},{h:'Vendor',w:16},{h:'Priority',w:10},{h:'NV PN',w:14},{h:'Supplier PN',w:14},{h:'Where Used',w:24},{h:'Syringe Sizes',w:14},{h:'Qty',w:8},{h:'Expiry Date',w:13},{h:'Status',w:13},{h:'Freezer',w:18},{h:'Shelf #',w:10},{h:'Storage Temp',w:13},{h:'Owner',w:14},{h:'Comments',w:30},{h:'Datasheet',w:30},{h:'ID',w:16}];
+  var stLabel = { ok:'OK', warn:'Expiring', expired:'Expired', na:'\u2014' };
+  var expSty  = { warn:[10,18], expired:[20,26], ok:[28,22], na:[24,29] };
+  var stSty   = { warn:11, expired:21, ok:23, na:25 };
+  var invRows = data.map(function(r, i) {
+    var st = getStatus(r), ds = (r.dsType === 'file' && r.dsFileName) ? r.dsFileName : (r.datasheet || '');
+    var vals = [i + 1, r.name, r.vendor, r.priority, r.nvpn, r.spn, r.used, r.syringe, r.qty, r.expiry, stLabel[st] || '\u2014', r.freezer, r.shelf, r.temp, r.owner, r.comments, ds, String(r.id == null ? '' : r.id)];
+    var sty  = [5, pick(i,6,14), pick(i,7,15), pick(i,9,17), pick(i,8,16), pick(i,8,16), pick(i,7,15), pick(i,7,15), pick(i,9,17), pick(i, (expSty[st]||expSty.na)[0], (expSty[st]||expSty.na)[1]), stSty[st] || 25, pick(i,7,15), 12, 12, pick(i,7,15), pick(i,13,19), pick(i,8,16), pick(i,24,29)];
+    return { ht: _xlHt(vals.map(function(v,k){ return k === 0 ? '' : v; }), invCols.map(function(c){ return c.w; }), 26),
+             cells: vals.map(function(v, k){ return k === 0 ? { t: v, s: 5, n: true } : (k === 3 && /^[123]$/.test(String(v))) ? { t: v, s: sty[k], n: true } : { t: (k === 3 ? (v === 'Samples' ? 'Samples' : '') : v), s: sty[k] }; }) };
+  });
+  var sheet1 = _xlSheet(sst, { title:'NVIDIA Process Lab \u2014 Adhesives Inventory', subtitle:'Process Lab \u00B7 Adhesives & Epoxy Management  \u00B7  Exported: ' + D, footer:'NVIDIA Confidential  \u00B7  Process Lab  \u00B7  ' + D, cols: invCols, rows: invRows });
+
+  // ── Sheet 2: Shipment Status ──
+  var shCols = [{h:'#',w:5},{h:'Adhesive',w:22},{h:'Vendor',w:16},{h:'Carrier',w:10},{h:'Amount',w:12},{h:'Syringe',w:12},{h:'NV PR #',w:14},{h:'Requested By',w:14},{h:'Request Date',w:13},{h:'Expected Arrival',w:15},{h:'Tracking #',w:22},{h:'Status',w:14},{h:'Comments',w:28},{h:'Actual Arrival',w:14},{h:'ID',w:16}];
+  var shLabel = { pending:'Pending', transit:'In Transit', delivered:'Delivered', delayed:'Delayed', cancelled:'Cancelled' };
+  var shSty   = { pending:12, transit:11, delivered:23, delayed:21, cancelled:25 };
+  var shRows = shipments.map(function(s, i) {
+    var vals = [i + 1, s.name, s.vendor, s.carrier, s.amount, s.syringe, s.nvpr, s.requester, s.reqdate, s.eta, s.tracking, shLabel[s.status] || 'Pending', s.comments, s.arrived, String(s.id == null ? '' : s.id)];
+    var sty  = [5, pick(i,6,14), pick(i,7,15), pick(i,7,15), pick(i,7,15), pick(i,7,15), pick(i,8,16), pick(i,7,15), pick(i,7,15), pick(i,7,15), pick(i,8,16), shSty[s.status] || 12, pick(i,13,19), pick(i,7,15), pick(i,24,29)];
+    return { ht: _xlHt(vals.map(function(v,k){ return k === 0 ? '' : v; }), shCols.map(function(c){ return c.w; }), 26),
+             cells: vals.map(function(v, k){ return k === 0 ? { t: v, s: 5, n: true } : { t: v, s: sty[k] }; }) };
+  });
+  var sheet2 = _xlSheet(sst, { title:'NVIDIA Process Lab \u2014 Shipment Status', subtitle:'Requirement & Shipment Tracking  \u00B7  Exported: ' + D, footer:'NVIDIA Confidential  \u00B7  Process Lab  \u00B7  ' + D, cols: shCols, rows: shRows });
+
+  // ── Sheet 3: Requirements (discussion board) ──
+  var rqCols = [{h:'#',w:5},{h:'Author',w:16},{h:'Type',w:16},{h:'Adhesive',w:22},{h:'Message',w:52},{h:'Date',w:16},{h:'ID',w:16}];
+  var tgLabel = { note:'Note', order:'Order Request', urgent:'URGENT', resolved:'Resolved' };
+  var tgSty   = { note:23, order:12, urgent:21, resolved:25 };
+  var rqRows = comments.map(function(c, i) {
+    var when = c.time ? _xlDate(new Date(c.time)) : '';
+    var vals = [i + 1, c.author, tgLabel[c.tag] || 'Note', c.adhesive, c.text, when, String(c.id == null ? '' : c.id)];
+    var sty  = [5, pick(i,6,14), tgSty[c.tag] || 23, pick(i,28,22), pick(i,13,19), pick(i,7,15), pick(i,24,29)];
+    return { ht: _xlHt(vals.map(function(v,k){ return k === 0 ? '' : v; }), rqCols.map(function(c){ return c.w; }), 45),
+             cells: vals.map(function(v, k){ return k === 0 ? { t: v, s: 5, n: true } : { t: v, s: sty[k] }; }) };
+  });
+  var sheet3 = _xlSheet(sst, { title:'NVIDIA Process Lab \u2014 Lab Requirements & Requests', subtitle:'Discussion Board & Order Requests  \u00B7  Exported: ' + D, footer:'NVIDIA Confidential  \u00B7  Process Lab  \u00B7  ' + D, cols: rqCols, rows: rqRows });
+
+  // ── Sheet 4: short instructions (ignored by Import) ──
+  var howTxt = [
+    'EDIT: change any cell on the Inventory, Shipment Status or Requirements sheet, save the file, then click \uD83D\uDCE5 Import Excel in the platform. The platform is updated to match this file (you see a summary and confirm first).',
+    'ADD: add a new row at the bottom of a table and leave its ID cell empty. The Adhesive name (or Message for Requirements) is required.',
+    'DELETE: delete the whole row. The import summary lists everything that will be removed, and nothing changes until you confirm.',
+    'ID column (last column): do not change it. It ties each row to its datasheet file. Rows you copy get a new ID automatically if you clear the ID cell.',
+    'PRIORITY: 1, 2, 3 (1 = highest) or Samples. Leave it empty for no priority.',
+    'DATES: type 2027-01-15 or a normal Excel date. Status (OK / Expiring / Expired) is calculated by the platform \u2014 editing it does nothing.',
+    'DATASHEET: a web link (https://\u2026) can be edited here. Uploaded PDF files cannot be added or removed from Excel \u2014 use Edit in the platform. They always stay attached to their row.',
+    'SHIPMENT STATUS: Pending, In Transit, Delivered, Delayed, Cancelled.  REQUIREMENT TYPE: Note, Order Request, URGENT, Resolved.',
+    'Do not rename the sheets or the header row (row 4). Save as .xlsx.'
+  ];
+  var sheet4 = _xlSheet(sst, { title:'NVIDIA Process Lab \u2014 How to use this Excel', subtitle:'Edit \u2192 Save \u2192 Import Excel in the platform  \u00B7  Exported: ' + D, footer:'NVIDIA Confidential  \u00B7  Process Lab  \u00B7  ' + D,
+    cols:[{h:'#',w:5},{h:'How to use this file',w:120}],
+    rows: howTxt.map(function(t, i){ return { ht: _xlHt([ '', t ], [5, 120], 30), cells: [{ t: i + 1, s: 5, n: true }, { t: t, s: pick(i,13,19) }] }; }) });
+
+  var sstXml = '<sst xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" count="' + sst.count + '" uniqueCount="' + sst.list.length + '">' +
+    sst.list.map(function(t){ return '<si><t>' + _xe(t) + '</t></si>'; }).join('') + '</sst>';
+  var REL = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships/';
+  var iso = now.toISOString().replace(/\.\d+Z$/, 'Z');
+  var blob = _zipStore([
+    { name:'[Content_Types].xml', text:'<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/><Override PartName="/xl/theme/theme1.xml" ContentType="application/vnd.openxmlformats-officedocument.theme+xml"/><Override PartName="/xl/sharedStrings.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sharedStrings+xml"/><Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/><Override PartName="/docProps/app.xml" ContentType="application/vnd.openxmlformats-officedocument.extended-properties+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/worksheets/sheet2.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/worksheets/sheet3.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/worksheets/sheet4.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/></Types>' },
+    { name:'_rels/.rels', text:'<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Type="' + REL + 'officeDocument" Target="xl/workbook.xml" Id="rId1"/><Relationship Type="http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties" Target="docProps/core.xml" Id="rId2"/><Relationship Type="' + REL + 'extended-properties" Target="docProps/app.xml" Id="rId3"/></Relationships>' },
+    { name:'docProps/app.xml', text:'<Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/extended-properties"><Application>Process Lab Adhesives Inventory</Application></Properties>' },
+    { name:'docProps/core.xml', text:'<cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties"><dc:creator xmlns:dc="http://purl.org/dc/elements/1.1/">Process Lab</dc:creator><dcterms:created xmlns:dcterms="http://purl.org/dc/terms/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="dcterms:W3CDTF">' + iso + '</dcterms:created><dcterms:modified xmlns:dcterms="http://purl.org/dc/terms/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="dcterms:W3CDTF">' + iso + '</dcterms:modified></cp:coreProperties>' },
+    { name:'xl/workbook.xml', text:'<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><workbookPr/><workbookProtection/><bookViews><workbookView visibility="visible" minimized="0" showHorizontalScroll="1" showVerticalScroll="1" showSheetTabs="1" tabRatio="600" firstSheet="0" activeTab="0" autoFilterDateGrouping="1"/></bookViews><sheets><sheet xmlns:r="' + REL.slice(0,-1) + '" name="Inventory" sheetId="1" state="visible" r:id="rId1"/><sheet xmlns:r="' + REL.slice(0,-1) + '" name="Shipment Status" sheetId="2" state="visible" r:id="rId2"/><sheet xmlns:r="' + REL.slice(0,-1) + '" name="Requirements" sheetId="3" state="visible" r:id="rId3"/><sheet xmlns:r="' + REL.slice(0,-1) + '" name="How to use" sheetId="4" state="visible" r:id="rId4"/></sheets><definedNames/><calcPr calcId="124519" fullCalcOnLoad="1"/></workbook>' },
+    { name:'xl/_rels/workbook.xml.rels', text:'<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="' + REL + 'worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="' + REL + 'worksheet" Target="worksheets/sheet2.xml"/><Relationship Id="rId3" Type="' + REL + 'worksheet" Target="worksheets/sheet3.xml"/><Relationship Id="rId4" Type="' + REL + 'worksheet" Target="worksheets/sheet4.xml"/><Relationship Id="rId5" Type="' + REL + 'styles" Target="styles.xml"/><Relationship Id="rId6" Type="' + REL + 'theme" Target="theme/theme1.xml"/><Relationship Id="rId7" Type="' + REL + 'sharedStrings" Target="sharedStrings.xml"/></Relationships>' },
+
+    { name:'xl/styles.xml', text:_XL_STYLES },
+    { name:'xl/theme/theme1.xml', text:_XL_THEME },
+    { name:'xl/sharedStrings.xml', text:sstXml },
+    { name:'xl/worksheets/sheet1.xml', text:sheet1 },
+    { name:'xl/worksheets/sheet2.xml', text:sheet2 },
+    { name:'xl/worksheets/sheet3.xml', text:sheet3 },
+    { name:'xl/worksheets/sheet4.xml', text:sheet4 }
+  ]);
+  var url = URL.createObjectURL(blob), a = document.createElement('a');
+  a.href = url; a.download = 'NVIDIA_Lab_Adhesives_' + now.toISOString().slice(0, 10) + '.xlsx';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(function(){ URL.revokeObjectURL(url); }, 3000);
+  showSaveToast('\u2B07 Excel downloaded \u2014 ' + data.length + ' adhesives, ' + shipments.length + ' shipments, ' + comments.length + ' comments');
+}
+
+
+// ── Import from Excel (.xlsx) — updates the platform to match the file ──
+// Rows are matched by the ID column, so edited rows keep their datasheet file and history.
+//   changed cells -> updated   |   new row (empty ID) -> added   |   row deleted in Excel -> removed
+// Nothing is changed until you confirm the summary. No external library is needed.
+
+function _xlUnesc(s) {
+  return String(s == null ? '' : s)
+    .replace(/_x([0-9A-Fa-f]{4})_/g, function(m, h){ return String.fromCharCode(parseInt(h, 16)); })
+    .replace(/&#x([0-9a-fA-F]+);/g, function(m, h){ return String.fromCodePoint(parseInt(h, 16)); })
+    .replace(/&#(\d+);/g, function(m, d){ return String.fromCodePoint(parseInt(d, 10)); })
+    .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&apos;/g, "'").replace(/&amp;/g, '&');
+}
+
+// --- reading the .xlsx (a zip file) ---
+async function _xlOpenZip(buf) {
+  var u8 = new Uint8Array(buf), dv = new DataView(buf), e = u8.length - 22, min = Math.max(0, u8.length - 65557);
+  while (e >= min && dv.getUint32(e, true) !== 0x06054b50) e--;
+  if (e < min) throw new Error('This is not a valid .xlsx file. In Excel use Save As \u2192 "Excel Workbook (*.xlsx)".');
+  var n = dv.getUint16(e + 10, true), p = dv.getUint32(e + 16, true), ent = {}, td = new TextDecoder();
+  for (var i = 0; i < n; i++) {
+    if (dv.getUint32(p, true) !== 0x02014b50) break;
+    var method = dv.getUint16(p + 10, true), csize = dv.getUint32(p + 20, true), nl = dv.getUint16(p + 28, true), el = dv.getUint16(p + 30, true), cl = dv.getUint16(p + 32, true), lho = dv.getUint32(p + 42, true);
+    ent[td.decode(u8.subarray(p + 46, p + 46 + nl))] = { method: method, csize: csize, lho: lho };
+    p += 46 + nl + el + cl;
+  }
+  return { u8: u8, dv: dv, ent: ent };
+}
+async function _xlReadEntry(z, name) {
+  var en = z.ent[name]; if (!en) return null;
+  var nl = z.dv.getUint16(en.lho + 26, true), el = z.dv.getUint16(en.lho + 28, true), st = en.lho + 30 + nl + el;
+  var raw = z.u8.subarray(st, st + en.csize);
+  if (en.method === 0) return new TextDecoder().decode(raw);
+  if (en.method !== 8) throw new Error('Unsupported compression inside the .xlsx file.');
+  var out = await new Response(new Blob([raw]).stream().pipeThrough(new DecompressionStream('deflate-raw'))).arrayBuffer();
+  return new TextDecoder().decode(out);
+}
+function _loadJSZip() {   // only used on very old browsers without built-in decompression
+  return new Promise(function(res, rej) {
+    if (typeof JSZip !== 'undefined') return res();
+    var urls = ['https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js', 'https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js'], i = 0;
+    (function next() {
+      if (i >= urls.length) return rej(new Error('This browser cannot open Excel files here (no ZIP support).'));
+      var s = document.createElement('script'); s.src = urls[i++]; s.onload = function(){ res(); }; s.onerror = next; document.head.appendChild(s);
+    })();
+  });
+}
+async function _xlReader(buf) {
+  if (typeof DecompressionStream !== 'undefined') { var z = await _xlOpenZip(buf); return function(n){ return _xlReadEntry(z, n); }; }
+  await _loadJSZip(); var zip = await JSZip.loadAsync(buf);
+  return async function(n){ var f = zip.file(n); return f ? await f.async('string') : null; };
+}
+async function _xlWorkbook(rd) {
+  var wb = await rd('xl/workbook.xml'); if (!wb) throw new Error('This file is not an Excel workbook.');
+  var rels = (await rd('xl/_rels/workbook.xml.rels')) || '', relMap = {}, sheets = {};
+  (rels.match(/<Relationship\b[^>]*>/g) || []).forEach(function(t){ var id = (t.match(/\sId="([^"]*)"/) || [])[1], tg = (t.match(/\sTarget="([^"]*)"/) || [])[1]; if (id && tg) relMap[id] = tg; });
+  (wb.match(/<sheet\b[^>]*>/g) || []).forEach(function(t){
+    var nm = (t.match(/\sname="([^"]*)"/) || [])[1], rid = (t.match(/\sr:id="([^"]*)"/) || [])[1];
+    if (nm && rid && relMap[rid]) { var tg = relMap[rid]; sheets[_xlUnesc(nm)] = tg.charAt(0) === '/' ? tg.slice(1) : 'xl/' + tg; }
+  });
+  var sst = [], ssx = await rd('xl/sharedStrings.xml');
+  if (ssx) (ssx.match(/<si\b[\s\S]*?<\/si>|<si\s*\/>/g) || []).forEach(function(si){
+    si = si.replace(/<rPh\b[\s\S]*?<\/rPh>/g, '');
+    sst.push(_xlUnesc(Array.from(si.matchAll(/<t\b[^>]*>([\s\S]*?)<\/t>/g)).map(function(m){ return m[1]; }).join('')));
+  });
+  return { sheets: sheets, sst: sst };
+}
+function _xlParseSheet(xml, sst) {
+  var rows = [];
+  (xml.match(/<row\b[^>]*?(?:\/>|>[\s\S]*?<\/row>)/g) || []).forEach(function(rx) {
+    var rn = parseInt((rx.match(/\sr="(\d+)"/) || [])[1] || '0', 10), cells = {};
+    Array.from(rx.matchAll(/<c\b([^>]*?)(?:\/>|>([\s\S]*?)<\/c>)/g)).forEach(function(m) {
+      var at = m[1], inner = m[2] || '', ref = (at.match(/\sr="([A-Z]+)\d+"/) || [])[1]; if (!ref) return;
+      var t = (at.match(/\st="([^"]*)"/) || [])[1] || 'n', v = (inner.match(/<v>([\s\S]*?)<\/v>/) || [])[1], val = '';
+      if (t === 's') val = v != null ? (sst[parseInt(v, 10)] || '') : '';
+      else if (t === 'inlineStr') val = _xlUnesc(Array.from(inner.matchAll(/<t\b[^>]*>([\s\S]*?)<\/t>/g)).map(function(x){ return x[1]; }).join(''));
+      else if (v != null) val = _xlUnesc(v);
+      cells[ref] = val;
+    });
+    rows.push({ r: rn, cells: cells });
+  });
+  return rows;
+}
+
+// --- understanding the cells ---
+function _xlNorm(s) { return String(s == null ? '' : s).toLowerCase().replace(/\s+/g, ' ').trim(); }
+function _xlISO(y, m, d) { return y + '-' + String(m).padStart(2, '0') + '-' + String(d).padStart(2, '0'); }
+function _xlNormDate(v) {   // any date a person may type in Excel -> YYYY-MM-DD
+  v = String(v == null ? '' : v).trim(); if (!v) return '';
+  var m;
+  if (/^\d+(\.\d+)?$/.test(v)) { var n = parseFloat(v); if (n > 20000 && n < 80000) return new Date(Date.UTC(1899, 11, 30) + Math.floor(n) * 86400000).toISOString().slice(0, 10); return v; }
+  if ((m = v.match(/^(\d{4})[-\/.](\d{1,2})[-\/.](\d{1,2})/))) return _xlISO(m[1], +m[2], +m[3]);
+  if ((m = v.match(/^(\d{1,2})[\/.\-](\d{1,2})[\/.\-](\d{2,4})$/))) {
+    var a = +m[1], b = +m[2], y = +m[3]; if (y < 100) y += 2000;
+    if (b > 12 && a <= 12) { var t = a; a = b; b = t; }   // 03/25/2027 -> month/day
+    return _xlISO(y, b, a);                               // otherwise day/month/year
+  }
+  if ((m = v.match(/^(\d{1,2})\s+([A-Za-z]{3,})\.?,?\s+(\d{4})$/))) {
+    var mi = ['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'].indexOf(m[2].slice(0, 3).toLowerCase());
+    if (mi >= 0) return _xlISO(m[3], mi + 1, +m[1]);
+  }
+  return v;
+}
+function _xlPrio(v) { v = String(v == null ? '' : v).trim(); if (/^samples?\b/i.test(v)) return 'Samples'; var m = v.match(/^\D*([123])\b/); return m ? m[1] : ''; }   // 2, "P2", "Priority 2" -> "2"; "samples" -> "Samples"; anything else -> none
+function _xlNormId(v) {
+  v = String(v == null ? '' : v).trim(); if (!v) return '';
+  if (/^[\d.]+(e[+-]?\d+)?$/i.test(v)) { var n = Number(v); if (isFinite(n) && n === Math.floor(n)) return String(n); }
+  return v;
+}
+function _xlText(v) { v = String(v == null ? '' : v).trim(); return /^-?\d+\.0+$/.test(v) ? v.replace(/\.0+$/, '') : v; }
+function _xlLocalISO(d) { d = new Date(d); return isNaN(d.getTime()) ? '' : _xlISO(d.getFullYear(), d.getMonth() + 1, d.getDate()); }
+
+var _XL_INV  = { 'adhesive':'name','name':'name','vendor':'vendor','priority':'priority','nv pn':'nvpn','supplier pn':'spn','where used':'used','syringe sizes':'syringe','syringe':'syringe','qty':'qty','expiry date':'expiry','expiry':'expiry','freezer':'freezer','shelf #':'shelf','shelf':'shelf','storage temp':'temp','owner':'owner','comments':'comments','datasheet':'_ds','id':'_id' };
+var _XL_SHIP = { 'adhesive':'name','vendor':'vendor','carrier':'carrier','amount':'amount','syringe':'syringe','nv pr #':'nvpr','requested by':'requester','request date':'reqdate','expected arrival':'eta','tracking #':'tracking','status':'_status','comments':'comments','actual arrival':'arrived','id':'_id' };
+var _XL_COMM = { 'author':'author','type':'_tag','adhesive':'adhesive','message':'text','date':'_date','id':'_id' };
+
+function _xlTable(rows, aliases, anchor) {   // find the header row, then read every row below it
+  var hdr = null;
+  for (var i = 0; i < Math.min(rows.length, 20); i++) {
+    var vals = Object.keys(rows[i].cells).map(function(k){ return _xlNorm(rows[i].cells[k]); });
+    if (vals.indexOf(anchor) >= 0) { hdr = rows[i]; break; }
+  }
+  if (!hdr) return null;
+  var map = {}, fields = [];
+  Object.keys(hdr.cells).forEach(function(col){ var f = aliases[_xlNorm(hdr.cells[col])]; if (f && fields.indexOf(f) < 0) { map[col] = f; fields.push(f); } });
+  var items = [];
+  rows.forEach(function(row) {
+    if (row.r <= hdr.r) return;
+    var f = {}, any = false;
+    Object.keys(map).forEach(function(col){ var v = _xlText(row.cells[col]); f[map[col]] = v; if (v && map[col] !== '_id') any = true; });
+    var first = Object.keys(row.cells).map(function(k){ return row.cells[k]; }).join(' ');
+    if (!any || /Confidential/.test(first)) return;
+    items.push(f);
+  });
+  return { fields: fields, hasId: fields.indexOf('_id') >= 0, items: items };
+}
+function _xlMatch(existing, tbl, keyFn) {   // tie every Excel row to an existing row (by ID, else by name when the file has no ID column)
+  var byId = {}, used = {};
+  existing.forEach(function(r){ byId[String(r.id)] = r; });
+  var out = tbl.items.map(function(f){ return { f: f, ex: null }; });
+  out.forEach(function(it){ var id = _xlNormId(it.f._id); if (id && byId[id] && !used[id]) { used[id] = 1; it.ex = byId[id]; } });
+  if (!tbl.hasId) out.forEach(function(it){
+    var k = keyFn(it.f), m = existing.find(function(r){ return !used[String(r.id)] && keyFn(r) === k; });
+    if (m) { used[String(m.id)] = 1; it.ex = m; }
+  });
+  return { rows: out, removed: existing.filter(function(r){ return !used[String(r.id)]; }) };
+}
+function _xlSame(a, b, keys) { return keys.every(function(k){ return String(a[k] == null ? '' : a[k]) === String(b[k] == null ? '' : b[k]); }); }
+
+async function _xlPlan(buf) {
+  var rd = await _xlReader(buf), wb = await _xlWorkbook(rd), plan = { notes: [] }, nid = Date.now();
+  var newId = function(){ return ++nid; };
+  async function sheet(name, aliases, anchor) {
+    var path = wb.sheets[name]; if (!path) return null;
+    var xml = await rd(path); if (!xml) return null;
+    return _xlTable(_xlParseSheet(xml, wb.sst), aliases, anchor);
+  }
+  var idFor = function(f, taken){ var id = _xlNormId(f._id); if (id && !taken[id]) { taken[id] = 1; return /^\d{1,15}$/.test(id) ? Number(id) : id; } var n = newId(); taken[n] = 1; return n; };
+
+  // ---- Inventory ----
+  var inv = await sheet('Inventory', _XL_INV, 'adhesive');
+  if (!inv) plan.notes.push('Sheet "Inventory" not found \u2014 adhesives not changed.');
+  else if (!inv.items.length) plan.notes.push('Sheet "Inventory" has no rows \u2014 adhesives not changed (to remove everything, delete items in the platform).');
+  else {
+    var IF = ['name','vendor','priority','nvpn','spn','used','syringe','qty','expiry','freezer','shelf','temp','owner','comments'], mt = _xlMatch(data, inv, function(r){ return _xlNorm(r.name); }), taken = {}, upd = 0, add = 0, skipped = 0, rows = [];
+    mt.rows.forEach(function(it){ if (it.ex) taken[String(it.ex.id)] = 1; });
+    mt.rows.forEach(function(it) {
+      var f = it.f, ex = it.ex; if (!f.name) { skipped++; return; }
+      var row = ex ? Object.assign({}, ex) : { dsType: 'url', datasheet: '', dsFileName: '' };
+      inv.fields.forEach(function(k){ if (IF.indexOf(k) >= 0) row[k] = k === 'expiry' ? _xlNormDate(f[k]) : k === 'priority' ? _xlPrio(f[k]) : f[k]; });
+      if (inv.fields.indexOf('_ds') >= 0) {
+        var ds = f._ds || '';
+        if (ex && ex.dsType === 'file') { if (/^https?:\/\//i.test(ds) && ds !== ex.dsFileName) { row.datasheet = ds; row.dsType = 'url'; } }   // uploaded files stay attached
+        else if (!ex || ds !== (ex.datasheet || '')) { row.datasheet = ds; row.dsType = 'url'; }   // links: only touched when the cell really changed
+      }
+      if (ex) { row.id = ex.id; taken[String(ex.id)] = 1; if (!_xlSame(row, ex, IF.concat(['datasheet','dsType']))) upd++; }
+      else { row.id = idFor(f, taken); add++; }
+      rows.push(row);
+    });
+    plan.inv = { rows: rows, upd: upd, add: add, rem: mt.removed };
+    if (skipped) plan.notes.push(skipped + ' Inventory row(s) without an Adhesive name were ignored.');
+  }
+
+  // ---- Shipments ----
+  var sh = await sheet('Shipment Status', _XL_SHIP, 'adhesive');
+  if (sh) {
+    var SF = ['name','vendor','carrier','amount','syringe','nvpr','requester','reqdate','eta','tracking','comments','arrived'], SD = ['reqdate','eta','arrived'];
+    var SM = { 'pending':'pending','in transit':'transit','transit':'transit','delivered':'delivered','delayed':'delayed','cancelled':'cancelled','canceled':'cancelled' };
+    var ms = _xlMatch(shipments, sh, function(r){ return _xlNorm(r.name) + '|' + _xlNorm(r.nvpr); }), taken2 = {}, u2 = 0, a2 = 0, sk2 = 0, rows2 = [];
+    ms.rows.forEach(function(it){ if (it.ex) taken2[String(it.ex.id)] = 1; });
+    ms.rows.forEach(function(it) {
+      var f = it.f, ex = it.ex; if (!f.name) { sk2++; return; }
+      var row = ex ? Object.assign({}, ex) : { status: 'pending' };
+      sh.fields.forEach(function(k){ if (SF.indexOf(k) >= 0) row[k] = SD.indexOf(k) >= 0 ? _xlNormDate(f[k]) : f[k]; });
+      if (sh.fields.indexOf('_status') >= 0) { var s = SM[_xlNorm(f._status)]; if (s) row.status = s; }
+      if (ex) { row.id = ex.id; taken2[String(ex.id)] = 1; if (!_xlSame(row, ex, SF.concat(['status']))) u2++; }
+      else { row.id = idFor(f, taken2); a2++; }
+      rows2.push(row);
+    });
+    plan.ship = { rows: rows2, upd: u2, add: a2, rem: ms.removed };
+    if (sk2) plan.notes.push(sk2 + ' Shipment row(s) without an Adhesive name were ignored.');
+  }
+
+  // ---- Requirements (comments) ----
+  var cm = await sheet('Requirements', _XL_COMM, 'author');
+  if (cm) {
+    var CM = { 'note':'note','order request':'order','order':'order','urgent':'urgent','resolved':'resolved' };
+    var mc = _xlMatch(comments, cm, function(r){ return _xlNorm(r.author) + '|' + _xlNorm(r.text).slice(0, 40); }), taken3 = {}, u3 = 0, a3 = 0, sk3 = 0, rows3 = [];
+    mc.rows.forEach(function(it){ if (it.ex) taken3[String(it.ex.id)] = 1; });
+    mc.rows.forEach(function(it) {
+      var f = it.f, ex = it.ex; if (!f.text) { sk3++; return; }
+      var row = ex ? Object.assign({}, ex) : { tag: 'note', adhesive: '', author: '' };
+      cm.fields.forEach(function(k){ if (['author','adhesive','text'].indexOf(k) >= 0) row[k] = f[k]; });
+      if (cm.fields.indexOf('_tag') >= 0) { var t = CM[_xlNorm(f._tag)]; if (t) row.tag = t; }
+      if (cm.fields.indexOf('_date') >= 0) {
+        var iso = _xlNormDate(f._date);
+        if (ex && ex.time && (!iso || iso === _xlLocalISO(ex.time))) row.time = ex.time;
+        else if (/^\d{4}-\d{2}-\d{2}$/.test(iso)) row.time = new Date(iso + 'T12:00:00').toISOString();
+        else row.time = (ex && ex.time) || new Date().toISOString();
+      } else if (!row.time) row.time = new Date().toISOString();
+      if (ex) { row.id = ex.id; taken3[String(ex.id)] = 1; if (!_xlSame(row, ex, ['author','adhesive','text','tag','time'])) u3++; }
+      else { row.id = idFor(f, taken3); a3++; }
+      rows3.push(row);
+    });
+    plan.com = { rows: rows3, upd: u3, add: a3, rem: mc.removed };
+    if (sk3) plan.notes.push(sk3 + ' Requirements row(s) without a Message were ignored.');
+  }
+  return plan;
+}
+
+function _xlLine(label, p) {
+  if (!p) return label + ':  (sheet not in file \u2014 unchanged)';
+  if (!p.upd && !p.add && !p.rem.length) return label + ':  no changes';
+  return label + ':  ' + p.upd + ' updated \u00B7 ' + p.add + ' added \u00B7 ' + p.rem.length + ' removed';
+}
+function importExcel() {
+  if (!_gistReady) { alert('The cloud is not connected, so an import could not be saved.\nPlease reload the page and try again.'); return; }
+  var inp = document.createElement('input');
+  inp.type = 'file'; inp.accept = '.xlsx';
+  inp.onchange = async function(e) {
+    var file = e.target.files[0]; if (!file) return;
+    try {
+      var plan = await _xlPlan(await file.arrayBuffer());
+      var parts = [plan.inv, plan.ship, plan.com];
+      if (!parts.some(function(p){ return p; })) { alert('No data found in this file.\n\n' + plan.notes.join('\n') + '\n\nUse a file made with "Export Excel" (sheets: Inventory, Shipment Status, Requirements).'); return; }
+      var changes = parts.reduce(function(n, p){ return n + (p ? p.upd + p.add + p.rem.length : 0); }, 0);
+      if (!changes) { alert('No changes \u2014 the Excel file already matches the platform.' + (plan.notes.length ? '\n\n' + plan.notes.join('\n') : '')); return; }
+      var removed = [].concat(
+        plan.inv  ? plan.inv.rem.map(function(r){ return r.name; }) : [],
+        plan.ship ? plan.ship.rem.map(function(r){ return 'shipment: ' + r.name; }) : [],
+        plan.com  ? plan.com.rem.map(function(r){ return 'comment by ' + r.author; }) : []);
+      var msg = 'Import from "' + file.name + '"?\n\n' +
+        _xlLine('Adhesives', plan.inv) + '\n' + _xlLine('Shipments', plan.ship) + '\n' + _xlLine('Comments', plan.com) + '\n' +
+        (removed.length ? '\nWILL BE REMOVED: ' + removed.slice(0, 12).join(', ') + (removed.length > 12 ? ' \u2026 (+' + (removed.length - 12) + ' more)' : '') + '\n' : '') +
+        (plan.notes.length ? '\n' + plan.notes.join('\n') + '\n' : '') +
+        '\nThe platform will be updated to match this Excel file.\nUploaded datasheet files stay attached to their rows.\n\nContinue?';
+      if (!confirm(msg)) return;
+      if (plan.inv)  data      = plan.inv.rows;
+      if (plan.ship) shipments = plan.ship.rows;
+      if (plan.com)  comments  = plan.com.rows;
+      refreshAll();
+      saveState();
+      showSaveToast('\u2705 Imported: ' + parts.map(function(p, i){ return p ? ['adhesives','shipments','comments'][i] + ' +' + p.add + ' ~' + p.upd + ' \u2212' + p.rem.length : ''; }).filter(Boolean).join('  \u00B7  '));
+    } catch (err) {
+      console.error(err);
+      alert('Import failed: ' + err.message + '\nNothing was changed.');
+    }
+  };
+  document.body.appendChild(inp); inp.click(); document.body.removeChild(inp);
+}
+
+
+
+// ── Init ─────────────────────────────────────────────────────────
+// Revision of THIS file = day.month.year + a letter (a, b, c … = which version of that day). Updated with every new delivery of the file.
+const APP_REV = '10.11.26b';
+(function() {
+  var rev = document.getElementById('appRev');
+  if (rev) { rev.textContent = 'Rev ' + APP_REV; rev.title = 'Version of this file (day.month.year + letter of the day\'s revision)'; }
+  var el = document.getElementById('ts'), D = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  function tick() {   // e.g.  Sun 08/11/2026 12:06:04
+    var d = new Date(), p = function(n){ return String(n).padStart(2, '0'); };
+    if (el) el.textContent = D[d.getDay()] + ' ' + p(d.getDate()) + '/' + p(d.getMonth() + 1) + '/' + d.getFullYear() + ' ' + p(d.getHours()) + ':' + p(d.getMinutes()) + ':' + p(d.getSeconds());
+  }
+  tick(); setInterval(tick, 1000);
+})();
+document.getElementById('modalOverlay').addEventListener('click', e => { if(e.target===e.currentTarget) closeModal(); });
+document.getElementById('shipModalOverlay').addEventListener('click', e => { if(e.target===e.currentTarget) closeShipModal(); });
+showLoginScreen();
+</script>
+</body>
+</html>
