@@ -928,12 +928,19 @@ const _cloud = window.AdhesiveGistConnection.create(_gistId, window.fetch.bind(w
 var hubSelectedEmail = '';
 var _savingBusy = false;
 
-function _draftKey() { return 'nv_adhesives_draft_v1:' + (hubSelectedEmail || 'legacy:' + currentUser); }
+function _legacyDraftKey() { return 'nv_adhesives_draft_v1:' + (hubSelectedEmail || 'legacy:' + currentUser); }
+function _draftKey() { return _legacyDraftKey() + ':' + currentRole; }
 function _readDraft() {
   try {
-    var raw = localStorage.getItem(_draftKey()); if (!raw) return null;
+    var raw = localStorage.getItem(_draftKey()), legacy = !raw && localStorage.getItem(_legacyDraftKey()); if (!raw && !legacy) return null;
+    raw = raw || legacy;
     var d = JSON.parse(raw);
     if (d.version !== 1 || !Array.isArray(d.data) || !Array.isArray(d.comments) || !Array.isArray(d.shipments) || !d.base || !d.base.data || !d.base.comments || !d.base.shipments) throw new Error('Invalid draft');
+    if (legacy) {
+      var inventory = _diff(d.data, d.base.data), shipping = _diff(d.shipments, d.base.shipments);
+      if (currentRole !== 'editor' && (inventory.up.length || inventory.del.length || shipping.up.length || shipping.del.length)) return null;
+      localStorage.setItem(_draftKey(), raw); localStorage.removeItem(_legacyDraftKey());
+    }
     return d;
   } catch (error) { showSaveToast('A saved draft could not be read and was left untouched. Keep this tab open and contact the administrator.', true); return null; }
 }
