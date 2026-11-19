@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Process Lab — Adhesives Inventory</title>
 <style>
+  [hidden] { display: none !important; }
+  #savingDialog::backdrop { background: rgba(0,0,0,.65); }
   :root {
     --nv-green: #76b900;
     --nv-green-dark: #5c9100;
@@ -888,6 +890,23 @@
 
 
 
+<dialog id="savingDialog" style="background:#1e1e1e;color:#e8e8e8;border:1px solid #76b900;border-radius:14px;padding:28px;max-width:560px;width:calc(100% - 36px)">
+  <h2 style="margin-top:0">Connect inventory saving</h2>
+  <p style="line-height:1.6">Saving uses the GitHub account that owns the shared inventory. Your Process Lab role controls the application view; GitHub separately authorizes writes.</p>
+  <ol style="line-height:1.7;padding-left:22px">
+    <li><a href="https://github.com/settings/personal-access-tokens/new?name=Adhesives%20saving&amp;expires_in=30&amp;gists=write" target="_blank" rel="noopener noreferrer" style="color:#a8d500">Create a fine-grained GitHub token</a> under the inventory owner's GitHub account.</li>
+    <li>Set account permission <strong>Gists → Read and write</strong>.</li>
+    <li>Enter the token below and connect. Do not paste it in chat.</li>
+  </ol>
+  <label for="savingToken">GitHub token</label>
+  <input id="savingToken" type="password" autocomplete="off" autocapitalize="none" spellcheck="false" style="display:block;width:100%;margin:8px 0 16px;padding:12px;background:#111;color:#fff;border:1px solid #555;border-radius:8px;box-sizing:border-box">
+  <p style="color:#aaa;font-size:12px;line-height:1.6">Kept only in this page's memory until disconnect, reload, or closing the page. It is never saved in browser storage or included in application files. Browser drafts contain inventory edits only.</p>
+  <p id="savingError" role="alert" style="color:#ff9090"></p>
+  <button class="btn btn-primary" id="confirmSaving" type="button">Connect</button>
+  <button class="btn btn-ghost" id="cancelSaving" type="button">Cancel</button>
+</dialog>
+<script src="gist-connection.js?v=1"></script>
+<script src="hub-entry.js?v=2"></script>
 <script>
 // Data loaded from Gist on initData()
 // ── Data ──────────────────────────────────────────────────────────
@@ -904,8 +923,60 @@ let sortAsc = true;
 // ── Persistence variables ─────────────────────────────────────────
 const LS_KEY     = 'nv_adhesives_v2';
 const DATA_URL   = 'data.json';
-const _gistToken = 'ghp_yAk8' + 'XZyqMZ2A2BLf' + 'ftTeF8t2X9GvB12hpocP';
 const _gistId    = '32393f1f1f4f7d35' + '5049a7102a3e5970';
+const _cloud = window.AdhesiveGistConnection.create(_gistId, window.fetch.bind(window));
+var hubSelectedEmail = '';
+var _savingBusy = false;
+
+function _draftKey() { return 'nv_adhesives_draft_v1:' + (hubSelectedEmail || 'legacy:' + currentUser); }
+function _readDraft() {
+  try {
+    var raw = localStorage.getItem(_draftKey()); if (!raw) return null;
+    var d = JSON.parse(raw);
+    if (d.version !== 1 || !Array.isArray(d.data) || !Array.isArray(d.comments) || !Array.isArray(d.shipments) || !d.base || !d.base.data || !d.base.comments || !d.base.shipments) throw new Error('Invalid draft');
+    return d;
+  } catch (error) { showSaveToast('A saved draft could not be read and was left untouched. Keep this tab open and contact the administrator.', true); return null; }
+}
+function _writeDraft() {
+  try {
+    localStorage.setItem(_draftKey(), JSON.stringify({ version: 1, data: data.map(_stripRow), comments: comments, shipments: shipments, base: _base }));
+  } catch (error) { showSaveToast('Browser draft storage is unavailable. Keep this tab open and connect saving before leaving. Newly attached files also require this tab to stay open until saved.', true); }
+}
+function _clearSavedDraft() {
+  var remaining = _diff(data, _base.data).up.length || _diff(data, _base.data).del.length || _diff(comments, _base.comments).up.length || _diff(comments, _base.comments).del.length || _diff(shipments, _base.shipments).up.length || _diff(shipments, _base.shipments).del.length;
+  if (remaining) _writeDraft();
+  else { try { localStorage.removeItem(_draftKey()); } catch (error) {} }
+}
+function updateSavingUI() {
+  var connect = document.getElementById('connectSaving'), disconnect = document.getElementById('disconnectSaving'), status = document.getElementById('savingStatus');
+  if (connect) connect.hidden = _cloud.isConnected();
+  if (disconnect) disconnect.hidden = !_cloud.isConnected();
+  if (status) status.textContent = _cloud.isConnected() ? 'Saving: ' + _cloud.getLogin() : 'Drafts kept on this browser';
+}
+function setupSavingUI() {
+  var header = document.querySelector('.header-right'); if (!header || document.getElementById('connectSaving')) return;
+  var connect = document.createElement('button'); connect.id = 'connectSaving'; connect.className = 'btn btn-ghost'; connect.textContent = 'Connect saving';
+  connect.onclick = function () { document.getElementById('savingError').textContent = ''; document.getElementById('savingDialog').showModal(); document.getElementById('savingToken').focus(); };
+  var disconnect = document.createElement('button'); disconnect.id = 'disconnectSaving'; disconnect.className = 'btn btn-ghost'; disconnect.textContent = 'Disconnect saving';
+  disconnect.onclick = function () { if (_savingBusy) return; _cloud.disconnect(); updateSavingUI(); };
+  var status = document.createElement('span'); status.id = 'savingStatus'; status.style.cssText = 'font-size:10px;color:#aaa;max-width:170px;'; status.setAttribute('role','status');
+  header.append(connect, disconnect, status); updateSavingUI();
+}
+document.getElementById('cancelSaving').onclick = function () { if (_savingBusy) return; document.getElementById('savingToken').value = ''; document.getElementById('savingDialog').close(); };
+document.getElementById('savingDialog').addEventListener('cancel', function (e) { if (_savingBusy) e.preventDefault(); else document.getElementById('savingToken').value = ''; });
+document.getElementById('confirmSaving').onclick = async function () {
+  if (_savingBusy) return;
+  var token = document.getElementById('savingToken').value.trim(); document.getElementById('savingToken').value = '';
+  _savingBusy = true; this.disabled = true; document.getElementById('cancelSaving').disabled = true;
+  document.getElementById('savingError').textContent = '';
+  try {
+    await _cloud.connect(token);
+    if (!_gistReady) await initData();
+    document.getElementById('savingDialog').close();
+    showSaveToast('Saving connected. Press Save to publish your pending changes.');
+  } catch (error) { document.getElementById('savingError').textContent = error.message; }
+  finally { token = ''; _savingBusy = false; this.disabled = false; document.getElementById('cancelSaving').disabled = false; updateSavingUI(); }
+};
 
 /* ═══════════════════════════════════════════════════════════════════
    PERSISTENCE — the GitHub Gist is the single source of truth.
@@ -965,12 +1036,7 @@ function lsSave() {   // local cache only (no PDFs inside, so it always fits)
 }
 
 async function _fetchGist() {
-  var r = await fetch('https://api.github.com/gists/' + _gistId + '?_=' + Date.now(), {
-    cache: 'no-store',
-    headers: { Authorization: 'token ' + _gistToken, Accept: 'application/vnd.github.v3+json' }
-  });
-  if (!r.ok) throw new Error('GitHub ' + r.status);
-  var g = await r.json(), files = g.files || {}, f = files[MAIN_FILE], saved = null;
+  var g = await _cloud.read(), files = g.files || {}, f = files[MAIN_FILE], saved = null;
   if (f) {
     var raw = f.content;
     // GitHub cuts any file >1 MB in the API answer. Read the complete file from raw_url instead.
@@ -1014,13 +1080,17 @@ async function _doSave() {
     showSaveToast('⚠️ Not connected to the cloud — kept on this device only. Reload the page to reconnect.', true);
     return false;
   }
+  if (!_cloud.isConnected()) {
+    showSaveToast('Draft kept on this browser. Choose Connect saving, then press Save to publish.' + (Object.keys(_dsPending).length ? ' Keep this tab open until newly attached files are saved.' : ''), true);
+    updateSavingUI(); return false;
+  }
   try {
     _ensureIds();
     var s0 = { data: _toMap(data), comments: _toMap(comments), shipments: _toMap(shipments) };
     var dD = _diff(data, _base.data), dC = _diff(comments, _base.comments), dS = _diff(shipments, _base.shipments);
     if (!dD.up.length && !dD.del.length && !dC.up.length && !dC.del.length && !dS.up.length && !dS.del.length &&
         !Object.keys(_dsPending).length && !Object.keys(_dsDelete).length) {
-      showSaveToast('✅ Already saved'); return true;
+      _clearSavedDraft(); showSaveToast('✅ Already saved'); return true;
     }
     var rem    = await _fetchGist();                 // always merge into the LATEST cloud copy
     var remote = _normalize(rem.saved);
@@ -1039,13 +1109,7 @@ async function _doSave() {
       sentDel[id] = 1;
     });
 
-    var r = await fetch('https://api.github.com/gists/' + _gistId, {
-      method: 'PATCH',
-      headers: { Authorization: 'token ' + _gistToken, 'Content-Type': 'application/json', Accept: 'application/vnd.github.v3+json' },
-      body: JSON.stringify({ files: files })
-    });
-    if (!r.ok) throw new Error('GitHub ' + r.status);
-    var g = await r.json();
+    var g = await _cloud.patch(files);
     if (g.files) _gistFiles = g.files;
 
     Object.keys(sentUp).forEach(function(id){ if (_dsPending[id] === sentUp[id]) delete _dsPending[id]; });
@@ -1059,17 +1123,19 @@ async function _doSave() {
     shipments = _apply(merged.shipments, inflight.shipments);
     _base = { data: _toMap(merged.data), comments: _toMap(merged.comments), shipments: _toMap(merged.shipments) };
     lsSave();
+    _clearSavedDraft(); updateSavingUI();
     if (JSON.stringify([data.map(_stripRow), comments, shipments]) !== before) refreshAll();   // someone else's changes arrived
     showSaveToast('✅ Saved to cloud');
     return true;
   } catch (e) {
-    console.error('Cloud save failed', e);
+    updateSavingUI();
     showSaveToast('⚠️ Cloud save failed (' + e.message + ') — kept on this device. Press 💾 Save to retry.', true);
     return false;
   }
 }
 function saveState() {
   lsSave();
+  _writeDraft();
   var p = _saveChain.then(_doSave);       // saves run one after another, never in parallel
   _saveChain = p.catch(function(){});
   return p;
@@ -1297,6 +1363,7 @@ function handleDsFile(input) {
 }
 
 function openAddModal() {
+  if (!requireEditor()) return;
   editId = null;
   document.getElementById('modalTitle').textContent = 'Add Adhesive';
   ['name','vendor','priority','nvpn','spn','used','syringe','qty','expiry','tracking','freezer','shelf','temp','owner','ds','comments']
@@ -1311,6 +1378,7 @@ function openAddModal() {
 }
 
 function editRow(id) {
+  if (!requireEditor()) return;
   const r = data.find(x => x.id === id);
   if (!r) return;
   editId = id;
@@ -1355,6 +1423,7 @@ function editRow(id) {
 function closeModal() { document.getElementById('modalOverlay').classList.remove('open'); }
 
 function saveRow() {
+  if (!requireEditor()) return;
   const name = document.getElementById('f_name').value.trim();
   if (!name) { alert('Adhesive name is required.'); return; }
   const row = {
@@ -1402,6 +1471,7 @@ function saveRow() {
 }
 
 function deleteRow(id) {
+  if (!requireEditor()) return;
   if (!confirm('Delete this adhesive entry?')) return;
   const _gone = data.find(x => x.id === id);
   if (_gone && _gone.dsType === 'file') { _dsDelete[id] = 1; delete _dsCache[id]; delete _dsPending[id]; }
@@ -1514,11 +1584,16 @@ function enterApp() {
     }
   }
 
+  completeEntry();
+}
+
+function completeEntry() {
   document.getElementById('loginOverlay')?.remove();
-  if (currentRole === 'viewer') document.body.classList.add('viewer-mode');
+  document.body.classList.toggle('viewer-mode', currentRole === 'viewer');
 
   // Show user badge in header
-  const badge = document.createElement('span');
+  document.getElementById('currentUserBadge')?.remove();
+  const badge = document.createElement('span'); badge.id = 'currentUserBadge';
   badge.style.cssText = 'font-size:11px;padding:3px 10px;border-radius:10px;font-weight:700;margin-right:8px;' +
     (currentRole==='editor'
       ? 'background:rgba(118,185,0,.15);color:#76b900;border:1px solid rgba(118,185,0,.3);'
@@ -1527,7 +1602,60 @@ function enterApp() {
   const hr = document.querySelector('.header-right');
   if (hr) hr.insertBefore(badge, hr.firstChild);
 
-  initData();
+  setupSavingUI(); initData();
+}
+
+
+var hubEntryAttempt = 0;
+function hubEntryScreen(message, retry) {
+  document.getElementById('loginOverlay')?.remove();
+  const overlay = document.createElement('div'); overlay.id = 'loginOverlay';
+  overlay.style.cssText = 'position:fixed;inset:0;background:#111;z-index:99999;display:flex;align-items:center;justify-content:center;font-family:Arial;padding:24px;';
+  const card = document.createElement('div');
+  card.style.cssText = 'background:#1e1e1e;border:1px solid #76b900;border-radius:16px;padding:30px;max-width:500px;color:#e8e8e8;line-height:1.6;';
+  const title = document.createElement('h2'); title.textContent = 'Adhesive Inventory'; card.appendChild(title);
+  const text = document.createElement('p'); text.id = 'hubEntryStatus'; text.setAttribute('role','status'); text.textContent = message; card.appendChild(text);
+  if (retry) {
+    const button = document.createElement('button'); button.className = 'btn btn-primary'; button.textContent = 'Try again';
+    button.addEventListener('click', startEntry); card.appendChild(button);
+  }
+  const back = document.createElement('a'); back.className = 'btn btn-ghost'; back.textContent = '← Process Lab';
+  back.href = 'https://yousefmahajna.github.io/interconnect-process-lab/'; back.style.marginLeft = '12px'; card.appendChild(back);
+  overlay.appendChild(card); document.body.appendChild(overlay);
+}
+async function startEntry() {
+  const marked = new URLSearchParams(window.location.hash.slice(1)).get('ipl-entry') === '1';
+  if (!marked) { showLoginScreen(); return; }
+  const attempt = ++hubEntryAttempt;
+  hubEntryScreen('Loading your Process Lab permissions…', false);
+  try {
+    if (!window.AdhesivesHubEntry) throw new Error('The Process Lab entry module could not be loaded. Reload this page to try again.');
+    const entry = await window.AdhesivesHubEntry.load(window.location.href, window.fetch.bind(window));
+    if (attempt !== hubEntryAttempt) return;
+    currentUser = entry.name; currentRole = entry.role; hubSelectedEmail = entry.email;
+    completeEntry();
+    const author = document.getElementById('c_author') || document.getElementById('cAuthor');
+    if (author) author.value = entry.name;
+    const badge = document.getElementById('currentUserBadge');
+    if (badge) badge.title = entry.email + ' · ' + entry.level + ' via Process Lab';
+    if (!document.getElementById('processLabBack')) {
+      const back = document.createElement('a'); back.id = 'processLabBack'; back.className = 'btn btn-ghost';
+      back.textContent = '← Process Lab'; back.href = window.AdhesivesHubEntry.HUB;
+      document.querySelector('.header-right')?.appendChild(back);
+    }
+  } catch (error) {
+    if (attempt !== hubEntryAttempt) return;
+    currentRole = null; currentUser = null;
+    hubEntryScreen(error.message || 'Process Lab permissions could not be loaded. Try again.', error.code !== 'NO_ACCESS' && error.code !== 'INVALID_EMAIL');
+  }
+}
+function requireEditor() {
+  if (currentRole === 'editor') {
+    if (_gistReady) return true;
+    showSaveToast('Shared data is not loaded. Connect saving or reload before editing.', true); return false;
+  }
+  showSaveToast('Viewer access: editing inventory and shipments is disabled.', true);
+  return false;
 }
 
 // ── Data loading ───────────────────────────────────────────────────
@@ -1560,8 +1688,15 @@ async function initData() {
       _rescueLocalFiles(data, g.files);
       _base = { data: _toMap(data), comments: _toMap(comments), shipments: _toMap(shipments) };
       _gistReady = true;
+      var pending = _readDraft();
+      if (pending) {
+        data = _apply(data, _diff(pending.data, pending.base.data));
+        comments = _apply(comments, _diff(pending.comments, pending.base.comments));
+        shipments = _apply(shipments, _diff(pending.shipments, pending.base.shipments));
+        _writeDraft();
+      }
       lsSave(); refreshAll();
-      showSaveToast('✅ Synced (' + data.length + ' adhesives)');
+      showSaveToast(pending ? 'Your unsaved draft was restored over the latest shared data. Connect saving and press Save to publish.' : '✅ Synced (' + data.length + ' adhesives)', Boolean(pending));
       return;
     }
   } catch(e) { console.warn('Cloud load failed:', e); }
@@ -1691,6 +1826,7 @@ function renderShipments() {
 }
 
 function openShipModal(id) {
+  if (!requireEditor()) return;
   const modal = document.getElementById('shipModalOverlay');
   const title = document.getElementById('shipModalTitle');
   if (!modal) return;
@@ -1717,6 +1853,7 @@ function closeShipModal() {
 }
 
 function saveShipment() {
+  if (!requireEditor()) return;
   const id = parseInt(document.getElementById('sf_id').value||'0');
   const fields = ['name','vendor','carrier','amount','syringe','nvpr','requester','reqdate','eta','arrived','tracking','status','comments'];
   const obj = { id: id || Date.now() };
@@ -1739,6 +1876,7 @@ function saveShipment() {
 function editShipment(id) { openShipModal(id); }
 
 function deleteShipment(id) {
+  if (!requireEditor()) return;
   if (!confirm('Delete this shipment?')) return;
   shipments = shipments.filter(s=>s.id!==id);
   renderShipments();
@@ -1749,6 +1887,7 @@ function deleteShipment(id) {
 
 // ── Discussion Board / Comments ───────────────────────────────────
 function deleteComment(id) {
+  if (!requireEditor()) return;
   if (!confirm('Delete this comment?')) return;
   comments = comments.filter(c => c.id !== id);
   renderComments();
@@ -1798,6 +1937,7 @@ function formatAgo(dt) {
 }
 
 function postComment() {
+  if (!_gistReady) { showSaveToast('Shared data is not loaded. Connect saving or reload before adding a comment.', true); return; }
   const author   = (document.getElementById('c_author')||document.getElementById('cAuthor'))?.value.trim();
   const adhesive = (document.getElementById('c_adhesive')||document.getElementById('cAdhesive'))?.value||'';
   const tag      = (document.getElementById('c_tag')||document.getElementById('cTag'))?.value||'note';
@@ -2294,6 +2434,7 @@ function _xlLine(label, p) {
   return label + ':  ' + p.upd + ' updated \u00B7 ' + p.add + ' added \u00B7 ' + p.rem.length + ' removed';
 }
 function importExcel() {
+  if (!requireEditor()) return;
   if (!_gistReady) { alert('The cloud is not connected, so an import could not be saved.\nPlease reload the page and try again.'); return; }
   var inp = document.createElement('input');
   inp.type = 'file'; inp.accept = '.xlsx';
@@ -2333,7 +2474,7 @@ function importExcel() {
 
 // ── Init ─────────────────────────────────────────────────────────
 // Revision of THIS file = day.month.year + a letter (a, b, c … = which version of that day). Updated with every new delivery of the file.
-const APP_REV = '10.11.26b';
+const APP_REV = '19.11.26a';
 (function() {
   var rev = document.getElementById('appRev');
   if (rev) { rev.textContent = 'Rev ' + APP_REV; rev.title = 'Version of this file (day.month.year + letter of the day\'s revision)'; }
@@ -2346,7 +2487,16 @@ const APP_REV = '10.11.26b';
 })();
 document.getElementById('modalOverlay').addEventListener('click', e => { if(e.target===e.currentTarget) closeModal(); });
 document.getElementById('shipModalOverlay').addEventListener('click', e => { if(e.target===e.currentTarget) closeShipModal(); });
-showLoginScreen();
+window.addEventListener('hashchange', function(event) {
+  const wasHub = new URLSearchParams(new URL(event.oldURL).hash.slice(1)).get('ipl-entry') === '1';
+  const isHub = new URLSearchParams(window.location.hash.slice(1)).get('ipl-entry') === '1';
+  if (wasHub || isHub) window.location.reload();
+});
+window.addEventListener('beforeunload', function(event) {
+  if (Object.keys(_dsPending).length || _savingBusy) { event.preventDefault(); event.returnValue = ''; }
+});
+startEntry();
 </script>
 </body>
 </html>
+
