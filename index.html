@@ -901,24 +901,16 @@
 
 
 
-<dialog id="savingDialog" style="background:#1e1e1e;color:#e8e8e8;border:1px solid #76b900;border-radius:14px;padding:28px;max-width:560px;width:calc(100% - 36px)">
-  <h2 style="margin-top:0">Connect inventory saving</h2>
-  <p style="line-height:1.6">Saving uses the GitHub account that owns the shared inventory. Your Process Lab role controls the application view; GitHub separately authorizes writes.</p>
-  <ol style="line-height:1.7;padding-left:22px">
-    <li><a href="https://github.com/settings/personal-access-tokens/new?name=Adhesives%20saving&amp;expires_in=30&amp;gists=write" target="_blank" rel="noopener noreferrer" style="color:#a8d500">Create a fine-grained GitHub token</a> under the inventory owner's GitHub account.</li>
-    <li>Set account permission <strong>Gists → Read and write</strong>.</li>
-    <li>Enter the token below and connect. Do not paste it in chat.</li>
-  </ol>
-  <label for="savingToken">GitHub token</label>
-  <input id="savingToken" type="password" autocomplete="off" autocapitalize="none" spellcheck="false" style="display:block;width:100%;margin:8px 0 16px;padding:12px;background:#111;color:#fff;border:1px solid #555;border-radius:8px;box-sizing:border-box">
-  <p style="color:#aaa;font-size:12px;line-height:1.6">Kept only in this page's memory until disconnect, reload, or closing the page. It is never saved in browser storage or included in application files. Browser drafts contain inventory edits only.</p>
-  <p id="savingError" role="alert" style="color:#ff9090"></p>
-  <button class="btn btn-primary" id="confirmSaving" type="button">Connect</button>
-  <button class="btn btn-ghost" id="cancelSaving" type="button">Cancel</button>
-</dialog>
+
 <script src="low-stock.js?v=20.11.26a"></script>
 <script src="gist-connection.js?v=publishing-1"></script>
 <script src="hub-entry.js?v=quota-fix-1"></script>
+<script src="firebase-config.js?v=1"></script>
+<script src="firebase-auth.js?v=1"></script>
+<script src="firebase-access.js?v=1"></script>
+<script src="firebase-signin.js?v=1"></script>
+<script src="firebase-shared.js?v=1"></script>
+<script src="shared-cloud.js?v=1"></script>
 <script>
 // Data loaded from Gist on initData()
 // ── Data ──────────────────────────────────────────────────────────
@@ -936,7 +928,7 @@ let sortAsc = true;
 const LS_KEY     = 'nv_adhesives_v2';
 const DATA_URL   = 'data.json';
 const _gistId    = '32393f1f1f4f7d35' + '5049a7102a3e5970';
-const _cloud = window.AdhesiveGistConnection.create(_gistId, window.fetch.bind(window));
+const _cloud = window.AdhesiveSharedCloud.create(_gistId, window.fetch.bind(window));
 var hubSelectedEmail = '';
 var _savingBusy = false;
 var _publishAfterConnect = false;
@@ -959,6 +951,7 @@ function _readDraft() {
 }
 function _writeDraft() {
   updateSavingUI();
+  if(!_hasUnpublishedChanges())return;
   try {
     localStorage.setItem(_draftKey(), JSON.stringify({ version: 1, data: data.map(_stripRow), comments: comments, shipments: shipments, base: _base }));
   } catch (error) { showSaveToast('Browser draft storage is unavailable. Keep this tab open and connect saving before leaving. Newly attached files also require this tab to stay open until saved.', true); }
@@ -973,38 +966,31 @@ function _hasUnpublishedChanges() {
   if (!_gistReady) return false;
   return ['data','comments','shipments'].some(function(key){var rows=key==='data'?data:key==='comments'?comments:shipments;var change=_diff(rows,_base[key]);return change.up.length||change.del.length;})||Object.keys(_dsPending).length||Object.keys(_dsDelete).length;
 }
+function syncSharedIdentity() {
+  var user=_cloud.getUser();if(!user?.emailVerified||!_cloud.isActive())return;
+  var level=_cloud.getLevel();hubSelectedEmail=user.email.toLowerCase();
+  currentUser=LabFirebaseAccess.name(user.email);currentRole=['editor','manager','admin'].includes(level)?'editor':'viewer';
+  document.body.classList.toggle('viewer-mode',currentRole==='viewer');
+  var badge=document.getElementById('currentUserBadge');if(badge){badge.textContent=(currentRole==='editor'?'✏️ ':'👁 ')+currentUser;badge.title=user.email+' · '+level+' · verified';}
+}
 function updateSavingUI() {
-  var connect = document.getElementById('connectSaving'), disconnect = document.getElementById('disconnectSaving'), status = document.getElementById('savingStatus');
-  if (connect) connect.hidden = _cloud.isConnected();
-  if (disconnect) disconnect.hidden = !_cloud.isConnected();
+  var connect=document.getElementById('connectSaving'),disconnect=document.getElementById('disconnectSaving'),status=document.getElementById('savingStatus');
+  if(connect){connect.hidden=_cloud.isConnected();connect.textContent='Sign in to save';}
+  if(disconnect)disconnect.hidden=!_cloud.getUser();
   var dirty=_hasUnpublishedChanges();
-  if(status){status.textContent=dirty?'UNPUBLISHED DRAFT — only this browser':(_cloud.isConnected()?'Shared changes saved':'Shared inventory · connect to publish edits');status.style.color=dirty?'#ffb347':'#aaa';}
-  var publish=document.getElementById('publishChanges');if(publish){publish.disabled=_savingBusy;publish.textContent=dirty?'Publish changes':'Shared inventory';publish.title=dirty?'Update the shared inventory so every visitor sees these changes':'No unpublished changes in this tab';}
+  if(status){status.textContent=!_cloud.isActive()?'Shared setup required':dirty?(_savingBusy?'Saving…':'Not saved — retry saving'):'Shared inventory · autosave';status.style.color=dirty?'#ffb347':'#aaa';}
+  var button=document.getElementById('publishChanges');if(button){button.disabled=_savingBusy;button.textContent=dirty?'Retry save':'Saved';}
 }
 function setupSavingUI() {
-  var header = document.querySelector('.header-right'); if (!header || document.getElementById('connectSaving')) return;
-  var connect = document.createElement('button'); connect.id = 'connectSaving'; connect.className = 'btn btn-ghost'; connect.textContent = 'Connect saving';
-  connect.onclick = function () { document.getElementById('savingError').textContent = ''; document.getElementById('savingDialog').showModal(); document.getElementById('savingToken').focus(); };
-  var disconnect = document.createElement('button'); disconnect.id = 'disconnectSaving'; disconnect.className = 'btn btn-ghost'; disconnect.textContent = 'Disconnect saving';
-  disconnect.onclick = function () { if (_savingBusy) return; _cloud.disconnect(); updateSavingUI(); };
-  var status = document.createElement('span'); status.id = 'savingStatus'; status.style.cssText = 'font-size:11px;color:#aaa;max-width:220px;'; status.setAttribute('role','status');
-  header.append(connect, disconnect, status); updateSavingUI();
+  var header=document.querySelector('.header-right');if(!header||document.getElementById('connectSaving'))return;
+  var connect=document.createElement('button');connect.id='connectSaving';connect.className='btn btn-ghost';
+  connect.onclick=async function(){try{await _cloud.connect();syncSharedIdentity();await initData();if(_cloud.isConnected()&&_hasUnpublishedChanges())await saveState();}catch(error){showSaveToast(error.message,true);}finally{updateSavingUI();}};
+  var disconnect=document.createElement('button');disconnect.id='disconnectSaving';disconnect.className='btn btn-ghost';disconnect.textContent='Sign out';
+  disconnect.onclick=async function(){if(_hasUnpublishedChanges()){showSaveToast('Save or export the pending change before signing out.',true);return;}await _cloud.disconnect();location.reload();};
+  var setup=document.createElement('a');setup.className='btn btn-ghost';setup.href='shared-setup.html';setup.textContent='Shared setup';
+  var status=document.createElement('span');status.id='savingStatus';status.style.cssText='font-size:11px;color:#aaa;max-width:220px';status.setAttribute('role','status');
+  header.append(connect,disconnect,setup,status);updateSavingUI();
 }
-document.getElementById('cancelSaving').onclick = function () { if (_savingBusy) return; _publishAfterConnect=false;document.getElementById('savingToken').value = ''; document.getElementById('savingDialog').close(); };
-document.getElementById('savingDialog').addEventListener('cancel', function (e) { if (_savingBusy) e.preventDefault(); else {_publishAfterConnect=false;document.getElementById('savingToken').value = '';} });
-document.getElementById('confirmSaving').onclick = async function () {
-  if (_savingBusy) return;
-  var token = document.getElementById('savingToken').value.trim(); document.getElementById('savingToken').value = '';
-  _savingBusy = true; this.disabled = true; document.getElementById('cancelSaving').disabled = true;
-  document.getElementById('savingError').textContent = '';
-  try {
-    await _cloud.connect(token);
-    if (!_gistReady) await initData();
-    document.getElementById('savingDialog').close();
-    if(_publishAfterConnect){_publishAfterConnect=false;await saveState();}else showSaveToast('Saving connected. Use Publish changes to share any pending edits.');
-  } catch (error) { document.getElementById('savingError').textContent = error.message; }
-  finally { token = ''; _savingBusy = false; this.disabled = false; document.getElementById('cancelSaving').disabled = false; updateSavingUI(); }
-};
 
 /* ═══════════════════════════════════════════════════════════════════
    PERSISTENCE — the GitHub Gist is the single source of truth.
@@ -1117,14 +1103,15 @@ function refreshAll() {
   if (ts) ts.textContent = shipments.length;
 }
 
-async function _doSave() {
+async function _doSave(attempt=0) {
+  _savingBusy=true;updateSavingUI();
   if (!_gistReady) {
     showSaveToast('⚠️ Not connected to the cloud — kept on this device only. Reload the page to reconnect.', true);
-    return false;
+    _savingBusy=false;updateSavingUI();return false;
   }
   if (!_cloud.isConnected()) {
-    showSaveToast('Draft kept on this browser. Choose Connect saving, then press Save to publish.' + (Object.keys(_dsPending).length ? ' Keep this tab open until newly attached files are saved.' : ''), true);
-    updateSavingUI(); return false;
+    showSaveToast('Sign in with your verified NVIDIA email to save shared changes. Your open change is retained for retry.',true);
+    _savingBusy=false;updateSavingUI();return false;
   }
   try {
     _ensureIds();
@@ -1136,7 +1123,7 @@ async function _doSave() {
     }
     var rem    = await _fetchGist();                 // always merge into the LATEST cloud copy
     var remote = _normalize(rem.saved);
-    var merged = { data: _mergeDraftFields(remote.data,dD,_base.data), comments: _mergeDraftFields(remote.comments,dC,_base.comments), shipments: _mergeDraftFields(remote.shipments,dS,_base.shipments) };
+    var merged = { ...rem.saved, data: _mergeDraftFields(remote.data,dD,_base.data), comments: _mergeDraftFields(remote.comments,dC,_base.comments), shipments: _mergeDraftFields(remote.shipments,dS,_base.shipments) };
 
     var files = {}, sentUp = {}, sentDel = {};
     files[MAIN_FILE] = { content: JSON.stringify(merged, null, 2) };
@@ -1152,7 +1139,7 @@ async function _doSave() {
     });
 
     var g = await _cloud.patch(files);
-    if (g.files) _gistFiles = g.files;
+    if (g.files) { _gistFiles = g.files; if(g.files[MAIN_FILE]?.content)merged=JSON.parse(g.files[MAIN_FILE].content); }
 
     Object.keys(sentUp).forEach(function(id){ if (_dsPending[id] === sentUp[id]) delete _dsPending[id]; });
     Object.keys(sentDel).forEach(function(id){ delete _dsDelete[id]; });
@@ -1168,18 +1155,19 @@ async function _doSave() {
     _clearSavedDraft(); updateSavingUI();
     if (JSON.stringify([data.map(_stripRow), comments, shipments]) !== before) refreshAll();   // someone else's changes arrived
     try{localStorage.setItem('nv_adhesives_published_v1',String(Date.now()));}catch(error){}
-    updateSavingUI();showSaveToast('✅ Published — shared with every visitor');
+    updateSavingUI();showSaveToast('✅ Saved for everyone');
     return true;
   } catch (e) {
+    if(e.status===412&&attempt<3)return _doSave(attempt+1);
     updateSavingUI();
-    showSaveToast('⚠️ Cloud save failed (' + e.message + ') — kept on this device. Press 💾 Save to retry.', true);
+    showSaveToast('⚠️ Cloud save failed (' + e.message + ') — kept on this device. Press Retry save.', true);
     return false;
-  }
+  } finally { _savingBusy=false;updateSavingUI(); }
 }
 function saveState() {
   lsSave();
   _writeDraft();
-  var p = _saveChain.then(_doSave);       // saves run one after another, never in parallel
+  var p = _saveChain.then(()=>_doSave()); // saves run one after another, never in parallel
   _saveChain = p.catch(function(){});
   return p;
 }
@@ -1198,17 +1186,17 @@ function refreshSharedInventory(){
     if(document.querySelector('#modalOverlay.open,#shipModalOverlay.open'))return;
     var remote=await _fetchGist();if(!remote.saved||document.querySelector('#modalOverlay.open,#shipModalOverlay.open'))return;
     var changes={data:_diff(data,_base.data),comments:_diff(comments,_base.comments),shipments:_diff(shipments,_base.shipments)};
-    var fresh=_normalize(remote.saved);_gistFiles=remote.files;
+    var fresh=_normalize(remote.saved);_gistFiles=remote.files;syncSharedIdentity();
     var combined={data:_mergeDraftFields(fresh.data,changes.data,_base.data),comments:_mergeDraftFields(fresh.comments,changes.comments,_base.comments),shipments:_mergeDraftFields(fresh.shipments,changes.shipments,_base.shipments)};
     _base={data:_toMap(fresh.data),comments:_toMap(fresh.comments),shipments:_toMap(fresh.shipments)};
     data=combined.data;comments=combined.comments;shipments=combined.shipments;
     lsSave();_clearSavedDraft();refreshAll();updateSavingUI();
   });
-  _saveChain=run.catch(function(){showSaveToast('Shared refresh unavailable. Your draft is kept.',true);}).finally(function(){_sharedRefreshBusy=false;});
+  _saveChain=run.catch(function(){showSaveToast('Shared refresh unavailable. The last confirmed data remains visible.',true);}).finally(function(){_sharedRefreshBusy=false;});
 }
 window.addEventListener('storage',function(event){if(event.key==='nv_adhesives_published_v1')refreshSharedInventory();});
 document.addEventListener('visibilitychange',function(){if(!document.hidden)refreshSharedInventory();});
-setInterval(function(){if(!document.hidden)refreshSharedInventory();},60000);
+setInterval(function(){if(!document.hidden)refreshSharedInventory();},10000);
 
 // ── Datasheet files ────────────────────────────────────────────────
 function _dataUrlToBlob(du) {
@@ -1726,6 +1714,7 @@ async function startEntry() {
 }
 function requireEditor() {
   if (currentRole === 'editor') {
+    if(!_cloud.canEdit()){document.getElementById('connectSaving')?.click();return false;}
     if (_gistReady) return true;
     showSaveToast('Shared data is not loaded. Connect saving or reload before editing.', true); return false;
   }
@@ -1735,15 +1724,6 @@ function requireEditor() {
 
 // ── Data loading ───────────────────────────────────────────────────
 async function initData() {
-  // Clear corrupted localStorage if nvpn looks like a row number
-  try {
-    const ls = JSON.parse(localStorage.getItem(LS_KEY) || '{}');
-    if (ls.data?.length && ls.data[0]?.nvpn && !isNaN(ls.data[0].nvpn)) {
-      localStorage.removeItem(LS_KEY);
-      console.log('Cleared corrupted localStorage');
-    }
-  } catch(e) {}
-
   // 1. Instant paint from this device's cache (NOT trusted for saving)
   try {
     const ls = JSON.parse(localStorage.getItem(LS_KEY) || '{}');
@@ -1762,16 +1742,18 @@ async function initData() {
       _gistFiles = g.files;
       _rescueLocalFiles(data, g.files);
       _base = { data: _toMap(data), comments: _toMap(comments), shipments: _toMap(shipments) };
-      _gistReady = true;
-      var pending = _readDraft();
+      _gistReady = true;syncSharedIdentity();
+      var pending = _cloud.isConnected() ? _readDraft() : null;
       if (pending) {
-        data = _apply(data, _diff(pending.data, pending.base.data));
-        comments = _apply(comments, _diff(pending.comments, pending.base.comments));
-        shipments = _apply(shipments, _diff(pending.shipments, pending.base.shipments));
+        data = _mergeDraftFields(data, _diff(pending.data, pending.base.data),pending.base.data);
+        comments = _mergeDraftFields(comments, _diff(pending.comments, pending.base.comments),pending.base.comments);
+        shipments = _mergeDraftFields(shipments, _diff(pending.shipments, pending.base.shipments),pending.base.shipments);
         _writeDraft();
       }
       lsSave(); refreshAll();
-      showSaveToast(pending ? 'Your unsaved draft was restored over the latest shared data. Connect saving and press Save to publish.' : '✅ Synced (' + data.length + ' adhesives)', Boolean(pending));
+      updateSavingUI();
+      if(pending){showSaveToast('Recovering your previous unsaved change…');await saveState();}
+      else showSaveToast('✅ Synced ('+data.length+' adhesives)');
       return;
     }
   } catch(e) { console.warn('Cloud load failed:', e); }
@@ -2012,6 +1994,7 @@ function formatAgo(dt) {
 }
 
 function postComment() {
+  if(!_cloud.isConnected()){document.getElementById('connectSaving')?.click();return;}
   if (!_gistReady) { showSaveToast('Shared data is not loaded. Connect saving or reload before adding a comment.', true); return; }
   const author   = (document.getElementById('c_author')||document.getElementById('cAuthor'))?.value.trim();
   const adhesive = (document.getElementById('c_adhesive')||document.getElementById('cAdhesive'))?.value||'';
@@ -2551,7 +2534,7 @@ function importExcel() {
 
 // ── Init ─────────────────────────────────────────────────────────
 // Revision of THIS file = day.month.year + a letter (a, b, c … = which version of that day). Updated with every new delivery of the file.
-const APP_REV = '20.11.26b';
+const APP_REV = '20.11.26c';
 (function() {
   var rev = document.getElementById('appRev');
   if (rev) { rev.textContent = 'Rev ' + APP_REV; rev.title = 'Version of this file (day.month.year + letter of the day\'s revision)'; }
@@ -2571,6 +2554,11 @@ window.addEventListener('hashchange', function(event) {
 });
 window.addEventListener('beforeunload', function(event) {
   if (Object.keys(_dsPending).length || _savingBusy) { event.preventDefault(); event.returnValue = ''; }
+});
+LabFirebaseAuth.onChange(function(user){
+  if(!user&&_cloud.isActive()){currentRole='viewer';document.body.classList.add('viewer-mode');}
+  if(_cloud.isActive())syncSharedIdentity();updateSavingUI();
+  if(user?.emailVerified&&_gistReady&&!_hasUnpublishedChanges())initData();
 });
 startEntry();
 </script>

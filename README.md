@@ -1,45 +1,39 @@
 # Lab Adhesives
 
-Live page: https://yousefmahajna.github.io/lab-adhesives/
+Live: https://yousefmahajna.github.io/lab-adhesives/
 
-## Entry paths
+## Shared autosave activation
 
-Opening the regular page URL keeps the existing name selector and editor-password flow. Stored hub emails do not bypass this selection screen.
+Open [Shared setup](https://yousefmahajna.github.io/lab-adhesives/shared-setup.html). Publish `firebase-database-rules.json` in the Firebase Console, create and verify the owner's `ymahajna@nvidia.com` account, preview the Gist source, then initialize. Setup copies the latest complete inventory to an empty `adhesivesSharedV1` Firebase path using an ETag conditional write. It cannot replace existing inventory. The Gist archive and separate datasheet files are never modified by this version.
 
-When opened from Interconnect Process Lab, the Adhesive Inventory tile passes a selected NVIDIA email in a URL fragment (`#ipl-entry=1&email=...`). The fragment does not contain a role, password, or token and is not sent in HTTP referrer headers. Adhesives loads the published hub policy and reads the current shared `platforms.json` from GitHub with caching disabled. It determines the Adhesives role from that shared configuration:
+Deployment alone does not migrate data or enable writes. Until initialization, the page reads the saved Gist inventory and blocks editing with a Shared setup link. Reload open inventory tabs after initialization.
 
-- Viewer opens in the existing Viewer mode, including its existing commenting behavior.
-- Editor, Manager, and Administrator open as Adhesive Editor.
-- No access, invalid email, or a failed permission lookup keeps the page blocked. It never falls back to the legacy selector for marked hub links.
+The supplied Firebase web configuration is a public client identifier, not an admin credential. No service-account keys or GitHub tokens are embedded. Authentication uses the official Firebase SDK, Email/Password and verified NVIDIA email addresses. Users choose a separate lab-app password. Firebase Auth persists the session for this origin across the lab routes.
 
-Hub entry skips the name/password selector, shows the configured user name and role, and adds a back link to Process Lab. A refresh or changed handoff fragment rechecks permissions. Entry roles are not saved in localStorage or reused by the regular link. Inventory, shipment, and comment deletion/import editing functions also check the current Editor mode.
+## Entry and permissions
 
-This is integration with the hub's existing unverified email selection. It does not verify NVIDIA mailbox ownership or create server-side authorization. The regular entry selector and existing cloud data service remain in place. Verified identity and data-service permission enforcement require separate work.
+The regular URL retains the existing name selector. Hub links retain the selected-email handoff, skip the selector and load the shared hub policy. A selected email or legacy editor password does not authorize a database write. Verified Firebase identity and server-enforced grants authorize writes. The verified account's name and role supersede an unverified selection once signed in.
 
-## Shared saving
+The owner alone initializes and updates `adhesiveAccessV1`. The hub synchronizes that mirror after successful Users saves and reports any sync failure explicitly. Use Shared setup → Sync permissions to retry. Server rules consult the currently saved mirror on every write; revoking Editor prevents further stock writes even from an open tab. General NVIDIA default levels and individual No access entries are supported.
 
-The page no longer embeds a GitHub API credential. Inventory reads use the existing gist anonymously until a saving connection is established. Choose **Connect saving** to enter a fine-grained token belonging to the owner of that shared gist (currently YousefMahajna), with account permission **Gists: Read and write**. Other GitHub accounts cannot write this owner-owned gist simply because they are lab Editors. An Editor role permits the application editing interface; GitHub independently authorizes shared writes. This is a page-local connection separate from the hub's repository-saving connection.
+Editors, managers and the owner can edit inventory, shipments and comments. Verified Viewers can add new comments, with their Firebase UID recorded in a wrapper; they cannot edit stock, modify/delete existing comments or upload files. Public read access is retained from the existing deployment. The supplied rules protect the new Adhesives paths and preserve existing public-write behavior at Activities `appState` and `processRecipeLibrary`; those applications have not yet migrated to verified authorization. Never grant `.write:true` at the database root, because ancestor grants bypass child restrictions.
 
-Tokens are sent only to GitHub API endpoints and kept only in a private page-memory variable. Inputs clear after a connection attempt. Credentials are never included in source, localStorage, sessionStorage, inventory data, or handoff URLs. Disconnecting, reloading, closing the page or an authorization failure clears the connection. **Save** publishes the pending inventory/comment/shipment changes using the existing merge-into-latest behavior.
+The old exposed GitHub credential must remain revoked. Historical commits and backups can still contain it; deleting it from current source does not invalidate a token.
 
-Disconnected edits are kept in a browser draft for the selected hub email or legacy user name and access role. Reloading restores that draft over the latest shared data. An Editor draft stays separate if that email is subsequently downgraded to Viewer. A confirmed save clears the draft when no newer edits remain. Missing cloud data blocks editing until a valid baseline has loaded. Newly attached files stay in page memory until saved; the page warns before leaving while attachments are pending. Browser draft storage failures are reported. Failed network writes keep the draft and do not report success.
+## Saves and recovery
 
-The previous credential was already public, including in repository history and backups. The repository owner must revoke that old credential in GitHub and create a replacement. Removing it from the current page cannot invalidate historical copies. See [GitHub token management](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens).
+Every edit attempts an automatic Firebase save. Saves read the latest shared data, merge only changed fields and conditionally write the read ETag. Conflicts re-read and retry at most three times. A confirmed server response clears the recovery record and shows Saved. A failed/unconfirmed write shows Not saved and retains the edit for retry; it does not report success. Datasheet uploads remain in page memory until confirmed, with a before-leaving warning.
 
-## Minimum stock
+Other visible tabs refresh about every ten seconds and on foregrounding. Both direct and hub URLs use the same shared source. Unknown row fields, zero quantities, hidden legacy Owner values, comments, shipments, extra main-file metadata and datasheet references survive migration and normal saves. New datasheets live in the Firebase inventory; existing attachment URLs continue to read the untouched Gist files.
 
-Inventory shows **Min QTY** immediately after QTY. Each adhesive has an independent editable `minQty`; old rows remain unchanged until an editor explicitly sets a value. Blank/unknown quantities and minimums are not assumed to be zero. QTY below Min QTY is red; QTY from Min QTY up to but below 130% is dark yellow; 130% or above has no stock highlight. Only below-minimum items belong in urgent reports.
+Previous per-email unsaved records are retained. In the original browser, sign in as the matching verified account to recover changed fields over the latest shared data and autosave them. Recovery records are used for connection failures, rather than as the ordinary inventory source. They are removed after confirmed saving. A downgrade to Viewer never replays an Editor's inventory draft.
 
-Owner is hidden from the inventory table and edit form, but existing `owner` data remains on every saved row. Excel retains Owner in a hidden **Owner (legacy)** column for lossless round-tripping. Min QTY is exported/imported; older workbooks without it leave existing thresholds unchanged. Uploaded datasheet references and unknown row fields survive normal edits and imports. This release does not migrate or rewrite shared inventory data.
+## Stock and Excel
 
-Use **Red first** or **Yellow first** to sort by stock urgency, or click the QTY heading to alternate between them. The **Stock color** filter can show only red or only yellow items. These controls affect the displayed rows, not stored inventory order or quantities.
+Min QTY is independently editable after QTY. Below Min QTY is red; Min QTY through below 130% is dark yellow; 130% or higher is normal. Missing values are unknown rather than zero. Red-first/yellow-first sorting and stock-color filters affect only displayed rows. Owner is hidden from the inventory form/table but retained in data and a hidden Excel Owner (legacy) column. Existing workbooks without Min QTY do not reset minima; attachments and unknown row fields survive imports.
 
-`node scripts/weekly-low-stock.cjs` reads the saved shared inventory and emits an urgent report for Michael (`michaelsk@nvidia.com`) and Yousef (`ymahajna@nvidia.com`). It never sends email, changes inventory, or places orders. A separate Codex desktop automation is configured for Sundays at 09:00 Asia/Jerusalem to create an Outlook email draft only when items are below minimum. Automatic sending is unavailable with the current connector; drafts need manual Send. The schedule is outside this static website and is not installed by cloning this repository.
+`node scripts/weekly-low-stock.cjs` produces a read-only urgent report for Michael and Yousef. It reads Firebase once initialized and uses the Gist only when the new path is absent. A failed Firebase read never falls back to a potentially stale Gist. The separately configured Codex Sunday 09:00 Israel-time automation prepares an Outlook draft for below-minimum items only. The user manually sends it. Yellow warnings do not trigger urgent emails.
 
-## Development checks
+## Validation
 
-The header distinguishes **UNPUBLISHED DRAFT — only this browser** from the saved shared inventory. **Publish changes** opens the existing owner saving connection if needed and publishes after a successful connection. An unconnected edit is never presented as globally saved. Keep the editor tab or its recovery draft until publishing succeeds.
-
-Open tabs refresh after a successful same-browser publication, when they regain visibility, and periodically while visible. Refresh and publishing merge only fields actually changed locally, preserving unrelated newer fields from another editor. Public inventory reads use the current raw Gist file, avoiding anonymous API quota consumption; authenticated saves still read and merge the live API data before writing. No inventory values are changed by deployment.
-
-Run `node --test tests/*.test.cjs` with Node 24. The policy under `tests/fixtures/` is an offline snapshot for contract tests; production loads the published hub policy. The check workflow runs on pull requests and pushes to main. Browser integration checks are maintained in the implementing workspace and intercept all GitHub API requests to avoid changing live inventory.
+Run `node --test tests/*.test.cjs` with Node 24. Tests cover source preservation, conflict detection, denied saves, Viewer comment restrictions and server authorization predicates, alongside existing entry, low-stock and merge tests. Rule-predicate tests are not a Firebase emulator; Firebase Console validates rule syntax when publishing. Workspace browser tests mock all writes and check both entry routes, cross-browser saves, failures/retry and recovery. A separate browser check loads the real official Auth SDK without creating accounts, sending emails or writing data.
