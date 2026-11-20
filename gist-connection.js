@@ -14,12 +14,32 @@
       if (!response.ok) {
         if ([401, 403, 404].indexOf(response.status) !== -1 && credential) { token = ''; login = ''; }
         var error = new Error(response.status === 401 ? 'GitHub did not accept this credential. Connect again with a valid token.' : response.status === 403 || response.status === 404 ? 'GitHub access was denied. Saving needs the inventory owner account and Gists: Read and write permission.' : 'GitHub returned an error (' + response.status + '). Your draft is kept.');
-        error.status = response.status; throw error;
+        error.status = response.status;
+        error.rateLimited = response.status === 429 || (response.headers && response.headers.get('x-ratelimit-remaining') === '0');
+        throw error;
       }
       return response.json();
     }
     return {
-      read: function () { return request(endpoint + '?_=' + Date.now(), token); },
+      read: async function () {
+        var wasConnected=Boolean(token);
+        try { return await request(endpoint + '?_=' + Date.now(), token); }
+        catch(error) {
+          if (wasConnected || !error.rateLimited) throw error;
+          var base='https://gist.githubusercontent.com/YousefMahajna/'+gistId+'/raw/';
+          var response=await fetcher(base+'adhesives_data.json?_='+Date.now(),{method:'GET',cache:'no-store',redirect:'error',signal:AbortSignal.timeout(20000)});
+          if(!response.ok)throw new Error('The shared inventory could not be read. No data was changed.');
+          var saved=await response.json();
+          if(!saved||!Array.isArray(saved.data))throw new Error('The shared inventory format is invalid. No data was changed.');
+          var files={'adhesives_data.json':{content:JSON.stringify(saved)}};
+          saved.data.forEach(function(row){
+            if(row.dsType==='file'&&/^[A-Za-z0-9_-]+$/.test(String(row.id))) {
+              var filename='ds_'+row.id+'.json';files[filename]={raw_url:base+filename};
+            }
+          });
+          return {files:files,publicReadFallback:true};
+        }
+      },
       connect: async function (candidate) {
         token = ''; login = ''; candidate = String(candidate || '').trim();
         if (!candidate) throw new Error('Enter a GitHub token to connect saving.');

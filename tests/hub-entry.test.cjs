@@ -53,3 +53,29 @@ test('unavailable or malformed shared permissions block hub entry', async () => 
   await assert.rejects(Hub.load(url('neweditor@nvidia.com'), async () => ({ ok: true, json: async () => ({}) }), async () => Policy), /could not be read/);
   assert.throws(() => Hub.fromData('neweditor@nvidia.com', { access: [] }, Policy), /permissions list/);
 });
+
+test('an exhausted anonymous API quota reads the same public main-branch file', async () => {
+  const calls=[];
+  const result=await Hub.load(url('unknown@nvidia.com')+'&role=admin',async(href,options)=>{
+    calls.push({href,options});
+    if(calls.length===1)return {ok:false,status:403,headers:{get:()=> '0'}};
+    assert.ok(href.startsWith('https://raw.githubusercontent.com/YousefMahajna/interconnect-process-lab/main/platforms.json?_='));
+    assert.equal(options.cache,'no-store');assert.equal(options.redirect,'error');
+    return {ok:true,json:async()=>data()};
+  },async()=>Policy);
+  assert.equal(result.role,'viewer');assert.equal(calls.length,2);
+});
+
+test('rate-limit fallback still blocks denied users and unavailable sources', async () => {
+  for(const denied of [false,true]){
+    let calls=0;
+    await assert.rejects(Hub.load(url('blocked@nvidia.com'),async()=>{
+      if(++calls===1)return {ok:false,status:403,headers:{get:()=> '0'}};
+      const d=data();d.access.push({name:'Blocked',email:'blocked@nvidia.com',platform:'adhesives',level:'none'});
+      return {ok:denied,json:async()=>d};
+    },async()=>Policy),e=>e.code===(denied?'NO_ACCESS':'UNAVAILABLE'));
+  }
+  let calls=0;
+  await assert.rejects(Hub.load(url('unknown@nvidia.com'),async()=>{calls++;return {ok:false,status:403,headers:{get:()=> '1'}};},async()=>Policy),/current Process Lab permissions/);
+  assert.equal(calls,1);
+});

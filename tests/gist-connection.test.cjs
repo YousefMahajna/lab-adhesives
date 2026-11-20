@@ -33,3 +33,12 @@ test('network failure does not claim a confirmed save or retry writes',async()=>
  let failed=false,writes=0;const client=Connection.create(id,async(url,o)=>{if(o.method==='PATCH'){writes++;throw Error('network');}return{ok:true,json:async()=>url.endsWith('/user')?{id:7,login:'Owner'}:{owner:{id:7},files:{}}};});
  await client.connect('test-only-credential');await assert.rejects(client.patch({}),/could not be confirmed/);assert.equal(writes,1);
 });
+test('anonymous rate-limited reads load the complete saved inventory from the same public Gist',async()=>{
+ const saved={data:[{id:1,name:'A',owner:'Keep owner',minQty:'5',dsType:'file',dsFileName:'Keep.pdf'}],comments:[{id:2}],shipments:[{id:3}]},calls=[];
+ const client=Connection.create(id,async(url,o)=>{calls.push({url,o});return url.includes('api.github.com')?{ok:false,status:403,headers:{get:()=> '0'}}:{ok:true,json:async()=>saved};});
+ const result=await client.read();assert.deepEqual(JSON.parse(result.files['adhesives_data.json'].content),saved);assert.ok(result.files['ds_1.json'].raw_url.endsWith('/ds_1.json'));assert.equal(client.isConnected(),false);assert.equal(calls.length,2);assert.equal(calls[1].o.headers,undefined);await assert.rejects(client.patch({}),/Connect saving/);
+});
+test('failed authenticated reads never use a public copy as the pre-save source',async()=>{
+ let fail=false,rawReads=0;const client=Connection.create(id,async(url,o)=>{if(url.includes('gist.githubusercontent.com'))rawReads++;if(fail)return{ok:false,status:403,headers:{get:()=> '0'}};return{ok:true,json:async()=>url.endsWith('/user')?{id:7,login:'Owner'}:{owner:{id:7}}};});
+ await client.connect('test-only-credential');fail=true;await assert.rejects(client.read());assert.equal(rawReads,0);
+});
