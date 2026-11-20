@@ -690,6 +690,16 @@
     <option value="Fridge">Fridge / Cold</option>
     <option value="Room">Room Temp</option>
   </select>
+  <select id="filterStock" aria-label="Stock color" onchange="render()">
+    <option value="">All stock colors</option>
+    <option value="low">Red only — below minimum</option>
+    <option value="warning">Yellow only — below 130%</option>
+  </select>
+  <select id="sortStock" aria-label="Sort by stock" onchange="render()">
+    <option value="">Current order</option>
+    <option value="red">Red first — urgent</option>
+    <option value="yellow">Yellow first — warning</option>
+  </select>
   <button class="btn btn-ghost edit-only" onclick="exportExcel()">⬇ Export Excel</button>
   <button class="btn btn-ghost edit-only" onclick="importExcel()" style="border-color:#76b900;color:#76b900;" title="Import from exported Excel file">📥 Import Excel</button>
 </div>
@@ -706,7 +716,7 @@
         <th>Supplier PN</th>
         <th>Where Used</th>
         <th>Syringe Sizes</th>
-        <th>Qty</th>
+        <th onclick="toggleStockOrder()" title="Switch between red-first and yellow-first stock sorting">Qty <span class="sort-arrow">↕</span></th>
         <th>Min QTY</th>
         <th onclick="sortBy('expiry')">Expiry Date <span class="sort-arrow">↕</span></th>
         <th>Status</th>
@@ -1228,10 +1238,12 @@ function render() {
   const q   = document.getElementById('searchInput').value.toLowerCase();
   const fs  = document.getElementById('filterStatus').value;
   const fst = document.getElementById('filterStorage').value;
+  const stockFilter = document.getElementById('filterStock').value;
 
   let rows = data.filter(r => {
     const hay = [r.name, r.vendor, r.nvpn, r.spn, r.used, r.location, r.owner, r.tracking].join(' ').toLowerCase();
     if (q && !hay.includes(q)) return false;
+    if (stockFilter && AdhesiveLowStock.level(r)!==stockFilter) return false;
     const st = getStatus(r);
     if (fs && st !== fs) return false;
     if (fst) {
@@ -1252,6 +1264,8 @@ function render() {
     });
   }
 
+  const stockOrder=document.getElementById('sortStock').value;
+  if(stockOrder)rows.sort((a,b)=>AdhesiveLowStock.rank(a,stockOrder)-AdhesiveLowStock.rank(b,stockOrder));
   const tbody = document.getElementById('tbody');
   if (!rows.length) {
     tbody.innerHTML = `<tr class="empty-row"><td colspan="18">No adhesives match your filter.</td></tr>`;
@@ -1321,6 +1335,7 @@ function updateStats() {
 }
 
 // ── Sort ──────────────────────────────────────────────────────────
+function toggleStockOrder(){const input=document.getElementById('sortStock');input.value=input.value==='red'?'yellow':'red';render();}
 function sortBy(col) {
   if (sortCol === col) sortAsc = !sortAsc; else { sortCol = col; sortAsc = true; }
   document.querySelectorAll('th').forEach(th => th.classList.remove('sorted'));
