@@ -637,6 +637,7 @@
   body.viewer-mode .row-actions button.del-btn  { display: none !important; }
   body.viewer-mode #filterStorage { pointer-events: auto; }
 
+.stock-qty{text-align:center}.stock-low{color:#ff6b6b!important;background:rgba(255,50,50,.16)!important;font-weight:700;box-shadow:inset 3px 0 #ef4444}.stock-warning{color:#d2a000!important;background:rgba(184,134,11,.18)!important;font-weight:700;box-shadow:inset 3px 0 #b8860b}.stock-warning-label{display:block;font-size:10px;color:#b8860b;margin-top:3px}.stock-low-label{display:block;font-size:10px;color:#ff8a8a;margin-top:3px}
 </style>
 </head>
 <body>
@@ -706,6 +707,7 @@
         <th>Where Used</th>
         <th>Syringe Sizes</th>
         <th>Qty</th>
+        <th>Min QTY</th>
         <th onclick="sortBy('expiry')">Expiry Date <span class="sort-arrow">↕</span></th>
         <th>Status</th>
         
@@ -714,7 +716,6 @@
         <th>Freezer</th>
         <th>Shelf #</th>
         <th>Storage Temp</th>
-        <th>Owner</th>
         <th>Comments</th>
         <th>Datasheet</th>
         <th>Actions</th>
@@ -757,7 +758,7 @@
   <div class="comments-header">
     <div>
       <div class="comments-title">&#x1F4AC; Lab Discussion Board</div>
-      <div class="comments-sub">Leave notes, tag the owner, or flag an adhesive for reorder</div>
+      <div class="comments-sub">Leave notes or flag an adhesive for reorder</div>
     </div>
     <div class="comment-tag-pills">
       <span class="tag-pill tag-note">&#x1F4DD; Note</span>
@@ -810,6 +811,7 @@
       <div class="field"><label>Where Used</label><input id="f_used" placeholder="e.g. 1.6T SIAN3 SIPH — TIM1 dispense, underfill…"></div>
       <div class="field"><label>Syringe Sizes</label><input id="f_syringe" placeholder="e.g. 3cc, 10cc, 30cc"></div>
       <div class="field"><label>Amount of Syringes</label><input id="f_qty" type="number" placeholder="e.g. 12"></div>
+      <div class="field"><label for="f_minQty">Min QTY</label><input id="f_minQty" type="number" min="0" step="any" placeholder="Set per adhesive / priority"><small>Leave blank until a minimum is defined.</small></div>
       <div class="field"><label>Expiry Date</label><input id="f_expiry" type="date"></div>
       <div class="field"><label>Shipment Tracking #</label><input id="f_tracking" placeholder="e.g. 1Z999AA10123456784"></div>
       <div class="field"><label>Freezer</label>
@@ -823,7 +825,6 @@
       </div>
       <div class="field"><label>Shelf # (inside freezer)</label><input id="f_shelf" placeholder="e.g. Shelf 1, Shelf 3, Top shelf"></div>
       <div class="field"><label>Storage Temp</label><input id="f_temp" placeholder="e.g. −20°C, 2–8°C, 25°C"></div>
-      <div class="field"><label>Owner</label><input id="f_owner" placeholder="e.g. Yousef A."></div>
       <div class="field modal-full">
         <label>Datasheet</label>
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:6px">
@@ -905,6 +906,7 @@
   <button class="btn btn-primary" id="confirmSaving" type="button">Connect</button>
   <button class="btn btn-ghost" id="cancelSaving" type="button">Cancel</button>
 </dialog>
+<script src="low-stock.js?v=20.11.26a"></script>
 <script src="gist-connection.js?v=1"></script>
 <script src="hub-entry.js?v=2"></script>
 <script>
@@ -1285,13 +1287,13 @@ function render() {
         <td style="font-family:monospace;font-size:11px">${r.spn || '—'}</td>
         <td style="max-width:140px"><div style="white-space:normal">${r.used}</div></td>
         <td>${r.syringe || '—'}</td>
-        <td style="text-align:center">${r.qty || '—'}</td>
+        <td class="stock-qty${AdhesiveLowStock.level(r)==='low' ? ' stock-low' : AdhesiveLowStock.level(r)==='warning' ? ' stock-warning' : ''}" title="${AdhesiveLowStock.isLow(r) ? 'Below minimum — urgent reorder' : AdhesiveLowStock.level(r)==='warning' ? 'Below 130% of minimum — stock warning' : ''}">${esc(AdhesiveLowStock.display(r.qty))}${AdhesiveLowStock.isLow(r) ? '<span class="stock-low-label">Order urgently</span>' : AdhesiveLowStock.level(r)==='warning' ? '<span class="stock-warning-label">Near minimum</span>' : ''}</td>
+        <td style="text-align:center">${esc(AdhesiveLowStock.display(r.minQty))}</td>
         <td>${expiryTxt}</td>
         <td>${statusBadge(st)}</td>
         <td style="font-size:11px">${r.freezer || '—'}</td>
         <td style="font-size:11px;color:#a0c8ff;font-weight:600">${r.shelf || '—'}</td>
         <td>${tempBadge(r.temp)}</td>
-        <td>${r.owner || '—'}</td>
         <td style="max-width:180px;white-space:normal;font-size:11px;color:var(--nv-muted)">${r.comments || '—'}</td>
         <td>${dsLink}</td>
         <td><div class="row-actions">
@@ -1373,7 +1375,7 @@ function openAddModal() {
   if (!requireEditor()) return;
   editId = null;
   document.getElementById('modalTitle').textContent = 'Add Adhesive';
-  ['name','vendor','priority','nvpn','spn','used','syringe','qty','expiry','tracking','freezer','shelf','temp','owner','ds','comments']
+  ['name','vendor','priority','nvpn','spn','used','syringe','qty','minQty','expiry','tracking','freezer','shelf','temp','owner','ds','comments']
     .forEach(f => { const el = document.getElementById('f_'+f); if (el) el.value = ''; });
   currentDsTab = 'url'; currentDsFileName = ''; currentDsFileData = '';
   const _fi = document.getElementById('f_ds_file'); if (_fi) _fi.value = '';
@@ -1391,7 +1393,7 @@ function editRow(id) {
   editId = id;
   function setVal(elId, val) {
     const el = document.getElementById(elId);
-    if (el) el.value = val || '';
+    if (el) el.value = val == null ? '' : val;
   }
   function setText(elId, val) {
     const el = document.getElementById(elId);
@@ -1406,11 +1408,11 @@ function editRow(id) {
   setVal('f_used',    r.used);
   setVal('f_syringe', r.syringe);
   setVal('f_qty',     r.qty);
+  setVal('f_minQty',  r.minQty);
   setVal('f_expiry',  r.expiry);
   setVal('f_freezer', r.freezer);
   setVal('f_shelf',   r.shelf);
   setVal('f_temp',    r.temp);
-  setVal('f_owner',   r.owner);
   setVal('f_ds',      r.datasheet);
   setVal('f_comments',r.comments);
   setText('ds_file_name', r.dsFileName ? '📎 ' + r.dsFileName : '');
@@ -1433,6 +1435,8 @@ function saveRow() {
   if (!requireEditor()) return;
   const name = document.getElementById('f_name').value.trim();
   if (!name) { alert('Adhesive name is required.'); return; }
+  const minInput=document.getElementById('f_minQty'),minQty=minInput.value.trim();
+  if(minInput.validity.badInput||(minQty!==''&&AdhesiveLowStock.quantity(minQty)===null)){alert('Min QTY must be a non-negative number, or blank.');return;}
   const row = {
     name,
     vendor:   document.getElementById('f_vendor').value.trim(),
@@ -1442,12 +1446,12 @@ function saveRow() {
     used:     document.getElementById('f_used').value.trim(),
     syringe:  document.getElementById('f_syringe').value.trim(),
     qty:      document.getElementById('f_qty').value.trim(),
+    minQty:   minQty,
     expiry:   document.getElementById('f_expiry').value,
 
     freezer:  document.getElementById('f_freezer').value,
     shelf:    document.getElementById('f_shelf').value.trim(),
     temp:     document.getElementById('f_temp').value.trim(),
-    owner:    document.getElementById('f_owner').value.trim(),
     comments: document.getElementById('f_comments').value.trim(),
     datasheet:  (document.getElementById('f_ds') ? document.getElementById('f_ds').value.trim() : ''),
     dsType:     currentDsTab,
@@ -2087,7 +2091,7 @@ function _xlSheet(sst, o) {
     r++;
   });
   x.push('<row r="' + r + '" ht="14" customHeight="1">' + cell('A' + r, 27, o.footer) + '</row>');
-  var cols = ''; o.cols.forEach(function(c, i){ cols += '<col width="' + c.w + '" customWidth="1" min="' + (i + 1) + '" max="' + (i + 1) + '"/>'; });
+  var cols = ''; o.cols.forEach(function(c, i){ cols += '<col width="' + c.w + '" customWidth="1" min="' + (i + 1) + '" max="' + (i + 1) + '"' + (c.hidden ? ' hidden="1"' : '') + '/>'; });
   return '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetPr><tabColor rgb="0076B900"/><outlinePr summaryBelow="1" summaryRight="1"/><pageSetUpPr/></sheetPr>' +
     '<dimension ref="A1:' + last + r + '"/><sheetViews><sheetView showGridLines="0" workbookViewId="0"><pane ySplit="4" topLeftCell="A5" activePane="bottomLeft" state="frozen"/><selection pane="bottomLeft" activeCell="A1" sqref="A1"/></sheetView></sheetViews>' +
     '<sheetFormatPr baseColWidth="8" defaultRowHeight="15"/><cols>' + cols + '</cols><sheetData>' + x.join('') + '</sheetData>' +
@@ -2124,14 +2128,15 @@ function exportExcel() {
   var pick = function(i, a, b){ return odd(i) ? a : b; };
 
   // ── Sheet 1: Inventory — ALL rows of the table (filters on screen are ignored) ──
-  var invCols = [{h:'#',w:5},{h:'Adhesive',w:26},{h:'Vendor',w:16},{h:'Priority',w:10},{h:'NV PN',w:14},{h:'Supplier PN',w:14},{h:'Where Used',w:24},{h:'Syringe Sizes',w:14},{h:'Qty',w:8},{h:'Expiry Date',w:13},{h:'Status',w:13},{h:'Freezer',w:18},{h:'Shelf #',w:10},{h:'Storage Temp',w:13},{h:'Owner',w:14},{h:'Comments',w:30},{h:'Datasheet',w:30},{h:'ID',w:16}];
+  var invCols = [{h:'#',w:5},{h:'Adhesive',w:26},{h:'Vendor',w:16},{h:'Priority',w:10},{h:'NV PN',w:14},{h:'Supplier PN',w:14},{h:'Where Used',w:24},{h:'Syringe Sizes',w:14},{h:'Qty',w:8},{h:'Min QTY',w:10},{h:'Expiry Date',w:13},{h:'Status',w:13},{h:'Freezer',w:18},{h:'Shelf #',w:10},{h:'Storage Temp',w:13},{h:'Owner (legacy)',w:14,hidden:true},{h:'Comments',w:30},{h:'Datasheet',w:30},{h:'ID',w:16}];
   var stLabel = { ok:'OK', warn:'Expiring', expired:'Expired', na:'\u2014' };
   var expSty  = { warn:[10,18], expired:[20,26], ok:[28,22], na:[24,29] };
   var stSty   = { warn:11, expired:21, ok:23, na:25 };
   var invRows = data.map(function(r, i) {
     var st = getStatus(r), ds = (r.dsType === 'file' && r.dsFileName) ? r.dsFileName : (r.datasheet || '');
-    var vals = [i + 1, r.name, r.vendor, r.priority, r.nvpn, r.spn, r.used, r.syringe, r.qty, r.expiry, stLabel[st] || '\u2014', r.freezer, r.shelf, r.temp, r.owner, r.comments, ds, String(r.id == null ? '' : r.id)];
-    var sty  = [5, pick(i,6,14), pick(i,7,15), pick(i,9,17), pick(i,8,16), pick(i,8,16), pick(i,7,15), pick(i,7,15), pick(i,9,17), pick(i, (expSty[st]||expSty.na)[0], (expSty[st]||expSty.na)[1]), stSty[st] || 25, pick(i,7,15), 12, 12, pick(i,7,15), pick(i,13,19), pick(i,8,16), pick(i,24,29)];
+    var vals = [i + 1, r.name, r.vendor, r.priority, r.nvpn, r.spn, r.used, r.syringe, r.qty, r.minQty, r.expiry, stLabel[st] || '\u2014', r.freezer, r.shelf, r.temp, r.owner, r.comments, ds, String(r.id == null ? '' : r.id)];
+    var sty  = [5, pick(i,6,14), pick(i,7,15), pick(i,9,17), pick(i,8,16), pick(i,8,16), pick(i,7,15), pick(i,7,15), pick(i,9,17), pick(i,9,17), pick(i, (expSty[st]||expSty.na)[0], (expSty[st]||expSty.na)[1]), stSty[st] || 25, pick(i,7,15), 12, 12, pick(i,7,15), pick(i,13,19), pick(i,8,16), pick(i,24,29)];
+    if (AdhesiveLowStock.isLow(r)) sty[8]=20;else if(AdhesiveLowStock.level(r)==='warning')sty[8]=10;
     return { ht: _xlHt(vals.map(function(v,k){ return k === 0 ? '' : v; }), invCols.map(function(c){ return c.w; }), 26),
              cells: vals.map(function(v, k){ return k === 0 ? { t: v, s: 5, n: true } : (k === 3 && /^[123]$/.test(String(v))) ? { t: v, s: sty[k], n: true } : { t: (k === 3 ? (v === 'Samples' ? 'Samples' : '') : v), s: sty[k] }; }) };
   });
@@ -2317,7 +2322,7 @@ function _xlNormId(v) {
 function _xlText(v) { v = String(v == null ? '' : v).trim(); return /^-?\d+\.0+$/.test(v) ? v.replace(/\.0+$/, '') : v; }
 function _xlLocalISO(d) { d = new Date(d); return isNaN(d.getTime()) ? '' : _xlISO(d.getFullYear(), d.getMonth() + 1, d.getDate()); }
 
-var _XL_INV  = { 'adhesive':'name','name':'name','vendor':'vendor','priority':'priority','nv pn':'nvpn','supplier pn':'spn','where used':'used','syringe sizes':'syringe','syringe':'syringe','qty':'qty','expiry date':'expiry','expiry':'expiry','freezer':'freezer','shelf #':'shelf','shelf':'shelf','storage temp':'temp','owner':'owner','comments':'comments','datasheet':'_ds','id':'_id' };
+var _XL_INV  = { 'adhesive':'name','name':'name','vendor':'vendor','priority':'priority','nv pn':'nvpn','supplier pn':'spn','where used':'used','syringe sizes':'syringe','syringe':'syringe','qty':'qty','min qty':'minQty','minimum qty':'minQty','min quantity':'minQty','expiry date':'expiry','expiry':'expiry','freezer':'freezer','shelf #':'shelf','shelf':'shelf','storage temp':'temp','owner':'owner','owner (legacy)':'owner','comments':'comments','datasheet':'_ds','id':'_id' };
 var _XL_SHIP = { 'adhesive':'name','vendor':'vendor','carrier':'carrier','amount':'amount','syringe':'syringe','nv pr #':'nvpr','requested by':'requester','request date':'reqdate','expected arrival':'eta','tracking #':'tracking','status':'_status','comments':'comments','actual arrival':'arrived','id':'_id' };
 var _XL_COMM = { 'author':'author','type':'_tag','adhesive':'adhesive','message':'text','date':'_date','id':'_id' };
 
@@ -2369,10 +2374,11 @@ async function _xlPlan(buf) {
   if (!inv) plan.notes.push('Sheet "Inventory" not found \u2014 adhesives not changed.');
   else if (!inv.items.length) plan.notes.push('Sheet "Inventory" has no rows \u2014 adhesives not changed (to remove everything, delete items in the platform).');
   else {
-    var IF = ['name','vendor','priority','nvpn','spn','used','syringe','qty','expiry','freezer','shelf','temp','owner','comments'], mt = _xlMatch(data, inv, function(r){ return _xlNorm(r.name); }), taken = {}, upd = 0, add = 0, skipped = 0, rows = [];
+    var IF = ['name','vendor','priority','nvpn','spn','used','syringe','qty','minQty','expiry','freezer','shelf','temp','owner','comments'], mt = _xlMatch(data, inv, function(r){ return _xlNorm(r.name); }), taken = {}, upd = 0, add = 0, skipped = 0, rows = [];
     mt.rows.forEach(function(it){ if (it.ex) taken[String(it.ex.id)] = 1; });
     mt.rows.forEach(function(it) {
       var f = it.f, ex = it.ex; if (!f.name) { skipped++; return; }
+      if(inv.fields.includes('minQty') && f.minQty!=='' && AdhesiveLowStock.quantity(f.minQty)===null)throw new Error('Invalid Min QTY for '+f.name+'. Import cancelled; no changes applied.');
       var row = ex ? Object.assign({}, ex) : { dsType: 'url', datasheet: '', dsFileName: '' };
       inv.fields.forEach(function(k){ if (IF.indexOf(k) >= 0) row[k] = k === 'expiry' ? _xlNormDate(f[k]) : k === 'priority' ? _xlPrio(f[k]) : f[k]; });
       if (inv.fields.indexOf('_ds') >= 0) {
@@ -2481,7 +2487,7 @@ function importExcel() {
 
 // ── Init ─────────────────────────────────────────────────────────
 // Revision of THIS file = day.month.year + a letter (a, b, c … = which version of that day). Updated with every new delivery of the file.
-const APP_REV = '19.11.26a';
+const APP_REV = '20.11.26a';
 (function() {
   var rev = document.getElementById('appRev');
   if (rev) { rev.textContent = 'Rev ' + APP_REV; rev.title = 'Version of this file (day.month.year + letter of the day\'s revision)'; }
