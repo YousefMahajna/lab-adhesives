@@ -654,7 +654,7 @@
   <div class="header-clock" id="ts"></div>
   <div class="header-right">
     <span id="saveIndicator" style="font-size:11px;color:var(--nv-green);opacity:0;transition:opacity .4s ease;white-space:nowrap;"></span>
-    <button class="btn btn-ghost" onclick="saveFile()" style="border-color:#76b900;color:#76b900;" title="Save all data">💾 Save</button><button class="btn btn-primary edit-only" onclick="openAddModal()">+ Add Adhesive</button>
+    <button id="publishChanges" class="btn btn-ghost" onclick="saveFile()" style="border-color:#76b900;color:#76b900;" title="Publish changes to the shared inventory for every visitor">Publish changes</button><button class="btn btn-primary edit-only" onclick="openAddModal()">+ Add Adhesive</button>
   </div>
 </header>
 
@@ -917,7 +917,7 @@
   <button class="btn btn-ghost" id="cancelSaving" type="button">Cancel</button>
 </dialog>
 <script src="low-stock.js?v=20.11.26a"></script>
-<script src="gist-connection.js?v=quota-fix-1"></script>
+<script src="gist-connection.js?v=publishing-1"></script>
 <script src="hub-entry.js?v=quota-fix-1"></script>
 <script>
 // Data loaded from Gist on initData()
@@ -939,6 +939,7 @@ const _gistId    = '32393f1f1f4f7d35' + '5049a7102a3e5970';
 const _cloud = window.AdhesiveGistConnection.create(_gistId, window.fetch.bind(window));
 var hubSelectedEmail = '';
 var _savingBusy = false;
+var _publishAfterConnect = false;
 
 function _legacyDraftKey() { return 'nv_adhesives_draft_v1:' + (hubSelectedEmail || 'legacy:' + currentUser); }
 function _draftKey() { return _legacyDraftKey() + ':' + currentRole; }
@@ -957,20 +958,28 @@ function _readDraft() {
   } catch (error) { showSaveToast('A saved draft could not be read and was left untouched. Keep this tab open and contact the administrator.', true); return null; }
 }
 function _writeDraft() {
+  updateSavingUI();
   try {
     localStorage.setItem(_draftKey(), JSON.stringify({ version: 1, data: data.map(_stripRow), comments: comments, shipments: shipments, base: _base }));
   } catch (error) { showSaveToast('Browser draft storage is unavailable. Keep this tab open and connect saving before leaving. Newly attached files also require this tab to stay open until saved.', true); }
 }
 function _clearSavedDraft() {
   var remaining = _diff(data, _base.data).up.length || _diff(data, _base.data).del.length || _diff(comments, _base.comments).up.length || _diff(comments, _base.comments).del.length || _diff(shipments, _base.shipments).up.length || _diff(shipments, _base.shipments).del.length;
+  updateSavingUI();
   if (remaining) _writeDraft();
   else { try { localStorage.removeItem(_draftKey()); } catch (error) {} }
+}
+function _hasUnpublishedChanges() {
+  if (!_gistReady) return false;
+  return ['data','comments','shipments'].some(function(key){var rows=key==='data'?data:key==='comments'?comments:shipments;var change=_diff(rows,_base[key]);return change.up.length||change.del.length;})||Object.keys(_dsPending).length||Object.keys(_dsDelete).length;
 }
 function updateSavingUI() {
   var connect = document.getElementById('connectSaving'), disconnect = document.getElementById('disconnectSaving'), status = document.getElementById('savingStatus');
   if (connect) connect.hidden = _cloud.isConnected();
   if (disconnect) disconnect.hidden = !_cloud.isConnected();
-  if (status) status.textContent = _cloud.isConnected() ? 'Saving: ' + _cloud.getLogin() : 'Drafts kept on this browser';
+  var dirty=_hasUnpublishedChanges();
+  if(status){status.textContent=dirty?'UNPUBLISHED DRAFT — only this browser':(_cloud.isConnected()?'Shared changes saved':'Shared inventory · connect to publish edits');status.style.color=dirty?'#ffb347':'#aaa';}
+  var publish=document.getElementById('publishChanges');if(publish){publish.disabled=_savingBusy;publish.textContent=dirty?'Publish changes':'Shared inventory';publish.title=dirty?'Update the shared inventory so every visitor sees these changes':'No unpublished changes in this tab';}
 }
 function setupSavingUI() {
   var header = document.querySelector('.header-right'); if (!header || document.getElementById('connectSaving')) return;
@@ -978,11 +987,11 @@ function setupSavingUI() {
   connect.onclick = function () { document.getElementById('savingError').textContent = ''; document.getElementById('savingDialog').showModal(); document.getElementById('savingToken').focus(); };
   var disconnect = document.createElement('button'); disconnect.id = 'disconnectSaving'; disconnect.className = 'btn btn-ghost'; disconnect.textContent = 'Disconnect saving';
   disconnect.onclick = function () { if (_savingBusy) return; _cloud.disconnect(); updateSavingUI(); };
-  var status = document.createElement('span'); status.id = 'savingStatus'; status.style.cssText = 'font-size:10px;color:#aaa;max-width:170px;'; status.setAttribute('role','status');
+  var status = document.createElement('span'); status.id = 'savingStatus'; status.style.cssText = 'font-size:11px;color:#aaa;max-width:220px;'; status.setAttribute('role','status');
   header.append(connect, disconnect, status); updateSavingUI();
 }
-document.getElementById('cancelSaving').onclick = function () { if (_savingBusy) return; document.getElementById('savingToken').value = ''; document.getElementById('savingDialog').close(); };
-document.getElementById('savingDialog').addEventListener('cancel', function (e) { if (_savingBusy) e.preventDefault(); else document.getElementById('savingToken').value = ''; });
+document.getElementById('cancelSaving').onclick = function () { if (_savingBusy) return; _publishAfterConnect=false;document.getElementById('savingToken').value = ''; document.getElementById('savingDialog').close(); };
+document.getElementById('savingDialog').addEventListener('cancel', function (e) { if (_savingBusy) e.preventDefault(); else {_publishAfterConnect=false;document.getElementById('savingToken').value = '';} });
 document.getElementById('confirmSaving').onclick = async function () {
   if (_savingBusy) return;
   var token = document.getElementById('savingToken').value.trim(); document.getElementById('savingToken').value = '';
@@ -992,7 +1001,7 @@ document.getElementById('confirmSaving').onclick = async function () {
     await _cloud.connect(token);
     if (!_gistReady) await initData();
     document.getElementById('savingDialog').close();
-    showSaveToast('Saving connected. Press Save to publish your pending changes.');
+    if(_publishAfterConnect){_publishAfterConnect=false;await saveState();}else showSaveToast('Saving connected. Use Publish changes to share any pending edits.');
   } catch (error) { document.getElementById('savingError').textContent = error.message; }
   finally { token = ''; _savingBusy = false; this.disabled = false; document.getElementById('cancelSaving').disabled = false; updateSavingUI(); }
 };
@@ -1038,6 +1047,20 @@ function _diff(arr, baseMap) {            // what changed locally since the last
   (arr||[]).forEach(function(x){ seen[x.id] = 1; if (baseMap[x.id] !== JSON.stringify(_stripRow(x))) up.push(x); });
   var del = Object.keys(baseMap).filter(function(id){ return !seen[id]; });
   return { up: up, del: del };
+}
+function _mergeDraftFields(remoteRows, change, baseline) {
+  var rows=remoteRows.map(_stripRow),index={};rows.forEach(function(row,i){index[row.id]=i;});
+  change.up.forEach(function(local){
+    var before=baseline[local.id],i=index[local.id];
+    if(typeof before==='string')before=JSON.parse(before);
+    if(!before||i===undefined){if(i===undefined){index[local.id]=rows.length;rows.push(_stripRow(local));}else rows[i]=_stripRow(local);return;}
+    var merged=Object.assign({},rows[i]);
+    new Set(Object.keys(before).concat(Object.keys(local))).forEach(function(key){
+      if(JSON.stringify(local[key])===JSON.stringify(before[key]))return;
+      if(Object.prototype.hasOwnProperty.call(local,key))merged[key]=local[key];else delete merged[key];
+    });rows[i]=_stripRow(merged);
+  });
+  var removed=new Set(change.del.map(String));return rows.filter(function(row){return !removed.has(String(row.id));});
 }
 function _apply(remoteArr, d) {           // put our changes on top of the latest remote list
   var out = (remoteArr||[]).slice(), idx = {};
@@ -1113,7 +1136,7 @@ async function _doSave() {
     }
     var rem    = await _fetchGist();                 // always merge into the LATEST cloud copy
     var remote = _normalize(rem.saved);
-    var merged = { data: _apply(remote.data, dD), comments: _apply(remote.comments, dC), shipments: _apply(remote.shipments, dS) };
+    var merged = { data: _mergeDraftFields(remote.data,dD,_base.data), comments: _mergeDraftFields(remote.comments,dC,_base.comments), shipments: _mergeDraftFields(remote.shipments,dS,_base.shipments) };
 
     var files = {}, sentUp = {}, sentDel = {};
     files[MAIN_FILE] = { content: JSON.stringify(merged, null, 2) };
@@ -1144,7 +1167,8 @@ async function _doSave() {
     lsSave();
     _clearSavedDraft(); updateSavingUI();
     if (JSON.stringify([data.map(_stripRow), comments, shipments]) !== before) refreshAll();   // someone else's changes arrived
-    showSaveToast('✅ Saved to cloud');
+    try{localStorage.setItem('nv_adhesives_published_v1',String(Date.now()));}catch(error){}
+    updateSavingUI();showSaveToast('✅ Published — shared with every visitor');
     return true;
   } catch (e) {
     updateSavingUI();
@@ -1159,7 +1183,32 @@ function saveState() {
   _saveChain = p.catch(function(){});
   return p;
 }
-async function saveFile() { await saveState(); }
+async function saveFile() {
+  _writeDraft();
+  if(!_cloud.isConnected()&&_hasUnpublishedChanges()){
+    _publishAfterConnect=true;document.getElementById('connectSaving').click();return;
+  }
+  await saveState();
+}
+var _sharedRefreshBusy=false;
+function refreshSharedInventory(){
+  if(!_gistReady||_sharedRefreshBusy||!currentUser)return;
+  _sharedRefreshBusy=true;
+  var run=_saveChain.then(async function(){
+    if(document.querySelector('#modalOverlay.open,#shipModalOverlay.open'))return;
+    var remote=await _fetchGist();if(!remote.saved||document.querySelector('#modalOverlay.open,#shipModalOverlay.open'))return;
+    var changes={data:_diff(data,_base.data),comments:_diff(comments,_base.comments),shipments:_diff(shipments,_base.shipments)};
+    var fresh=_normalize(remote.saved);_gistFiles=remote.files;
+    var combined={data:_mergeDraftFields(fresh.data,changes.data,_base.data),comments:_mergeDraftFields(fresh.comments,changes.comments,_base.comments),shipments:_mergeDraftFields(fresh.shipments,changes.shipments,_base.shipments)};
+    _base={data:_toMap(fresh.data),comments:_toMap(fresh.comments),shipments:_toMap(fresh.shipments)};
+    data=combined.data;comments=combined.comments;shipments=combined.shipments;
+    lsSave();_clearSavedDraft();refreshAll();updateSavingUI();
+  });
+  _saveChain=run.catch(function(){showSaveToast('Shared refresh unavailable. Your draft is kept.',true);}).finally(function(){_sharedRefreshBusy=false;});
+}
+window.addEventListener('storage',function(event){if(event.key==='nv_adhesives_published_v1')refreshSharedInventory();});
+document.addEventListener('visibilitychange',function(){if(!document.hidden)refreshSharedInventory();});
+setInterval(function(){if(!document.hidden)refreshSharedInventory();},60000);
 
 // ── Datasheet files ────────────────────────────────────────────────
 function _dataUrlToBlob(du) {
@@ -2502,7 +2551,7 @@ function importExcel() {
 
 // ── Init ─────────────────────────────────────────────────────────
 // Revision of THIS file = day.month.year + a letter (a, b, c … = which version of that day). Updated with every new delivery of the file.
-const APP_REV = '20.11.26a';
+const APP_REV = '20.11.26b';
 (function() {
   var rev = document.getElementById('appRev');
   if (rev) { rev.textContent = 'Rev ' + APP_REV; rev.title = 'Version of this file (day.month.year + letter of the day\'s revision)'; }
