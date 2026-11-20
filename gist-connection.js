@@ -20,14 +20,9 @@
       }
       return response.json();
     }
-    return {
-      read: async function () {
-        var wasConnected=Boolean(token);
-        try { return await request(endpoint + '?_=' + Date.now(), token); }
-        catch(error) {
-          if (wasConnected || !error.rateLimited) throw error;
+    async function publicRead(){
           var base='https://gist.githubusercontent.com/YousefMahajna/'+gistId+'/raw/';
-          var response=await fetcher(base+'adhesives_data.json?_='+Date.now(),{method:'GET',cache:'no-store',redirect:'error',signal:AbortSignal.timeout(20000)});
+          var response=await fetcher(base+'adhesives_data.json?_='+Date.now(),{method:'GET',headers:{Accept:'application/json'},cache:'no-store',redirect:'error',signal:AbortSignal.timeout(20000)});
           if(!response.ok)throw new Error('The shared inventory could not be read. No data was changed.');
           var saved=await response.json();
           if(!saved||!Array.isArray(saved.data))throw new Error('The shared inventory format is invalid. No data was changed.');
@@ -38,7 +33,11 @@
             }
           });
           return {files:files,publicReadFallback:true};
-        }
+    }
+    return {
+      read: async function () {
+        if(token)return request(endpoint+'?_='+Date.now(),token);
+        try{return await publicRead();}catch(error){return request(endpoint+'?_='+Date.now(),'');}
       },
       connect: async function (candidate) {
         token = ''; login = ''; candidate = String(candidate || '').trim();

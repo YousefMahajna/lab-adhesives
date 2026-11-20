@@ -38,4 +38,8 @@ Use **Red first** or **Yellow first** to sort by stock urgency, or click the QTY
 
 ## Development checks
 
+The header distinguishes **UNPUBLISHED DRAFT — only this browser** from the saved shared inventory. **Publish changes** opens the existing owner saving connection if needed and publishes after a successful connection. An unconnected edit is never presented as globally saved. Keep the editor tab or its recovery draft until publishing succeeds.
+
+Open tabs refresh after a successful same-browser publication, when they regain visibility, and periodically while visible. Refresh and publishing merge only fields actually changed locally, preserving unrelated newer fields from another editor. Public inventory reads use the current raw Gist file, avoiding anonymous API quota consumption; authenticated saves still read and merge the live API data before writing. No inventory values are changed by deployment.
+
 Run `node --test tests/*.test.cjs` with Node 24. The policy under `tests/fixtures/` is an offline snapshot for contract tests; production loads the published hub policy. The check workflow runs on pull requests and pushes to main. Browser integration checks are maintained in the implementing workspace and intercept all GitHub API requests to avoid changing live inventory.
